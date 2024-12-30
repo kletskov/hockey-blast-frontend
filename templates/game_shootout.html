@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Shootout Statistics</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            background-color: #008080;
+            /* Dark teal */
+        }
+
+        .container {
+            background-color: #20B2AA;
+            /* Light teal */
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 50px;
+        }
+
+        a {
+            color: #0000EE;
+            /* Default link color */
+        }
+
+        a:hover {
+            color: #551A8B;
+            /* Visited link color */
+        }
+
+        .form-control {
+            background-color: #008080;
+            /* Dark teal */
+            color: white;
+        }
+
+        .form-control::placeholder {
+            color: #B0C4DE;
+            /* Light Steel Blue */
+        }
+
+        .list-group-item {
+            background-color: #008080;
+            /* Dark teal */
+            color: white;
+        }
+
+        nav {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            /* Increase text size */
+        }
+
+        nav a {
+            color: orange;
+        }
+
+        nav a:hover {
+            color: darkorange;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <br>
+        <a href="{{ url_for('index') }}">Main</a> |
+        <a href="{{ url_for('search_humans.search_humans') }}">Search Humans</a> |
+        <a href="{{ url_for('search_teams.search_teams') }}">Search Teams</a> |
+        <a href="{{ url_for('special_stats') }}">Special Stats</a> |
+        <a href="mailto:kletskov+hockeyblast@gmail.com">Report a problem</a> |
+        <a href="https://forms.gle/YJuJ9Jw4Xxrz5JLQ9">Submit Feature Request</a>
+    </nav>
+
+    <div class="container">
+        <h1 class="mb-4">Shootouts when tied stats</h1>
+        <form id="filter-form" method="post">
+            <div class="form-group">
+                <label for="league_number">Choose a League:</label>
+                <select class="form-control" id="league_number" name="league_number" required>
+                    {% for league in leagues %}
+                    <option value="{{ league.league_number }}">{{ league.league_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="plot_level">Choose a Division:</label>
+                <select class="form-control" id="plot_level" name="plot_level">
+                    <option value="all">All Divisions</option>
+                    {% for division in divisions %}
+                    <option value="{{ division }}">{{ division }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="x_axis">Aggregate by:</label>
+                <select class="form-control" id="x_axis" name="x_axis">
+                    <option value="season">Season</option>
+                    <option value="year_month">Year+Month</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+        <div id="plot-div" class="mt-4"></div>
+    </div>
+    <script>
+        document.getElementById('filter-form').addEventListener('submit', function (event) {
+            event.preventDefault();
+            const x_axis = document.getElementById('x_axis').value;
+            const plot_level = document.getElementById('plot_level').value;
+            const league_number = document.getElementById('league_number').value;
+            fetch('/get_game_shootout_data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ x_axis, plot_level, league_number })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const x = data.x;
+                    const y = data.y;
+                    const traces = [];
+                    for (const [key, values] of Object.entries(y)) {
+                        traces.push({
+                            x: x,
+                            y: values,
+                            mode: 'lines+markers',
+                            name: key
+                        });
+                    }
+                    const layout = {
+                        title: 'Game Shootout Statistics',
+                        xaxis: { title: x_axis === 'year_month' ? 'Year/Month' : 'Season' },
+                        yaxis: { title: 'Percentage' }
+                    };
+                    Plotly.newPlot('plot-div', traces, layout);
+                });
+        });
+    </script>
+</body>
+
+</html>

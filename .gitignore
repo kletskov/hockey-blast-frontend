@@ -1,0 +1,25 @@
+# Compiled Python files
+__pycache__/
+*.pyc
+
+# Logs
+*.log
+
+# Database files
+*.db
+*.sqlite3
+
+# Sensitive files
+*.pem
+.env
+
+# Virtual environment
+venv/
+
+# Alembic cache but include migration history
+migrations/__pycache__/
+
+# Node modules (if applicable)
+node_modules/
+
+.vscode/

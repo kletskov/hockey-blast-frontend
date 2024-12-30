@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time of Games</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        .container {
+            margin-top: 20px;
+        }
+
+        #plot-avg-start-time {
+            height: 600px;
+            /* Increase the height of the plot */
+        }
+
+        #plot-last-slot {
+            height: 600px;
+            /* Increase the height of the plot */
+            margin-top: 20px;
+            /* Add margin to create space between plots */
+        }
+
+        nav {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            /* Increase text size */
+        }
+
+        nav a {
+            color: orange;
+        }
+
+        nav a:hover {
+            color: darkorange;
+        }
+    </style>
+
+</head>
+
+<body style="background-color: lightgrey;">
+    <nav>
+        <br>
+        <a href="{{ url_for('index') }}">Main</a> |
+        <a href="{{ url_for('search_humans.search_humans') }}">Search Humans</a> |
+        <a href="{{ url_for('search_teams.search_teams') }}">Search Teams</a> |
+        <a href="{{ url_for('special_stats') }}">Special Stats</a> |
+        <a href="mailto:kletskov+hockeyblast@gmail.com">Report a problem</a> |
+        <a href="https://forms.gle/YJuJ9Jw4Xxrz5JLQ9">Submit Feature Request</a>
+    </nav>
+    <div class="container">
+        <h1 class="mb-4">Time of Games</h1>
+        <div class="form-group">
+            <label for="plot-type">Comparison Mode:</label>
+            <select class="form-control" id="plot-type">
+                <option value="compare_teams_by_level">Compare Teams Inside a Division</option>
+                <option value="compare_levels_by_season">Compare Divisions</option>
+            </select>
+        </div>
+        <div class="form-group" id="level-1-container" style="display: none;">
+            <label for=" level-1">Choose Division 1:</label>
+            <select class="form-control" id="level-1">
+                <option value="all">ALL Divisions</option>
+                {% for level in levels %}
+                <option value="{{ level }}">{{ level }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group" id="level-2-container" style="display: none;">
+            <label for=" level-2">Choose Division 2:</label>
+            <select class="form-control" id="level-2">
+                <option value="all">ALL Divisions</option>
+                {% for level in levels %}
+                <option value="{{ level }}">{{ level }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group" id="plot-level-container">
+            <label for="plot-level">Choose a Division:</label>
+            <select class="form-control" id="plot-level">
+                <option value="all">ALL Divisions</option>
+                {% for level in levels %}
+                <option value="{{ level }}">{{ level }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button class="btn btn-primary" id="update-plot">Update Plot</button>
+        <div id="plot-avg-start-time"></div>
+        <div id="plot-last-slot"></div>
+    </div>
+    <script>
+        function getQueryParams() {
+            const params = {};
+            const queryString = window.location.search.substring(1);
+            const regex = /([^&=]+)=([^&]*)/g;
+            let m;
+            while (m = regex.exec(queryString)) {
+                params[decodeURIComponent(m[1])] = decodeURIComponent(m[2]);
+            }
+            return params;
+        }
+
+        function setDropdownValue(dropdownId, value) {
+            const dropdown = document.getElementById(dropdownId);
+            if (dropdown) {
+                dropdown.value = value;
+            }
+        }
+
+        document.getElementById('plot-type').addEventListener('change', function () {
+            var plot_type = document.getElementById('plot-type').value;
+            var level_1_container = document.getElementById('level-1-container');
+            var level_2_container = document.getElementById('level-2-container');
+            var plot_level_container = document.getElementById('plot-level-container');
+            if (plot_type === 'compare_levels_by_season') {
+                level_1_container.style.display = 'block';
+                level_2_container.style.display = 'block';
+                plot_level_container.style.display = 'none';
+            } else {
+                level_1_container.style.display = 'none';
+                level_2_container.style.display = 'none';
+                plot_level_container.style.display = 'block';
+            }
+        });
+
+        document.getElementById('update-plot').addEventListener('click', function () {
+            updatePlot();
+        });
+
+        function updatePlot() {
+            var plot_type = document.getElementById('plot-type').value;
+            var level_1 = document.getElementById('level-1').value;
+            var level_2 = document.getElementById('level-2').value;
+            var plot_level = document.getElementById('plot-level').value;
+
+            fetch('/get_time_of_games_data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    plot_type: plot_type,
+                    level_1: level_1,
+                    level_2: level_2,
+                    plot_level: plot_level
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    var traces_avg = [];
+                    var traces_last_slot = [];
+                    if (plot_type === 'compare_levels_by_season') {
+                        traces_avg.push({
+                            x: data.x,
+                            y: data.y_avg_1,
+                            mode: 'lines+markers',
+                            name: `${level_1}`
+                        });
+                        traces_avg.push({
+                            x: data.x,
+                            y: data.y_avg_2,
+                            mode: 'lines+markers',
+                            name: `${level_2}`
+                        });
+                        traces_last_slot.push({
+                            x: data.x,
+                            y: data.y_last_slot_1.map(value => parseFloat(value).toFixed(1)),
+                            mode: 'lines+markers',
+                            name: `${level_1}`
+                        });
+                        traces_last_slot.push({
+                            x: data.x,
+                            y: data.y_last_slot_2.map(value => parseFloat(value).toFixed(1)),
+                            mode: 'lines+markers',
+                            name: `${level_2}`
+                        });
+                    } else {
+                        traces_avg = data.traces_avg;
+                        traces_last_slot = data.traces_last_slot.map(trace => {
+                            trace.y = trace.y.map(value => parseFloat(value).toFixed(1));
+                            return trace;
+                        });
+                    }
+
+                    // Sort traces by name
+                    traces_avg.sort((a, b) => a.name.localeCompare(b.name));
+                    traces_last_slot.sort((a, b) => a.name.localeCompare(b.name));
+
+                    function formatTime(minutes) {
+                        const hours = Math.floor(minutes / 60);
+                        const mins = minutes % 60;
+                        return `${hours}:${mins < 10 ? '0' : ''}${mins}`;
+                    }
+
+                    var tickvals = traces_avg.flatMap(trace => trace.y).sort((a, b) => a - b);
+                    var ticktext = tickvals.map(formatTime);
+                    var filteredTickvals = tickvals;
+                    var filteredTicktext = ticktext;
+
+                    var layout_avg_slot_title = plot_type === 'compare_levels_by_season' ?
+                        `Average Game Start Time for ${level_1} and ${level_2}` :
+                        `Average Game Start Time for teams in ${plot_level}`;
+
+                    var layout_avg = {
+                        title: layout_avg_slot_title,
+                        xaxis: {
+                            tickangle: -30,
+                            tickfont: { size: 10 }
+                        },
+                        yaxis: {
+                            title: 'Start Time (HH:MM)',
+                            tickvals: filteredTickvals,
+                            ticktext: filteredTicktext,
+                            tickfont: { size: 10 }
+                        }
+                    };
+
+                    var layout_last_slot_title = plot_type === 'compare_levels_by_season' ?
+                        `Percentage of Last Slot Games for ${level_1} and ${level_2}` :
+                        `Percentage of Last Slot Games for teams in ${plot_level}`;
+
+                    var layout_last_slot = {
+                        title: layout_last_slot_title,
+                        xaxis: {
+                            tickangle: -30,
+                            tickfont: { size: 10 }
+                        },
+                        yaxis: { title: 'Percentage (%)', tickfont: { size: 10 } }
+                    };
+                    Plotly.newPlot('plot-avg-start-time', traces_avg, layout_avg);
+                    Plotly.newPlot('plot-last-slot', traces_last_slot, layout_last_slot);
+                });
+        }
+
+        // Parse URL parameters and set dropdown values
+        const params = getQueryParams();
+        if (params.plot_type) {
+            setDropdownValue('plot-type', params.plot_type);
+        }
+        if (params.level_1) {
+            setDropdownValue('level-1', params.level_1);
+        }
+        if (params.level_2) {
+            setDropdownValue('level-2', params.level_2);
+        }
+        if (params.plot_level) {
+            setDropdownValue('plot-level', params.plot_level);
+        }
+
+        // Trigger plot update if parameters are present
+        if (params.plot_type || params.level_1 || params.level_2 || params.plot_level) {
+            updatePlot();
+        }
+    </script>
+</body>
+
+</html>

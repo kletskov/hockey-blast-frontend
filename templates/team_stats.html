@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team "{{ team_name }}"" ({{ first_game_date }} - {{ last_game_date }})</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #008080;
+            /* Dark teal */
+        }
+
+        .container {
+            background-color: #20B2AA;
+            /* Light teal */
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        a {
+            color: #00008B;
+            /* Dark blue */
+        }
+
+        a:hover {
+            color: #FF4500;
+            /* OrangeRed */
+        }
+
+        nav {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            /* Increase text size */
+        }
+
+        nav a {
+            color: orange;
+        }
+
+        nav a:hover {
+            color: darkorange;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <br>
+        <a href="{{ url_for('index') }}">Main</a> |
+        <a href="{{ url_for('search_humans.search_humans') }}">Search Humans</a> |
+        <a href="{{ url_for('search_teams.search_teams') }}">Search Teams</a> |
+        <a href="{{ url_for('special_stats') }}">Special Stats</a> |
+        <a href="mailto:kletskov+hockeyblast@gmail.com">Report a problem</a> |
+        <a href="https://forms.gle/YJuJ9Jw4Xxrz5JLQ9">Submit Feature Request</a>
+    </nav>
+    <div class="container mt-5">
+        <h1 class="mb-4">Team "{{ team_name }}" (<a
+                href="{{ url_for('game_card.game_card', game_id=first_game_id) }}">{{ first_game_date }}</a> - <a
+                href="{{ url_for('game_card.game_card', game_id=last_game_id) }}">{{ last_game_date }}</a>)
+        </h1>
+        <h4>Recent and Upcoming Games for {{team_name}} in {{last_division_name}}</h4>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Date Time</th>
+                    <th>Team Names</th>
+                    <th>Final Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for game in recent_and_upcoming_games_data %}
+                <tr>
+                    <td>{{ game.date_time|safe }}</td>
+                    <td>{{ game.team_names|safe }}</td>
+                    <td>{{ game.final_score|safe }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>All Time Stats</th>
+                    <th>Plus</th>
+                    <th>Minus</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Goals (Scored/Allowed)</td>
+                    <td>{{ goals_scored }} ({{ goals_scored_percentage|round(2) }}%)</td>
+                    <td>{{ goals_against }} ({{ goals_against_percentage|round(2) }}%)</td>
+                </tr>
+                <tr>
+                    <td>Games (Won/Lost)</td>
+                    <td>{{ total_wins }} ({{ win_percentage|round(2) }}%)</td>
+                    <td>{{ total_losses }} ({{ loss_percentage|round(2) }}%)</td>
+                </tr>
+                <tr>
+                    <td>Playoff Goals (Scored/Allowed)</td>
+                    <td>{{ playoff_goals_scored }} ({{ playoff_goals_scored_percentage|round(2) }}%)</td>
+                    <td>{{ playoff_goals_against }} ({{ playoff_goals_against_percentage|round(2) }}%)</td>
+                </tr>
+                <tr>
+                    <td>Playoff Games (Won/Lost)</td>
+                    <td>{{ playoff_wins }} ({{ playoff_win_percentage|round(2) }}%)</td>
+                    <td>{{ playoff_losses }} ({{ playoff_loss_percentage|round(2) }}%)</td>
+                </tr>
+                <tr>
+                    <td>Championship Games (Won/Lost)</td>
+                    <td>{{ championship_wins }} ({{ championship_win_percentage|round(2) }}%)</td>
+                    <td>{{ championship_losses }} ({{ championship_loss_percentage|round(2) }}%)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Best Goals Diff</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Opponent Team Name</th>
+                    <th>Goal Differential</th>
+                    <th>Goals Scored</th>
+                    <th>Goals Allowed</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in best_performance %}
+                <tr>
+                    <td><a href="{{ url_for('team_stats.team_stats', team_id=stat.opponent_team_id) }}">{{
+                            stat.opponent_team_name }}</a></td>
+                    <td>{{ '+' if stat.goal_diff > 0 else '' }}{{ stat.goal_diff }}</td>
+                    <td>{{ stat.goals_scored }}</td>
+                    <td>{{ stat.goals_against }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2>Worst Goals Diff</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Opponent Team Name</th>
+                    <th>Goal Differential</th>
+                    <th>Goals Scored</th>
+                    <th>Goals Allowed</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in worst_performance %}
+                <tr>
+                    <td><a href="{{ url_for('team_stats.team_stats', team_id=stat.opponent_team_id) }}">{{
+                            stat.opponent_team_name }}</a></td>
+                    <td>{{ '+' if stat.goal_diff > 0 else '' }}{{ stat.goal_diff }}</td>
+                    <td>{{ stat.goals_scored }}</td>
+                    <td>{{ stat.goals_against }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2>Long Timers</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Player Name</th>
+                    <th>Roles</th>
+                    <th>Games Played</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for player in long_timers %}
+                <tr>
+                    <td><a href="{{ url_for('human_stats.human_stats', human_id=player.human_id) }}">{{
+                            player.human_name }}</a></td>
+                    <td>{{ player.roles }}</td>
+                    <td>{{ player.games_played }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+
+</html>
