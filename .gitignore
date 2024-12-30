@@ -14,7 +14,7 @@ __pycache__/
 .env
 
 # Virtual environment
-venv/
+.venv/
 
 # Alembic cache but include migration history
 migrations/__pycache__/
