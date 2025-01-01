@@ -1,15 +1,13 @@
 from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
+# import matplotlib
+# matplotlib.use('Agg')
+# import matplotlib.pyplot as plt
 from threading import Thread
 from hockey_blast_common_lib.models import db, Organization, Game, OrgStatsDailySkater, OrgStatsWeeklySkater, OrgStatsDailyGoalie, OrgStatsWeeklyGoalie, OrgStatsDailyReferee, OrgStatsWeeklyReferee, Human
 from hockey_blast_common_lib.db_connection import get_db_params
 from markupsafe import Markup
 
-# Patch flask_table to import Markup from markupsafe
-# Patch flask_table to import Markup from markupsafe
 import flask_table.table
 import flask_table.columns
 from markupsafe import Markup
