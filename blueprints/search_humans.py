@@ -4,7 +4,8 @@ from flask import Blueprint, request, render_template, url_for
 # Add the project root directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from hockey_blast_common_lib.models import db, Human, HumanAlias, OrgStatsHuman, OrgStatsSkater
+from hockey_blast_common_lib.models import db, Human, HumanAlias
+from hockey_blast_common_lib.stats_models import OrgStatsHuman, OrgStatsSkater
 from options import MAX_HUMAN_SEARCH_RESULTS
 
 search_players_bp = Blueprint('search_humans', __name__)

@@ -1,12 +1,12 @@
 import sys, os
-import urllib.parse
 from flask import Blueprint, request, jsonify, render_template, url_for
 
 # Add the project root directory to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-from hockey_blast_common_lib.models import db, Organization, Team, GameRoster, Game, Division, Human, Goal, Penalty, OrgStatsHuman, OrgStatsSkater, OrgStatsGoalie, OrgStatsReferee
+from hockey_blast_common_lib.models import db, Organization, Team, GameRoster, Game, Division, Human, Goal, Penalty
+from hockey_blast_common_lib.stats_models import OrgStatsHuman, OrgStatsSkater, OrgStatsGoalie, OrgStatsReferee
 import pandas as pd
 import plotly.graph_objs as go
 import plotly.io as pio

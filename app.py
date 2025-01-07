@@ -4,7 +4,8 @@ from flask_sqlalchemy import SQLAlchemy
 # matplotlib.use('Agg')
 # import matplotlib.pyplot as plt
 from threading import Thread
-from hockey_blast_common_lib.models import db, Organization, Game, OrgStatsDailySkater, OrgStatsWeeklySkater, OrgStatsDailyGoalie, OrgStatsWeeklyGoalie, OrgStatsDailyReferee, OrgStatsWeeklyReferee, Human
+from hockey_blast_common_lib.models import db, Organization, Game, Human
+from hockey_blast_common_lib.stats_models import OrgStatsDailySkater, OrgStatsWeeklySkater, OrgStatsDailyGoalie, OrgStatsWeeklyGoalie, OrgStatsDailyReferee, OrgStatsWeeklyReferee
 from hockey_blast_common_lib.db_connection import get_db_params
 from markupsafe import Markup
 
@@ -104,4 +105,4 @@ if __name__ == '__main__':
     app = create_app()
     with app.app_context():
         db.create_all()  # Create database tables for all models
-    Thread(target=run_http, args=(app, 5000)).start()
+    Thread(target=run_http, args=(app, 5009)).start()
