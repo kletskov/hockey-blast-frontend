@@ -31,8 +31,6 @@ from blueprints.seasons import seasons_bp
 from blueprints.game_shootout import game_shootout_bp
 from blueprints.version import version_bp
 
-import threading
-
 def create_app(db_name):
     app = Flask(__name__)
     db_params = get_db_params(db_name)
@@ -103,14 +101,14 @@ def create_app(db_name):
     return app
 
 def run_app(app, port):
-    app.run(port=port)
+    app.run(host='0.0.0.0', port=port)
 
 if __name__ == "__main__":
     app1 = create_app("frontend")
     app2 = create_app("frontend-sample-db")
 
-    thread1 = threading.Thread(target=run_app, args=(app1, 5000))
-    thread2 = threading.Thread(target=run_app, args=(app2, 5005))
+    thread1 = Thread(target=run_app, args=(app1, 5000))
+    thread2 = Thread(target=run_app, args=(app2, 5005))
 
     thread1.start()
     thread2.start()
