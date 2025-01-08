@@ -29,6 +29,7 @@ from blueprints.team_stats import team_stats_bp
 from blueprints.game_card import game_card_bp
 from blueprints.seasons import seasons_bp
 from blueprints.game_shootout import game_shootout_bp
+from blueprints.version import version_bp
 
 def create_app():
     app = Flask(__name__)
@@ -53,6 +54,7 @@ def create_app():
     app.register_blueprint(team_stats_bp)
     app.register_blueprint(game_card_bp)
     app.register_blueprint(game_shootout_bp)
+    app.register_blueprint(version_bp)
     
     @app.route('/')
     def index():
