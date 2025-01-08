@@ -168,7 +168,7 @@ def human_stats():
         skater_last_game_link = None
 
     # Pull all rosters where this human was present
-    rosters = db.session.query(GameRoster, Game, Division).join(Game, GameRoster.game_id == Game.id).join(Division, Game.division_id == Division.id).filter(GameRoster.human_id == human_id, Division.org_id == org_id).all()
+    rosters = db.session.query(GameRoster, Game, Division).join(Game, GameRoster.game_id == Game.id).join(Division, Game.division_id == Division.id).filter(GameRoster.human_id == human_id).all() #, Division.org_id == org_id).all()
     
     # Convert rosters to a dataframe
     rosters_df = pd.DataFrame([(r.GameRoster.team_id,
@@ -180,7 +180,7 @@ def human_stats():
                                 r.GameRoster.role,
                                 r.GameRoster.jersey_number,
                                 r.Game.home_final_score if r.GameRoster.team_id == r.Game.home_team_id else r.Game.visitor_final_score,
-                                r.Game.home_period_1_shots + r.Game.home_period_2_shots + r.Game.home_period_3_shots + r.Game.home_ot_shots + r.Game.home_so_shots if r.GameRoster.team_id == r.Game.visitor_team_id else r.Game.visitor_period_1_shots + r.Game.visitor_period_2_shots + r.Game.visitor_period_3_shots + r.Game.visitor_ot_shots + r.Game.visitor_so_shots) for r in rosters],
+                                (r.Game.home_period_1_shots or 0) + (r.Game.home_period_2_shots or 0) + (r.Game.home_period_3_shots or 0) + (r.Game.home_ot_shots or 0) + (r.Game.home_so_shots or 0) if r.GameRoster.team_id == r.Game.visitor_team_id else (r.Game.visitor_period_1_shots or 0) + (r.Game.visitor_period_2_shots or 0) + (r.Game.visitor_period_3_shots or 0) + (r.Game.visitor_ot_shots or 0) + (r.Game.visitor_so_shots or 0)) for r in rosters],
                                 columns=['team_id',
                                          'game_id',
                                          'division_id',

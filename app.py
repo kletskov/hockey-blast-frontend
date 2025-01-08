@@ -31,9 +31,11 @@ from blueprints.seasons import seasons_bp
 from blueprints.game_shootout import game_shootout_bp
 from blueprints.version import version_bp
 
-def create_app():
+import threading
+
+def create_app(db_name):
     app = Flask(__name__)
-    db_params = get_db_params("hockey-blast-radonly")
+    db_params = get_db_params(db_name)
     db_url = f"postgresql://{db_params['user']}:{db_params['password']}@{db_params['host']}:{db_params['port']}/{db_params['dbname']}"
     app.config['SQLALCHEMY_DATABASE_URI'] = db_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -100,11 +102,18 @@ def create_app():
 
     return app
 
-def run_http(app, port):
-    app.run(host='0.0.0.0', port=port)  # HTTP on specified port
+def run_app(app, port):
+    app.run(port=port)
 
-if __name__ == '__main__':
-    app = create_app()
-    with app.app_context():
-        db.create_all()  # Create database tables for all models
-    Thread(target=run_http, args=(app, 5000)).start()
+if __name__ == "__main__":
+    app1 = create_app("frontend")
+    app2 = create_app("frontend-sample-db")
+
+    thread1 = threading.Thread(target=run_app, args=(app1, 5000))
+    thread2 = threading.Thread(target=run_app, args=(app2, 5005))
+
+    thread1.start()
+    thread2.start()
+
+    thread1.join()
+    thread2.join()
