@@ -113,7 +113,3 @@ Follow these steps to set up the development environment for the Hockey Blast pr
     ```
     http://localhost:5005/
     ```
-
-## Notes
-
-- This setup is for development purposes only. Do not use the development server in a production deployment. Use a production WSGI server instead.
