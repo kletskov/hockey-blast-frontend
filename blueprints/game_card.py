@@ -44,14 +44,17 @@ def game_card():
     
     # Convert time to sortable format (handling both 'MM:SS' and 'SS.SS' formats)
     for goal in goals:
-        if ':' in goal.time:
-            minutes, seconds = goal.time.split(':')
-            minutes = int(minutes)
-            seconds = float(seconds)
+        if goal.time:
+            if ':' in goal.time:
+                minutes, seconds = goal.time.split(':')
+                minutes = int(minutes)
+                seconds = float(seconds)
+            else:
+                minutes = 0
+                seconds = float(goal.time)
+            goal.sortable_time = minutes * 60 + seconds
         else:
-            minutes = 0
-            seconds = float(goal.time)
-        goal.sortable_time = minutes * 60 + seconds
+            goal.sortable_time = 0  # Default value if time is empty
 
     # Sort goals by period ascending and time descending
     goals.sort(key=lambda x: (x.period, -x.sortable_time))
