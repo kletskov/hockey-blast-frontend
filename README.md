@@ -67,7 +67,6 @@ Follow these steps to set up the development and production environments for the
 3. Start the PostgreSQL service:
     ```bash
     pg_ctl -D ./postgres_data start
-    brew services start postgresql
     ```
 
 4. Create roles in PostgreSQL:
