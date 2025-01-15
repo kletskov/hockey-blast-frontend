@@ -14,20 +14,19 @@ services:
     ports:
       - "5001:5001"
       - "8001:8001"
-    depends_on:
-      - db
+    # network_mode: "host"
+    # Remove the db service if you are using the host's PostgreSQL
+    # db:
+    #   image: postgres:13
+    #   container_name: hockey_blast_db
+    #   environment:
+    #     POSTGRES_USER: frontend_user
+    #     POSTGRES_PASSWORD: hockey-blast
+    #     POSTGRES_DB: hockey_blast
+    #   volumes:
+    #     - postgres_data:/var/lib/postgresql/data
+    #   ports:
+    #     - "5432:5432"
 
-  db:
-    image: postgres:13
-    container_name: hockey_blast_db
-    environment:
-      POSTGRES_USER: frontend_user
-      POSTGRES_PASSWORD: hockey-blast
-      POSTGRES_DB: hockey_blast
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5433:5432"
-
-volumes:
-  postgres_data:
+    # volumes:
+    #   postgres_data:

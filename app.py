@@ -1,17 +1,18 @@
 from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy
-# import matplotlib
-# matplotlib.use('Agg')
-# import matplotlib.pyplot as plt
 from threading import Thread
 from hockey_blast_common_lib.models import db, Organization, Game, Human
 from hockey_blast_common_lib.stats_models import OrgStatsDailySkater, OrgStatsWeeklySkater, OrgStatsDailyGoalie, OrgStatsWeeklyGoalie, OrgStatsDailyReferee, OrgStatsWeeklyReferee
 from hockey_blast_common_lib.db_connection import get_db_params
 from markupsafe import Markup
-
 import flask_table.table
 import flask_table.columns
 from markupsafe import Markup
+import os
+
+
+# Debug: Print the DB_HOST environment variable
+print(f"app.py DB_HOST: {os.getenv('DB_HOST')}")
 
 flask_table.table.Markup = Markup
 flask_table.columns.Markup = Markup
