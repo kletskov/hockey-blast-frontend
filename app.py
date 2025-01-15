@@ -59,40 +59,47 @@ def create_app(db_name):
     
     @app.route('/')
     def index():
-        top_n = request.args.get('top_n', default=3, type=int)
-        org_id = request.args.get('org_id', default=1, type=int)
-        organization = db.session.query(Organization).filter(Organization.id == org_id).first()
-        # Query the total number of rows
-        games_indexed = db.session.query(Game).count()
-        
-        # Query the latest date and time
-        last_scheduled = db.session.query(Game).filter(Game.org_id == org_id).order_by(Game.date.desc(), Game.time.desc()).first()
-        
-        # Query the latest date and time where home_final_score is set
-        last_played = db.session.query(Game).filter(Game.org_id == org_id, Game.status.startswith("Final")).order_by(Game.date.desc(), Game.time.desc()).first()
-        
-        # Format the time as HH:MM AM/PM
-        last_scheduled_time = last_scheduled.time.strftime('%I:%M %p') if last_scheduled else None
-        last_played_time = last_played.time.strftime('%I:%M %p') if last_played else None
-        
-        # Fetch top performers for the last day
-        daily_skater_games_played = db.session.query(OrgStatsDailySkater, Human).join(Human, OrgStatsDailySkater.human_id == Human.id).filter(OrgStatsDailySkater.org_id == org_id).order_by(OrgStatsDailySkater.games_played.desc()).limit(top_n).all()
-        daily_skater_goals = db.session.query(OrgStatsDailySkater, Human).join(Human, OrgStatsDailySkater.human_id == Human.id).filter(OrgStatsDailySkater.org_id == org_id).order_by(OrgStatsDailySkater.goals.desc()).limit(top_n).all()
-        daily_skater_assists = db.session.query(OrgStatsDailySkater, Human).join(Human, OrgStatsDailySkater.human_id == Human.id).filter(OrgStatsDailySkater.org_id == org_id).order_by(OrgStatsDailySkater.assists.desc()).limit(top_n).all()
-        daily_skater_points = db.session.query(OrgStatsDailySkater, Human).join(Human, OrgStatsDailySkater.human_id == Human.id).filter(OrgStatsDailySkater.org_id == org_id).order_by(OrgStatsDailySkater.points.desc()).limit(top_n).all()
-        daily_skater_penalties = db.session.query(OrgStatsDailySkater, Human).join(Human, OrgStatsDailySkater.human_id == Human.id).filter(OrgStatsDailySkater.org_id == org_id).order_by(OrgStatsDailySkater.penalties.desc()).limit(top_n).all()
+        try:
+            top_n = request.args.get('top_n', default=3, type=int)
+            org_id = request.args.get('org_id', default=1, type=int)
+            organization = db.session.query(Organization).filter(Organization.id == org_id).first()
+            # Query the total number of rows
+            games_indexed = db.session.query(Game).count()
+            
+            # Query the latest date and time
+            last_scheduled = db.session.query(Game).filter(Game.org_id == org_id).order_by(Game.date.desc(), Game.time.desc()).first()
+            
+            # Query the latest date and time where home_final_score is set
+            last_played = db.session.query(Game).filter(Game.org_id == org_id, Game.status.startswith("Final")).order_by(Game.date.desc(), Game.time.desc()).first()
+            
+            # Format the time as HH:MM AM/PM
+            last_scheduled_time = last_scheduled.time.strftime('%I:%M %p') if last_scheduled else None
+            last_played_time = last_played.time.strftime('%I:%M %p') if last_played else None
+            
+            # Fetch top performers for the last day
+            daily_skater_games_played = db.session.query(OrgStatsDailySkater, Human).join(Human, OrgStatsDailySkater.human_id == Human.id).filter(OrgStatsDailySkater.org_id == org_id).order_by(OrgStatsDailySkater.games_played.desc()).limit(top_n).all()
+            daily_skater_goals = db.session.query(OrgStatsDailySkater, Human).join(Human, OrgStatsDailySkater.human_id == Human.id).filter(OrgStatsDailySkater.org_id == org_id).order_by(OrgStatsDailySkater.goals.desc()).limit(top_n).all()
+            daily_skater_assists = db.session.query(OrgStatsDailySkater, Human).join(Human, OrgStatsDailySkater.human_id == Human.id).filter(OrgStatsDailySkater.org_id == org_id).order_by(OrgStatsDailySkater.assists.desc()).limit(top_n).all()
+            daily_skater_points = db.session.query(OrgStatsDailySkater, Human).join(Human, OrgStatsDailySkater.human_id == Human.id).filter(OrgStatsDailySkater.org_id == org_id).order_by(OrgStatsDailySkater.points.desc()).limit(top_n).all()
+            daily_skater_penalties = db.session.query(OrgStatsDailySkater, Human).join(Human, OrgStatsDailySkater.human_id == Human.id).filter(OrgStatsDailySkater.org_id == org_id).order_by(OrgStatsDailySkater.penalties.desc()).limit(top_n).all()
 
-        daily_goalie_games_played = db.session.query(OrgStatsDailyGoalie, Human).join(Human, OrgStatsDailyGoalie.human_id == Human.id).filter(OrgStatsDailyGoalie.org_id == org_id).order_by(OrgStatsDailyGoalie.games_played.desc()).limit(top_n).all()
-        daily_goalie_save_percentage = db.session.query(OrgStatsDailyGoalie, Human).join(Human, OrgStatsDailyGoalie.human_id == Human.id).filter(OrgStatsDailyGoalie.org_id == org_id).order_by(OrgStatsDailyGoalie.save_percentage.desc()).limit(top_n).all()
+            daily_goalie_games_played = db.session.query(OrgStatsDailyGoalie, Human).join(Human, OrgStatsDailyGoalie.human_id == Human.id).filter(OrgStatsDailyGoalie.org_id == org_id).order_by(OrgStatsDailyGoalie.games_played.desc()).limit(top_n).all()
+            daily_goalie_save_percentage = db.session.query(OrgStatsDailyGoalie, Human).join(Human, OrgStatsDailyGoalie.human_id == Human.id).filter(OrgStatsDailyGoalie.org_id == org_id).order_by(OrgStatsDailyGoalie.save_percentage.desc()).limit(top_n).all()
 
-        daily_referee_games_reffed = db.session.query(OrgStatsDailyReferee, Human).join(Human, OrgStatsDailyReferee.human_id == Human.id).filter(OrgStatsDailyReferee.org_id == org_id).order_by(OrgStatsDailyReferee.games_reffed.desc()).limit(top_n).all()
-        daily_referee_penalties_given = db.session.query(OrgStatsDailyReferee, Human).join(Human, OrgStatsDailyReferee.human_id == Human.id).filter(OrgStatsDailyReferee.org_id == org_id).order_by(OrgStatsDailyReferee.penalties_given.desc()).limit(top_n).all()
-        daily_referee_gm_given = db.session.query(OrgStatsDailyReferee, Human).join(Human, OrgStatsDailyReferee.human_id == Human.id).filter(OrgStatsDailyReferee.org_id == org_id).order_by(OrgStatsDailyReferee.gm_given.desc()).limit(top_n).all()
-        
-        return render_template('index.html', games_indexed=games_indexed, last_scheduled=last_scheduled, last_scheduled_time=last_scheduled_time, last_played=last_played, last_played_time=last_played_time, background_image=app.config['BACKGROUND_IMAGE'], 
-                               daily_skater_games_played=daily_skater_games_played, daily_skater_goals=daily_skater_goals, daily_skater_assists=daily_skater_assists, daily_skater_points=daily_skater_points, daily_skater_penalties=daily_skater_penalties,
-                               daily_goalie_games_played=daily_goalie_games_played, daily_goalie_save_percentage=daily_goalie_save_percentage,
-                               daily_referee_games_reffed=daily_referee_games_reffed, daily_referee_penalties_given=daily_referee_penalties_given, daily_referee_gm_given=daily_referee_gm_given, org_name = organization.organization_name)
+            daily_referee_games_reffed = db.session.query(OrgStatsDailyReferee, Human).join(Human, OrgStatsDailyReferee.human_id == Human.id).filter(OrgStatsDailyReferee.org_id == org_id).order_by(OrgStatsDailyReferee.games_reffed.desc()).limit(top_n).all()
+            daily_referee_penalties_given = db.session.query(OrgStatsDailyReferee, Human).join(Human, OrgStatsDailyReferee.human_id == Human.id).filter(OrgStatsDailyReferee.org_id == org_id).order_by(OrgStatsDailyReferee.penalties_given.desc()).limit(top_n).all()
+            daily_referee_gm_given = db.session.query(OrgStatsDailyReferee, Human).join(Human, OrgStatsDailyReferee.human_id == Human.id).filter(OrgStatsDailyReferee.org_id == org_id).order_by(OrgStatsDailyReferee.gm_given.desc()).limit(top_n).all()
+            
+            return render_template('index.html', games_indexed=games_indexed, last_scheduled=last_scheduled, last_scheduled_time=last_scheduled_time, last_played=last_played, last_played_time=last_played_time, background_image=app.config['BACKGROUND_IMAGE'], 
+                                   daily_skater_games_played=daily_skater_games_played, daily_skater_goals=daily_skater_goals, daily_skater_assists=daily_skater_assists, daily_skater_points=daily_skater_points, daily_skater_penalties=daily_skater_penalties,
+                                   daily_goalie_games_played=daily_goalie_games_played, daily_goalie_save_percentage=daily_goalie_save_percentage,
+                                   daily_referee_games_reffed=daily_referee_games_reffed, daily_referee_penalties_given=daily_referee_penalties_given, daily_referee_gm_given=daily_referee_gm_given, org_name = organization.organization_name)
+        except Exception as e:
+            error_info = {
+                "error": str(e),
+                "db_params": {**db_params, "password": "HIDDEN"}
+            }
+            return render_template('error.html', error_info=error_info)
 
     @app.route('/special_stats')
     def special_stats():

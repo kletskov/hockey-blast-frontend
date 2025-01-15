@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error</title>
+</head>
+
+<body>
+    <h1>Internal Server Error</h1>
+    <p>An error occurred while trying to connect to the database.</p>
+    <h2>Error Details</h2>
+    <pre>{{ error_info.error }}</pre>
+    <h2>Database Parameters</h2>
+    <pre>{{ error_info.db_params }}</pre>
+</body>
+
+</html>
