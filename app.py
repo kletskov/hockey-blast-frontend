@@ -21,7 +21,7 @@ flask_table.columns.Markup = Markup
 from blueprints.teams_per_season import teams_per_season_bp
 from blueprints.human_stats import human_stats_bp
 from blueprints.search_humans import search_players_bp
-from players_per_season import players_per_season_bp
+from blueprints.players_per_season import players_per_season_bp
 from blueprints.active_players import active_players_bp
 from blueprints.day_of_week import day_of_week_bp
 from blueprints.time_of_games import time_of_games_bp

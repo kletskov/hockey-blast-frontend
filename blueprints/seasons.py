@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template
 from hockey_blast_common_lib.models import db, Division, Game, Season, GameRoster
-from players_per_season import players_per_season
-from blueprints.teams_per_season import teams_per_season
+from .players_per_season import players_per_season
+from .teams_per_season import teams_per_season
 
 seasons_bp = Blueprint('seasons', __name__)
 
