@@ -211,10 +211,6 @@ def human_stats():
     skater_first_game_id = player_rosters_df.loc[player_rosters_df['game_date'] == skater_first_game_date, 'game_id'].values[0] if skater_first_game_date else None
     skater_last_game_id = player_rosters_df.loc[player_rosters_df['game_date'] == skater_last_game_date, 'game_id'].values[0] if skater_last_game_date else None
 
-    # Debug output for skater first and last games
-    print(f"Skater First Game Date: {skater_first_game_date}, Game ID: {skater_first_game_id}", file=sys.stderr)
-    print(f"Skater Last Game Date: {skater_last_game_date}, Game ID: {skater_last_game_id}", file=sys.stderr)
-
     # Prepare links for skater first and last game dates
     skater_first_game_link = f"<a href='{url_for('game_card.game_card', game_id=skater_first_game_id)}'>{skater_first_game_date.strftime('%m/%d/%Y')}</a>" if skater_first_game_date else None
     skater_last_game_link = f"<a href='{url_for('game_card.game_card', game_id=skater_last_game_id)}'>{skater_last_game_date.strftime('%m/%d/%Y')}</a>" if skater_last_game_date else None
@@ -257,10 +253,6 @@ def human_stats():
     # goalie_last_game_date = goalie_rosters_df['game_date'].max() if not goalie_rosters_df.empty else None
     # goalie_first_game_id = goalie_rosters_df.loc[goalie_rosters_df['game_date'] == goalie_first_game_date, 'game_id'].values[0] if goalie_first_game_date else None
     # goalie_last_game_id = goalie_rosters_df.loc[goalie_rosters_df['game_date'] == goalie_last_game_date, 'game_id'].values[0] if goalie_last_game_date else None
-
-    # # Debug output for goalie first and last games
-    # print(f"Goalie First Game Date: {goalie_first_game_date}, Game ID: {goalie_first_game_id}", file=sys.stderr)
-    # print(f"Goalie Last Game Date: {goalie_last_game_date}, Game ID: {goalie_last_game_id}", file=sys.stderr)
 
     # Prepare links for first and last game dates
     # goalie_first_game_link = f"<a href='{url_for('game_card.game_card', game_id=goalie_first_game_id)}'>{goalie_first_game_date.strftime('%m/%d/%Y')}</a>" if goalie_first_game_date else None
