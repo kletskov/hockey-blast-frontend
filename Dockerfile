@@ -16,15 +16,8 @@ COPY . .
 # Copy the patch script into the container
 COPY patch_flask_table.sh .
 
-
 # Run the patch script
 RUN chmod +x patch_flask_table.sh && ./patch_flask_table.sh
-
-# Copy the database initialization script into the container
-#COPY init_db.sh .
-# Run the database initialization script
-# Uncomment the following line if you need to initialize the database
-# RUN chmod +x init_db.sh && ./init_db.sh
 
 # Expose the necessary ports
 EXPOSE 5001 8001

@@ -72,7 +72,6 @@ Follow these steps to set up the development and production environments for the
 4. Create roles in PostgreSQL:
     ```bash
     psql postgres
-    postgres=# CREATE ROLE your_superuser WITH SUPERUSER LOGIN PASSWORD 'your_superuser_password';
     postgres=# CREATE ROLE boss WITH SUPERUSER LOGIN PASSWORD 'boss';
     ```
 

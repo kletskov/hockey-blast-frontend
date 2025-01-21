@@ -97,7 +97,7 @@ def create_app(db_name):
         except Exception as e:
             error_info = {
                 "error": str(e),
-                "db_params": {**db_params, "password": "HIDDEN"}
+                "db_params": {**db_params}#, "password": "HIDDEN"}
             }
             return render_template('error.html', error_info=error_info)
 
