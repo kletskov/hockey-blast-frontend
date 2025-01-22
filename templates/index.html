@@ -92,7 +92,12 @@
         </h4>
 
         <h2>Last Day Top Performers</h2>
+
+        {% if daily_skater_games_played or daily_skater_goals or daily_skater_assists or daily_skater_points or
+        daily_skater_penalties %}
         <h3>Skaters</h3>
+
+        {% if daily_skater_games_played %}
         <h4>Games Played</h4>
         <table class="table table-striped">
             <thead>
@@ -111,7 +116,9 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% endif %}
 
+        {% if daily_skater_goals %}
         <h4>Goals Scored</h4>
         <table class="table table-striped">
             <thead>
@@ -130,7 +137,9 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% endif %}
 
+        {% if daily_skater_assists %}
         <h4>Assists</h4>
         <table class="table table-striped">
             <thead>
@@ -149,7 +158,9 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% endif %}
 
+        {% if daily_skater_points %}
         <h4>Points</h4>
         <table class="table table-striped">
             <thead>
@@ -168,7 +179,9 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% endif %}
 
+        {% if daily_skater_penalties %}
         <h4>Penalties</h4>
         <table class="table table-striped">
             <thead>
@@ -187,8 +200,13 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% endif %}
+        {% endif %}
 
+        {% if daily_goalie_games_played or daily_goalie_save_percentage %}
         <h3>Goalies</h3>
+
+        {% if daily_goalie_games_played %}
         <h4>Games Played</h4>
         <table class="table table-striped">
             <thead>
@@ -207,7 +225,9 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% endif %}
 
+        {% if daily_goalie_save_percentage %}
         <h4>Save Percentage</h4>
         <table class="table table-striped">
             <thead>
@@ -226,9 +246,13 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% endif %}
+        {% endif %}
 
+        {% if daily_referee_games_reffed or daily_referee_penalties_given or daily_referee_gm_given %}
         <h3>Referees</h3>
 
+        {% if daily_referee_games_reffed %}
         <h4>Games Reffed</h4>
         <table class="table table-striped">
             <thead>
@@ -247,7 +271,9 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% endif %}
 
+        {% if daily_referee_penalties_given %}
         <h4>Penalties Given</h4>
         <table class="table table-striped">
             <thead>
@@ -266,7 +292,9 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% endif %}
 
+        {% if daily_referee_gm_given %}
         <h4>Game Misconducts Given</h4>
         <table class="table table-striped">
             <thead>
@@ -285,6 +313,8 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% endif %}
+        {% endif %}
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
