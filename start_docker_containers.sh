@@ -1,7 +1,9 @@
-
 #!/bin/bash
-set -e
 
+# This is a helper script to set up and start two docker containers - for hockey-blast app and db
+# The db contianer is started after the app container is ready, since it needs a backup file to restore the sample database
+
+set -e
 # Start the app container
 docker-compose up -d app
 

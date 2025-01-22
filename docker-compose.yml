@@ -28,4 +28,4 @@ services:
     ports:
       - "5433:5432" # Map port 5433 on the host to port 5432 in the container
     depends_on:
-      - app
+      - app # Dependency is here just to pull the sample DB backup from the app container (from the hochey-blast-common-lib dependency)

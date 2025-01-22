@@ -1,8 +1,14 @@
-# Hockey Blast Development Setup
+# Basic Info
 
-Follow the steps below to set up the development environments for the Hockey Blast project.
+This repository contains the frontend logic for the hockey-blast project. It reads from the database and displays data on various endpoints as defined in the corresponding blueprint/template. The database schema/models are defined in the [hockey-blast-common-lib](https://github.com/kletskov/hockey-blast-common-lib.git) repository, which the frontend depends on.
 
-## Initial Setup
+If you want to add or modify some frontend logic, you will most likely need to add or modify a corresponding pair of blueprint and template. For example, `blueprints/human_stats.py` and `templates/human_stats.html`. If the blueprint is new, register it inside `app.py`.
+
+If you also require database schema changes or need to modify stats aggregation logic, submit changes to the [hockey-blast-common-lib](https://github.com/kletskov/hockey-blast-common-lib.git) repository.
+
+# Development Setup
+
+Get the code and run the following steps:
 
 1. Create a new directory and navigate into it:
     ```bash
@@ -15,20 +21,29 @@ Follow the steps below to set up the development environments for the Hockey Bla
     git init
     ```
 
-3. Clone the frontend repository.
+3. Clone the repository:
     ```bash
     git clone https://github.com/kletskov/hockey-blast-frontend.git 
     ```
 
+4. Launch the script:
+    ```bash
+    cd hockey-blast-frontend
+    ./start_docker_containers.sh
+    ```
 
-
-
-4. Open the application in your browser:
+5. Open the application in your browser:
     ```
     http://localhost:5001/
     ```
+    It should display the app main page and work on top of the sample database.
 
-## Running the Application in Production Mode
+6. To stop the Docker containers:
+    ```bash
+    ./stop_docker_containers.sh
+    ```
+
+## Running the Application in Production Mode (my personal notes for now, may remove later)
 
 ### Gunicorn Setup
 
@@ -171,9 +186,3 @@ Follow the steps below to set up the development environments for the Hockey Bla
     ```bash
     sudo launchctl load /Library/LaunchDaemons/com.certbot.renew.plist
     ```
-
-## Docker Setup (To Be Added)
-
-### Development Environment
-
-### Production Environment

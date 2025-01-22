@@ -10,7 +10,6 @@ psql --username=postgres --command="SELECT pg_terminate_backend(pg_stat_activity
 psql --username=postgres --command="DROP DATABASE IF EXISTS $DB_NAME"
 psql --username=postgres --command="CREATE DATABASE $DB_NAME OWNER boss"
 
-
 cd /sample_db_restore
 COMPRESSED_DUMP_FILE="hockey_blast_sample_backup.sql.gz"
 # Restore the database from the dump file with --no-owner option
