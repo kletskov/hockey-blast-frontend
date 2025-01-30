@@ -1,102 +1,24 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search Teams</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #20B2AA;
-            /* Light teal */
-        }
+{% block title %}Search Teams{% endblock %}
 
-        .container {
-            background-color: #20B2AA;
-            /* Light teal */
-            padding: 20px;
-            border-radius: 10px;
-        }
-
-        .form-control {
-            background-color: #008080;
-            /* Dark teal */
-            color: white;
-        }
-
-        .form-control::placeholder {
-            color: #B0C4DE;
-            /* Light Steel Blue */
-        }
-
-        .list-group-item {
-            background-color: #008080;
-            /* Dark teal */
-            color: white;
-        }
-
-        a {
-            color: #0000EE;
-            /* Default link color */
-        }
-
-        a:hover {
-            color: #551A8B;
-            /* Visited link color */
-        }
-
-        nav {
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 1.2rem;
-            /* Increase text size */
-        }
-
-        nav a {
-            color: orange;
-        }
-
-        nav a:hover {
-            color: darkorange;
-        }
-    </style>
-</head>
-
-<body>
-    <nav>
-        <br>
-        <a href="{{ url_for('index') }}">Main</a> |
-        <a href="{{ url_for('search_humans.search_humans') }}">Search Humans</a> |
-        <a href="{{ url_for('search_teams.search_teams') }}">Search Teams</a> |
-        <a href="{{ url_for('special_stats') }}">Special Stats</a> |
-        <a href="mailto:info@hockey-blast.com">Report a problem</a> |
-        <a href="https://forms.gle/YJuJ9Jw4Xxrz5JLQ9">Submit Feature Request</a>
-    </nav>
-
-    <div class="container mt-5">
-        <h1 class="mb-4">Search Teams</h1>
-        <form method="post" class="mb-4">
-            <div class="form-group">
-                <input type="text" class="form-control" id="team_name" name="team_name"
-                    placeholder="Enter team name (or any portion of it)">
-            </div>
-            <button type="submit" class="btn btn-primary">Search</button>
-        </form>
-        {% if results %}
-        <h2>Results (showing up to {{ max_results }} matches):</h2>
-        <ul class="list-group">
-            {% for link in results %}
-            <li class="list-group-item">{{ link|safe }}</li>
-            {% endfor %}
-        </ul>
-        {% elif no_results %}
-        <p>No teams found.</p>
-        {% endif %}
+{% block content %}
+<h1 class="mb-4">Search Teams</h1>
+<form method="post" class="mb-4">
+    <div class="form-group">
+        <input type="text" class="form-control" id="team_name" name="team_name"
+            placeholder="Enter team name (or any portion of it)">
     </div>
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-</body>
-
-</html>
+    <button type="submit" class="btn btn-primary">Search</button>
+</form>
+{% if results %}
+<h2>Results (showing up to {{ max_results }} matches):</h2>
+<ul class="list-group">
+    {% for link in results %}
+    <li class="list-group-item">{{ link|safe }}</li>
+    {% endfor %}
+</ul>
+{% elif no_results %}
+<p>No teams found.</p>
+{% endif %}
+{% endblock %}

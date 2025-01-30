@@ -1,126 +1,49 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hockey B.L.A.S.T - Special Stats!</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: grey;
-            /* Set background color to grey */
-            background-image: url('/static/images/{{ background_image }}');
-            /* Path to your background image */
-            background-size: cover;
-            /* Ensure the entire image is visible */
-            background-position: center;
-            /* Center the image */
-            background-repeat: no-repeat;
-            /* Prevent the image from repeating */
-            background-attachment: fixed;
-            /* Ensure the background image stays fixed */
-        }
+{% block title %}Hockey B.L.A.S.T - Special Stats!{% endblock %}
 
-        .container {
-            margin-top: 50px;
-        }
-
-        .card {
-            margin-bottom: 20px;
-            background-color: rgba(0, 128, 128, 0.5);
-            /* Semi-transparent background */
-        }
-
-        .outlined-text {
-            color: yellow;
-            text-shadow:
-                -1px -1px 0 #000,
-                1px -1px 0 #000,
-                -1px 1px 0 #000,
-                1px 1px 0 #000;
-        }
-
-        nav a {
-            color: orange;
-        }
-
-        nav a:hover {
-            color: darkorange;
-        }
-
-        nav {
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 1.2rem;
-            /* Increase text size */
-        }
-    </style>
-</head>
-
-<body>
-    <nav>
-        <br>
-        <a href="{{ url_for('index') }}">Main</a> |
-        <a href="{{ url_for('search_humans.search_humans') }}">Search Humans</a> |
-        <a href="{{ url_for('search_teams.search_teams') }}">Search Teams</a> |
-        <a href="{{ url_for('special_stats') }}">Special Stats</a> |
-        <a href="mailto:info@hockey-blast.com">Report a problem</a> |
-        <a href="https://forms.gle/YJuJ9Jw4Xxrz5JLQ9">Submit Feature Request</a>
-    </nav>
-    <div class="container">
-        <h1 class="mb-4" style="color: red; font-size: 2.5rem; text-align: center; margin-left: 0px;">
-        </h1>
-        <h4 class="mb-4" style="color: red; text-align: center; margin-left: 0px;">
-        </h4>
-        <div class="row justify-content-center">
-            <div class="col-sm-3 col-md-3">
-                <div class="card">
-                    <div class="card-body">
-                        <a href="{{ url_for('time_of_games.interactive_plot') }}" class="btn btn-primary">Game Start
-                            Times</a>
-                        <p class="card-text"><strong>See who got lucky!</strong></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row justify-content-center">
-            <div class="col-sm-3 col-md-3">
-                <div class="card">
-                    <div class="card-body">
-                        <a href="{{ url_for('day_of_week.interactive_plot') }}" class="btn btn-primary">Days of Week</a>
-                        <p class="card-text"><strong>Schedule stability/randomness.</strong></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row justify-content-center">
-            <div class="col-sm-3 col-md-3">
-                <div class="card">
-                    <div class="card-body">
-                        <a href="{{ url_for('active_players.interactive_plot') }}" class="btn btn-primary">Players
-                            Count</a>
-                        <p class="card-text"><strong>Per season, month or YoY.</strong></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row justify-content-center">
-            <div class="col-sm-3 col-md-3">
-                <div class="card">
-                    <div class="card-body">
-                        <a href="{{ url_for('game_shootout.interactive_plot') }}" class="btn btn-primary">Shootouts
-                            when tied</a>
-                        <p class="card-text"><strong>How often it happens...</strong></p>
-                    </div>
-                </div>
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-sm-3 col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <a href="{{ url_for('time_of_games.interactive_plot') }}" class="btn btn-primary">Game Start
+                    Times</a>
+                <p class="card-text"><strong>See who got lucky!</strong></p>
             </div>
         </div>
     </div>
-
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-</body>
-
-</html>
+</div>
+<div class="row justify-content-center">
+    <div class="col-sm-3 col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <a href="{{ url_for('day_of_week.interactive_plot') }}" class="btn btn-primary">Days of Week</a>
+                <p class="card-text"><strong>Schedule stability/randomness.</strong></p>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row justify-content-center">
+    <div class="col-sm-3 col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <a href="{{ url_for('active_players.interactive_plot') }}" class="btn btn-primary">Players
+                    Count</a>
+                <p class="card-text"><strong>Per season, month or YoY.</strong></p>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row justify-content-center">
+    <div class="col-sm-3 col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <a href="{{ url_for('game_shootout.interactive_plot') }}" class="btn btn-primary">Shootouts
+                    when tied</a>
+                <p class="card-text"><strong>How often it happens...</strong></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,325 +1,246 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hockey B.L.A.S.T (Beer League Analytics and Stats)</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #008080;
-            /* Dark teal */
-        }
+{% block title %}Hockey B.L.A.S.T (Beer League Analytics and Stats){% endblock %}
 
-        .container {
-            background-color: #20B2AA;
-            /* Light teal */
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 50px;
-        }
+{% block content %}
+<h1 class="mb-4 outlined-text" style="font-size: 2.5rem; text-align: center; margin-left: 0px;">
+    HOCKEY B.L.A.S.T.
+    <br>
+    <br>
+    Beer League
+    <br>
+    Analytics and Stats
+</h1>
+<h4 class="mb-4 outlined-text" style="text-align: center; margin-left: 0px;">
+    Last Game Indexed for {{ org_name }}:
+    <br>
+    Scheduled: <strong>{{ last_scheduled.date }} {{ last_scheduled_time }}</strong>
+    <br>
+    Completed: <strong>{{ last_played.date }} {{ last_played_time }}</strong>
+</h4>
 
-        a {
-            color: #0000EE;
-            /* Default link color */
-        }
+<h2>Last Day Top Performers</h2>
 
-        a:hover {
-            color: #551A8B;
-            /* Visited link color */
-        }
+{% if daily_skater_games_played or daily_skater_goals or daily_skater_assists or daily_skater_points or
+daily_skater_penalties %}
+<h3>Skaters</h3>
 
-        .form-control {
-            background-color: #008080;
-            /* Dark teal */
-            color: white;
-        }
+{% if daily_skater_games_played %}
+<h4>Games Played</h4>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Games Played</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for skater, human in daily_skater_games_played %}
+        <tr>
+            <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                    human.middle_name }} {{ human.last_name }}</a></td>
+            <td>{{ skater.games_played }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
 
-        .form-control::placeholder {
-            color: #B0C4DE;
-            /* Light Steel Blue */
-        }
+{% if daily_skater_goals %}
+<h4>Goals Scored</h4>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Goals</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for skater, human in daily_skater_goals %}
+        <tr>
+            <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                    human.middle_name }} {{ human.last_name }}</a></td>
+            <td>{{ skater.goals }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
 
-        .list-group-item {
-            background-color: #008080;
-            /* Dark teal */
-            color: white;
-        }
+{% if daily_skater_assists %}
+<h4>Assists</h4>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Assists</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for skater, human in daily_skater_assists %}
+        <tr>
+            <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                    human.middle_name }} {{ human.last_name }}</a></td>
+            <td>{{ skater.assists }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
 
-        nav {
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 1.2rem;
-            /* Increase text size */
-        }
+{% if daily_skater_points %}
+<h4>Points</h4>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Points</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for skater, human in daily_skater_points %}
+        <tr>
+            <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                    human.middle_name }} {{ human.last_name }}</a></td>
+            <td>{{ skater.points }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
 
-        nav a {
-            color: orange;
-        }
+{% if daily_skater_penalties %}
+<h4>Penalties</h4>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Penalties</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for skater, human in daily_skater_penalties %}
+        <tr>
+            <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                    human.middle_name }} {{ human.last_name }}</a></td>
+            <td>{{ skater.penalties }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endif %}
 
-        nav a:hover {
-            color: darkorange;
-        }
-    </style>
-</head>
+{% if daily_goalie_games_played or daily_goalie_save_percentage %}
+<h3>Goalies</h3>
 
-<body>
-    <nav>
-        <br>
-        <a href="{{ url_for('index') }}">Main</a> |
-        <a href="{{ url_for('search_humans.search_humans') }}">Search Humans</a> |
-        <a href="{{ url_for('search_teams.search_teams') }}">Search Teams</a> |
-        <a href="{{ url_for('special_stats') }}">Special Stats</a> |
-        <a href="mailto:info@hockey-blast.com">Report a problem</a> |
-        <a href="https://forms.gle/YJuJ9Jw4Xxrz5JLQ9">Submit Feature Request</a>
-    </nav>
-    <div class="container">
-        <h1 class="mb-4 outlined-text" style="font-size: 2.5rem; text-align: center; margin-left: 0px;">
-            HOCKEY B.L.A.S.T.
-            <br>
-            <br>
-            Beer League
-            <br>
-            Analytics and Stats
-        </h1>
-        <h4 class="mb-4 outlined-text" style="text-align: center; margin-left: 0px;">
-            Last Game Indexed for {{ org_name }}:
-            <br>
-            Scheduled: <strong>{{ last_scheduled.date }} {{ last_scheduled_time }}</strong>
-            <br>
-            Completed: <strong>{{ last_played.date }} {{ last_played_time }}</strong>
-        </h4>
+{% if daily_goalie_games_played %}
+<h4>Games Played</h4>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Games Played</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for goalie, human in daily_goalie_games_played %}
+        <tr>
+            <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                    human.middle_name }} {{ human.last_name }}</a></td>
+            <td>{{ goalie.games_played }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
 
-        <h2>Last Day Top Performers</h2>
+{% if daily_goalie_save_percentage %}
+<h4>Save Percentage</h4>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Save Percentage</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for goalie, human in daily_goalie_save_percentage %}
+        <tr>
+            <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                    human.middle_name }} {{ human.last_name }}</a></td>
+            <td>{{ goalie.save_percentage }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endif %}
 
-        {% if daily_skater_games_played or daily_skater_goals or daily_skater_assists or daily_skater_points or
-        daily_skater_penalties %}
-        <h3>Skaters</h3>
+{% if daily_referee_games_reffed or daily_referee_penalties_given or daily_referee_gm_given %}
+<h3>Referees</h3>
 
-        {% if daily_skater_games_played %}
-        <h4>Games Played</h4>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Games Played</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for skater, human in daily_skater_games_played %}
-                <tr>
-                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                            human.middle_name }} {{ human.last_name }}</a></td>
-                    <td>{{ skater.games_played }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% endif %}
+{% if daily_referee_games_reffed %}
+<h4>Games Reffed</h4>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Games Reffed</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for referee, human in daily_referee_games_reffed %}
+        <tr>
+            <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                    human.middle_name }} {{ human.last_name }}</a></td>
+            <td>{{ referee.games_reffed }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
 
-        {% if daily_skater_goals %}
-        <h4>Goals Scored</h4>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Goals</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for skater, human in daily_skater_goals %}
-                <tr>
-                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                            human.middle_name }} {{ human.last_name }}</a></td>
-                    <td>{{ skater.goals }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% endif %}
+{% if daily_referee_penalties_given %}
+<h4>Penalties Given</h4>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Penalties Given</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for referee, human in daily_referee_penalties_given %}
+        <tr>
+            <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                    human.middle_name }} {{ human.last_name }}</a></td>
+            <td>{{ referee.penalties_given }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
 
-        {% if daily_skater_assists %}
-        <h4>Assists</h4>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Assists</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for skater, human in daily_skater_assists %}
-                <tr>
-                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                            human.middle_name }} {{ human.last_name }}</a></td>
-                    <td>{{ skater.assists }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% endif %}
-
-        {% if daily_skater_points %}
-        <h4>Points</h4>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Points</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for skater, human in daily_skater_points %}
-                <tr>
-                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                            human.middle_name }} {{ human.last_name }}</a></td>
-                    <td>{{ skater.points }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% endif %}
-
-        {% if daily_skater_penalties %}
-        <h4>Penalties</h4>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Penalties</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for skater, human in daily_skater_penalties %}
-                <tr>
-                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                            human.middle_name }} {{ human.last_name }}</a></td>
-                    <td>{{ skater.penalties }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% endif %}
-        {% endif %}
-
-        {% if daily_goalie_games_played or daily_goalie_save_percentage %}
-        <h3>Goalies</h3>
-
-        {% if daily_goalie_games_played %}
-        <h4>Games Played</h4>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Games Played</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for goalie, human in daily_goalie_games_played %}
-                <tr>
-                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                            human.middle_name }} {{ human.last_name }}</a></td>
-                    <td>{{ goalie.games_played }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% endif %}
-
-        {% if daily_goalie_save_percentage %}
-        <h4>Save Percentage</h4>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Save Percentage</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for goalie, human in daily_goalie_save_percentage %}
-                <tr>
-                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                            human.middle_name }} {{ human.last_name }}</a></td>
-                    <td>{{ goalie.save_percentage }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% endif %}
-        {% endif %}
-
-        {% if daily_referee_games_reffed or daily_referee_penalties_given or daily_referee_gm_given %}
-        <h3>Referees</h3>
-
-        {% if daily_referee_games_reffed %}
-        <h4>Games Reffed</h4>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Games Reffed</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for referee, human in daily_referee_games_reffed %}
-                <tr>
-                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                            human.middle_name }} {{ human.last_name }}</a></td>
-                    <td>{{ referee.games_reffed }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% endif %}
-
-        {% if daily_referee_penalties_given %}
-        <h4>Penalties Given</h4>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Penalties Given</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for referee, human in daily_referee_penalties_given %}
-                <tr>
-                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                            human.middle_name }} {{ human.last_name }}</a></td>
-                    <td>{{ referee.penalties_given }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% endif %}
-
-        {% if daily_referee_gm_given %}
-        <h4>Game Misconducts Given</h4>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Game Misconducts Given</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for referee, human in daily_referee_gm_given %}
-                <tr>
-                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                            human.middle_name }} {{ human.last_name }}</a></td>
-                    <td>{{ referee.gm_given }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% endif %}
-        {% endif %}
-    </div>
-
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-</body>
-
-</html>
+{% if daily_referee_gm_given %}
+<h4>Game Misconducts Given</h4>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Game Misconducts Given</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for referee, human in daily_referee_gm_given %}
+        <tr>
+            <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                    human.middle_name }} {{ human.last_name }}</a></td>
+            <td>{{ referee.gm_given }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endif %}
+{% endblock %}

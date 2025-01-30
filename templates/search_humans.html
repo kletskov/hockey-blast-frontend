@@ -1,192 +1,115 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search Humans</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #008080;
-            /* Dark teal */
-        }
+{% block title %}Search Humans{% endblock %}
 
-        .container {
-            background-color: #20B2AA;
-            /* Light teal */
-            padding: 20px;
-            border-radius: 10px;
-        }
-
-        a {
-            color: #00008B;
-            /* Dark blue */
-        }
-
-        a:hover {
-            color: #FF4500;
-            /* OrangeRed */
-        }
-
-        nav a {
-            color: orange;
-        }
-
-        nav a:hover {
-            color: darkorange;
-        }
-
-        .form-control {
-            background-color: #008080;
-            /* Dark teal */
-            color: white;
-        }
-
-        .form-control::placeholder {
-            color: #B0C4DE;
-            /* Light Steel Blue */
-        }
-
-        .list-group-item {
-            background-color: #008080;
-            /* Dark teal */
-            color: white;
-        }
-
-        nav {
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 1.2rem;
-            /* Increase text size */
-        }
-    </style>
-</head>
-
-<body>
-    <nav>
-        <br>
-        <a href="{{ url_for('index') }}">Main</a> |
-        <a href="{{ url_for('search_humans.search_humans') }}">Search Humans</a> |
-        <a href="{{ url_for('search_teams.search_teams') }}">Search Teams</a> |
-        <a href="{{ url_for('special_stats') }}">Special Stats</a> |
-        <a href="mailto:info@hockey-blast.com">Report a problem</a> |
-        <a href="https://forms.gle/YJuJ9Jw4Xxrz5JLQ9">Submit Feature Request</a>
-    </nav>
-    <div class="container mt-5">
-        <h1 class="mb-4">Search Humans</h1>
-        <form method="post" class="mb-4">
-            <div class="form-group">
-                <input type="text" class="form-control" id="first_name" name="first_name"
-                    placeholder="Enter first name (or any portion of it)">
-            </div>
-            <div class="form-group">
-                <input type="text" class="form-control" id="last_name" name="last_name"
-                    placeholder="Enter last name (or any portion of it)">
-            </div>
-            <button type="submit" class="btn btn-primary">Search</button>
-        </form>
-        {% if results %}
-        <h2>Results (showing up to {{ max_results }} matches):</h2>
-        <ul class="list-group">
-            {% for link in results %}
-            <li class="list-group-item">{{ link|safe }}</li>
-            {% endfor %}
-        </ul>
-        {% endif %}
-
-        <h2 class="mt-4">Game Participation - all time rank</h2>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Rank</th>
-                    <th>Name</th>
-                    <th>Total</th>
-                    <th>Skater</th>
-                    <th>Goalie</th>
-                    <th>Referee</th>
-                    <th>Scorekeeper</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for human in top_humans %}
-                <tr>
-                    <td>{{ human.rank }}</td>
-                    <td>{{ human.name|safe }}</td>
-                    <td>{{ human.total }}</td>
-                    <td>{{ human.skater }}</td>
-                    <td>{{ human.goalie }}</td>
-                    <td>{{ human.referee }}</td>
-                    <td>{{ human.scorekeeper }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-        <h2 class="mt-4">Skaters - all time ranks</h2>
-        <h3>Games Played</h3>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Rank</th>
-                    <th>Name</th>
-                    <th>Games Played</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for player in top_games_played %}
-                <tr>
-                    <td>{{ player.rank }}</td>
-                    <td>{{ player.name|safe }}</td>
-                    <td>{{ player.value }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-        <h3>Points Per Game</h3>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Rank</th>
-                    <th>Name</th>
-                    <th>Points Per Game</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for player in top_points_per_game %}
-                <tr>
-                    <td>{{ player.rank }}</td>
-                    <td>{{ player.name|safe }}</td>
-                    <td>{{ player.value }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-        <h3>Penalties Per Game</h3>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Rank</th>
-                    <th>Name</th>
-                    <th>Penalties Per Game</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for player in top_penalties_per_game %}
-                <tr>
-                    <td>{{ player.rank }}</td>
-                    <td>{{ player.name|safe }}</td>
-                    <td>{{ player.value }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+{% block content %}
+<h1 class="mb-4">People Search</h1>
+<form method="post" class="mb-4">
+    <div class="form-group">
+        <input type="text" class="form-control" id="first_name" name="first_name"
+            placeholder="Enter first name (or any portion of it)">
     </div>
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-</body>
+    <div class="form-group">
+        <input type="text" class="form-control" id="last_name" name="last_name"
+            placeholder="Enter last name (or any portion of it)">
+    </div>
+    <button type="submit" class="btn btn-primary">Search</button>
+</form>
+{% if results %}
+<h2>Results (showing up to {{ max_results }} matches):</h2>
+<ul class="list-group">
+    {% for link in results %}
+    <li class="list-group-item">{{ link|safe }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
 
-</html>
+<h2 class="mt-4">Game Participation - all time rank</h2>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Rank</th>
+            <th>Name</th>
+            <th>Total</th>
+            <th>Skater</th>
+            <th>Goalie</th>
+            <th>Referee</th>
+            <th>Scorekeeper</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for human in top_humans %}
+        <tr>
+            <td>{{ human.rank }}</td>
+            <td>{{ human.name|safe }}</td>
+            <td>{{ human.total }}</td>
+            <td>{{ human.skater }}</td>
+            <td>{{ human.goalie }}</td>
+            <td>{{ human.referee }}</td>
+            <td>{{ human.scorekeeper }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h2 class="mt-4">Skaters - all time ranks</h2>
+<h3>Games Played</h3>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Rank</th>
+            <th>Name</th>
+            <th>Games Played</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for player in top_games_played %}
+        <tr>
+            <td>{{ player.rank }}</td>
+            <td>{{ player.name|safe }}</td>
+            <td>{{ player.value }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h3>Points Per Game</h3>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Rank</th>
+            <th>Name</th>
+            <th>Points Per Game</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for player in top_points_per_game %}
+        <tr>
+            <td>{{ player.rank }}</td>
+            <td>{{ player.name|safe }}</td>
+            <td>{{ "%.2f"|format(player.value) }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h3>Penalties Per Game</h3>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Rank</th>
+            <th>Name</th>
+            <th>Penalties Per Game</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for player in top_penalties_per_game %}
+        <tr>
+            <td>{{ player.rank }}</td>
+            <td>{{ player.name|safe }}</td>
+            <td>{{ "%.2f"|format(player.value) }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

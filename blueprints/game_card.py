@@ -1,9 +1,57 @@
-from flask import Blueprint, request, jsonify, render_template, url_for
+import logging
+from flask import Blueprint, request, jsonify, render_template, url_for, g
 from hockey_blast_common_lib.models import db, Game, GameRoster, Division, Goal, Penalty, Shootout, Human, League, Team
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Initialize Limiter
+# limiter = Limiter(
+#     key_func=get_remote_address,
+#     default_limits=["1 per 2 seconds", "1000 per day"]
+# )
+
+# Custom limit for specific user agent
+# user_agent_limiter = Limiter(
+#     key_func=lambda: request.headers.get('User-Agent'),
+#     default_limits=["1 per minute"]
+# )
 
 game_card_bp = Blueprint('game_card', __name__)
 
+# BLOCKED_USER_AGENT = "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.6834.83 Mobile Safari/537.36 (compatible; GoogleOther)"
+# BLOCKED_IPS = ["66.249.72.103", "66.249.72.204"]
+
+def get_client_ip():
+    if request.headers.get('X-Forwarded-For'):
+        return request.headers.get('X-Forwarded-For').split(',')[0]
+    return request.remote_addr
+
+@game_card_bp.before_request
+def before_request():
+    g.limited = False
+    user_agent = request.headers.get('User-Agent')
+    client_ip = get_client_ip()
+    logger.info(f"Request from {client_ip} with User-Agent {user_agent}")
+    # if user_agent == BLOCKED_USER_AGENT or client_ip in BLOCKED_IPS:
+    #     logger.warning(f"Blocked request from {client_ip} with User-Agent {user_agent}")
+    #     return jsonify({"error": "Request blocked"}), 403
+
+@game_card_bp.after_request
+def after_request(response):
+    client_ip = get_client_ip()
+    if response.status_code == 429:
+        g.limited = True
+    logger.info(f"Request to {request.path} from {client_ip} with User-Agent {request.headers.get('User-Agent')} - Status: {response.status_code} - Limited: {g.limited}")
+    return response
+
 @game_card_bp.route('/game_card', methods=['GET'])
+# @limiter.limit("1 per 2 seconds")
+# @limiter.limit("1000 per day")
+# @user_agent_limiter.limit("1 per minute", key_func=lambda: BLOCKED_USER_AGENT)
 def game_card():
     game_id = request.args.get('game_id')
     

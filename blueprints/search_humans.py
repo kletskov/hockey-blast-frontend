@@ -75,7 +75,6 @@ def search_humans():
     if request.method == 'POST':
         first_name = request.form.get('first_name')
         last_name = request.form.get('last_name')
-        print(f"Debug: First name: {first_name}, Last name: {last_name}")
         query = db.session.query(Human)
         
         if first_name:
@@ -91,7 +90,6 @@ def search_humans():
         
         links = []
         for player in results:
-            print(f"Debug: Player ID: {player.id}")
             aliases = db.session.query(HumanAlias).filter(HumanAlias.human_id == player.id).all()
             alias_names = [f"{alias.first_name} {alias.middle_name} {alias.last_name}".strip() for alias in aliases if f"{alias.first_name} {alias.middle_name} {alias.last_name}".strip() != f"{player.first_name} {player.middle_name} {player.last_name}".strip()]
             alias_text = f" A.K.A. {', '.join(alias_names)}" if alias_names else ""

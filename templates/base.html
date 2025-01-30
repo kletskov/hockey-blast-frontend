@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Hockey B.L.A.S.T{% endblock %}</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #008080;
+            /* Dark teal */
+        }
+
+        .container {
+            background-color: #20B2AA;
+            /* Light teal */
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 50px;
+        }
+
+        a {
+            color: #0000EE;
+            /* Default link color */
+        }
+
+        a:hover {
+            color: #551A8B;
+            /* Visited link color */
+        }
+
+        .form-control {
+            background-color: #008080;
+            /* Dark teal */
+            color: white;
+        }
+
+        .form-control::placeholder {
+            color: #B0C4DE;
+            /* Light Steel Blue */
+        }
+
+        .list-group-item {
+            background-color: #008080;
+            /* Dark teal */
+            color: yellow;
+        }
+
+        nav {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            /* Increase text size */
+        }
+
+        nav a {
+            color: orange;
+        }
+
+        nav a:hover {
+            color: darkorange;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <br>
+        <a href="{{ url_for('index') }}">Main</a> |
+        <a href="{{ url_for('search_humans.search_humans') }}">People</a> |
+        <a href="{{ url_for('search_teams.search_teams') }}">Teams</a> |
+        <a href="{{ url_for('special_stats') }}">Special Stats</a> |
+        <a href="mailto:info@hockey-blast.com">Report a problem</a> |
+        <a href="https://forms.gle/YJuJ9Jw4Xxrz5JLQ9">Submit Feature Request</a>
+    </nav>
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+
+</html>

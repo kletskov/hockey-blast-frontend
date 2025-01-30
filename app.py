@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request
+import logging
+from flask import Flask, render_template, request, g, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from threading import Thread
 from hockey_blast_common_lib.models import db, Organization, Game, Human
@@ -9,14 +10,16 @@ import flask_table.table
 import flask_table.columns
 from markupsafe import Markup
 import os
-
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 # Debug: Print the DB_HOST environment variable
-print(f"app.py DB_HOST: {os.getenv('DB_HOST')}")
-
 flask_table.table.Markup = Markup
 flask_table.columns.Markup = Markup
 
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 from blueprints.teams_per_season import teams_per_season_bp
 from blueprints.human_stats import human_stats_bp
@@ -32,6 +35,17 @@ from blueprints.seasons import seasons_bp
 from blueprints.game_shootout import game_shootout_bp
 from blueprints.version import version_bp
 
+# BLOCKED_USER_AGENT = "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.6834.83 Mobile Safari/537.36 (compatible; GoogleOther)"
+# BLOCKED_IPS = ["66.249.72.103", "66.249.72.204"]
+
+def get_user_agent():
+    return request.headers.get('User-Agent')
+
+def get_client_ip():
+    if request.headers.get('X-Forwarded-For'):
+        return request.headers.get('X-Forwarded-For').split(',')[0]
+    return request.remote_addr
+
 def create_app(db_name):
     app = Flask(__name__)
     db_params = get_db_params(db_name)
@@ -41,6 +55,20 @@ def create_app(db_name):
     app.config['BACKGROUND_IMAGE'] = 'default_background.jpg'
     app.config['ORG_NAME'] = 'Hockey Blast'
     db.init_app(app)
+    
+    # Initialize Limiter
+    # limiter = Limiter(
+    #     key_func=get_client_ip,
+    #     app=app,
+    #     default_limits=["1 per 2 seconds", "1000 per day"]
+    # )
+    
+    # Custom limit for specific user agent
+    # user_agent_limiter = Limiter(
+    #     key_func=get_user_agent,
+    #     app=app,
+    #     default_limits=["1 per minute"]
+    # )
     
     # Register blueprints
     app.register_blueprint(teams_per_season_bp)
@@ -57,7 +85,27 @@ def create_app(db_name):
     app.register_blueprint(game_shootout_bp)
     app.register_blueprint(version_bp)
     
+    # @app.before_request
+    # def before_request():
+    #     g.limited = False
+    #     user_agent = get_user_agent()
+    #     client_ip = get_client_ip()
+    #     logger.info(f"Request from {client_ip} with User-Agent {user_agent}")
+    #     # if user_agent == BLOCKED_USER_AGENT or client_ip in BLOCKED_IPS:
+    #     #     logger.warning(f"Blocked request from {client_ip} with User-Agent {user_agent}")
+    #     #     return jsonify({"error": "Request blocked"}), 403
+
+    # @app.after_request
+    # def after_request(response):
+    #     client_ip = get_client_ip()
+    #     if response.status_code == 429:
+    #         g.limited = True
+    #     logger.info(f"Request to {request.path} from {client_ip} with User-Agent {request.headers.get('User-Agent')} - Status: {response.status_code} - Limited: {g.limited}")
+    #     return response
+    
     @app.route('/')
+    # @limiter.limit("1 per 1 seconds")
+    # @user_agent_limiter.limit("1 per minute", key_func=lambda: BLOCKED_USER_AGENT)
     def index():
         try:
             top_n = request.args.get('top_n', default=3, type=int)
@@ -102,9 +150,16 @@ def create_app(db_name):
             return render_template('error.html', error_info=error_info)
 
     @app.route('/special_stats')
+    # @limiter.limit("1 per 2 seconds")
+    # @limiter.limit("1000 per day")
+    # @user_agent_limiter.limit("1 per minute", key_func=lambda: BLOCKED_USER_AGENT)
     def special_stats():
         # Your logic to get any data needed for special_stats.html
         return render_template('special_stats.html', background_image=app.config['BACKGROUND_IMAGE'])
+
+    @app.route('/robots.txt')
+    def robots_txt():
+        return send_from_directory(app.root_path, 'robots.txt')
 
     return app
 
@@ -113,13 +168,11 @@ def run_app(app, port):
 
 if __name__ == "__main__":
     app1 = create_app("frontend")
-    app2 = create_app("frontend-sample-db")
-
     thread1 = Thread(target=run_app, args=(app1, 5000))
-    thread2 = Thread(target=run_app, args=(app2, 5005))
-
     thread1.start()
-    thread2.start()
-
     thread1.join()
-    thread2.join()
+
+    # app2 = create_app("frontend-sample-db")
+    # thread2 = Thread(target=run_app, args=(app2, 5005))
+    # thread2.start()
+    # thread2.join()

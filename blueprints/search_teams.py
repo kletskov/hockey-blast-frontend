@@ -9,7 +9,6 @@ search_teams_bp = Blueprint('search_teams', __name__)
 def search_teams():
     if request.method == 'POST':
         team_name = request.form.get('team_name')
-        print(f"Debug: Team name: {team_name}")
         query = db.session.query(Team)
         
         if team_name:
