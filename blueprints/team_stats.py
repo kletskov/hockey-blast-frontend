@@ -251,6 +251,7 @@ def team_stats():
     
     return render_template(
         'team_stats.html',
+        team=team,  # Pass the team object to the template
         team_name=team_name,
         team_id=team_id,
         goals_scored=goals_scored,

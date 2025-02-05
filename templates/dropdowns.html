@@ -16,86 +16,38 @@
     <select id="season" name="season" disabled>
         <option value="">Select Season</option>
     </select>
+
+    <label for="top_n">Show Top:</label>
+    <select id="top_n" name="top_n">
+        <option value="20">20</option>
+        <option value="50" selected>50</option>
+        <option value="100">100</option>
+        <option value="200">200</option>
+    </select>
 </div>
 
 <script>
     document.getElementById('organization').addEventListener('change', function () {
         var orgId = this.value;
-        fetchLevels(orgId);
+        var event = new CustomEvent('dropdownChange', { detail: { orgId: orgId } });
+        document.dispatchEvent(event);
     });
 
     document.getElementById('level').addEventListener('change', function () {
-        var orgId = document.getElementById('organization').value;
         var levelId = this.value;
-        fetchSeasons(orgId, levelId);
+        var event = new CustomEvent('dropdownChange', { detail: { levelId: levelId } });
+        document.dispatchEvent(event);
     });
 
     document.getElementById('season').addEventListener('change', function () {
-        var orgId = document.getElementById('organization').value;
-        var levelId = document.getElementById('level').value;
         var seasonId = this.value;
-        fetchGames(orgId, levelId, seasonId);
+        var event = new CustomEvent('dropdownChange', { detail: { seasonId: seasonId } });
+        document.dispatchEvent(event);
     });
 
-    function fetchLevels(orgId) {
-        fetch('/results/filter_levels', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ org_id: orgId })
-        })
-            .then(response => response.json())
-            .then(data => {
-                var levelSelect = document.getElementById('level');
-                levelSelect.innerHTML = '<option value="">Select Level</option>';
-                data.forEach(level => {
-                    levelSelect.innerHTML += `<option value="${level.id}">${level.level_name}</option>`;
-                });
-                levelSelect.disabled = false;
-            });
-    }
-
-    function fetchSeasons(orgId, levelId) {
-        fetch('/results/filter_seasons', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ org_id: orgId, level_id: levelId })
-        })
-            .then(response => response.json())
-            .then(data => {
-                var seasonSelect = document.getElementById('season');
-                seasonSelect.innerHTML = '<option value="">Select Season</option>';
-                data.forEach(season => {
-                    seasonSelect.innerHTML += `<option value="${season.id}">${season.season_name}</option>`;
-                });
-                seasonSelect.disabled = false;
-            });
-    }
-
-    function fetchGames(orgId, levelId, seasonId) {
-        fetch('/results/filter_games', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ org_id: orgId, level_id: levelId, season_id: seasonId })
-        })
-            .then(response => response.json())
-            .then(data => {
-                var gamesList = document.getElementById('games-list');
-                gamesList.innerHTML = '';
-                data.forEach(game => {
-                    gamesList.innerHTML += `
-                <div>
-                    <p>${game.date} ${game.time}</p>
-                    <p>${game.visitor_team} at ${game.home_team}</p>
-                    <p>${game.visitor_score} - ${game.home_score}</p>
-                </div>
-            `;
-                });
-            });
-    }
+    document.getElementById('top_n').addEventListener('change', function () {
+        var topN = this.value;
+        var event = new CustomEvent('dropdownChange', { detail: { topN: topN } });
+        document.dispatchEvent(event);
+    });
 </script>
