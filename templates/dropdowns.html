@@ -1,0 +1,101 @@
+<div>
+    <label for="organization">Organization:</label>
+    <select id="organization" name="organization">
+        <option value="">Select Organization</option>
+        {% for org in organizations %}
+        <option value="{{ org.id }}">{{ org.organization_name }}</option>
+        {% endfor %}
+    </select>
+
+    <label for="level">Level:</label>
+    <select id="level" name="level" disabled>
+        <option value="">Select Level</option>
+    </select>
+
+    <label for="season">Season:</label>
+    <select id="season" name="season" disabled>
+        <option value="">Select Season</option>
+    </select>
+</div>
+
+<script>
+    document.getElementById('organization').addEventListener('change', function () {
+        var orgId = this.value;
+        fetchLevels(orgId);
+    });
+
+    document.getElementById('level').addEventListener('change', function () {
+        var orgId = document.getElementById('organization').value;
+        var levelId = this.value;
+        fetchSeasons(orgId, levelId);
+    });
+
+    document.getElementById('season').addEventListener('change', function () {
+        var orgId = document.getElementById('organization').value;
+        var levelId = document.getElementById('level').value;
+        var seasonId = this.value;
+        fetchGames(orgId, levelId, seasonId);
+    });
+
+    function fetchLevels(orgId) {
+        fetch('/results/filter_levels', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ org_id: orgId })
+        })
+            .then(response => response.json())
+            .then(data => {
+                var levelSelect = document.getElementById('level');
+                levelSelect.innerHTML = '<option value="">Select Level</option>';
+                data.forEach(level => {
+                    levelSelect.innerHTML += `<option value="${level.id}">${level.level_name}</option>`;
+                });
+                levelSelect.disabled = false;
+            });
+    }
+
+    function fetchSeasons(orgId, levelId) {
+        fetch('/results/filter_seasons', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ org_id: orgId, level_id: levelId })
+        })
+            .then(response => response.json())
+            .then(data => {
+                var seasonSelect = document.getElementById('season');
+                seasonSelect.innerHTML = '<option value="">Select Season</option>';
+                data.forEach(season => {
+                    seasonSelect.innerHTML += `<option value="${season.id}">${season.season_name}</option>`;
+                });
+                seasonSelect.disabled = false;
+            });
+    }
+
+    function fetchGames(orgId, levelId, seasonId) {
+        fetch('/results/filter_games', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ org_id: orgId, level_id: levelId, season_id: seasonId })
+        })
+            .then(response => response.json())
+            .then(data => {
+                var gamesList = document.getElementById('games-list');
+                gamesList.innerHTML = '';
+                data.forEach(game => {
+                    gamesList.innerHTML += `
+                <div>
+                    <p>${game.date} ${game.time}</p>
+                    <p>${game.visitor_team} at ${game.home_team}</p>
+                    <p>${game.visitor_score} - ${game.home_score}</p>
+                </div>
+            `;
+                });
+            });
+    }
+</script>

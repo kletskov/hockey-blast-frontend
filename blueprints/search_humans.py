@@ -6,21 +6,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from hockey_blast_common_lib.models import db, Human, HumanAlias
 from hockey_blast_common_lib.stats_models import OrgStatsHuman, OrgStatsSkater
+from hockey_blast_common_lib.utils import get_fake_human_for_stats
 from options import MAX_HUMAN_SEARCH_RESULTS
 
 search_players_bp = Blueprint('search_humans', __name__)
-
-def get_fake_human_for_stats(session):
-    first_name = "Fake"
-    middle_name = "Stats"
-    last_name = "Human"
-
-    # Check if the human already exists
-    existing_human = session.query(Human).filter_by(first_name=first_name, middle_name=middle_name, last_name=last_name).first()
-    if existing_human:
-        return existing_human.id
-    
-    return None
 
 def get_top_skaters_data(session, org_id, category, top_n_stats=10):
     fake_human_id = get_fake_human_for_stats(session)
