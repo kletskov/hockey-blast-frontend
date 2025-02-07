@@ -1,12 +1,14 @@
 from flask import Blueprint, request, jsonify
 from hockey_blast_common_lib.models import db, Level, Division, Season
+from hockey_blast_common_lib.utils import get_fake_level
 
 dropdowns_bp = Blueprint('dropdowns', __name__)
 
 @dropdowns_bp.route('/filter_levels', methods=['POST'])
 def filter_levels():
     org_id = request.json.get('org_id')
-    levels = db.session.query(Level).filter(Level.org_id == org_id).distinct(Level.id).all()
+    fake_level = get_fake_level(db.session)
+    levels = db.session.query(Level).filter(Level.org_id == org_id, Level.id != fake_level.id).distinct(Level.id).all()
     levels_data = [{'id': level.id, 'level_name': level.level_name} for level in levels]
     return jsonify(levels_data)
 

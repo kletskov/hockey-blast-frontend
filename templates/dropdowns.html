@@ -50,4 +50,105 @@
         var event = new CustomEvent('dropdownChange', { detail: { topN: topN } });
         document.dispatchEvent(event);
     });
+
+    document.getElementById('game_status').addEventListener('change', function () {
+        var orgId = document.getElementById('organization').value;
+        var levelId = document.getElementById('level').value;
+        var seasonId = document.getElementById('season').value;
+        var topN = document.getElementById('top_n').value;
+        updateDropdownsCGI(orgId, levelId, seasonId, topN);
+        fetchContent(orgId, levelId, seasonId, topN);
+    });
+
+    function fetchLevels(orgId) {
+        return fetch('/dropdowns/filter_levels', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ org_id: orgId })
+        })
+            .then(response => response.json())
+            .then(data => {
+                var levelSelect = document.getElementById('level');
+                levelSelect.innerHTML = '<option value="">Select Level</option>';
+                data.forEach(level => {
+                    levelSelect.innerHTML += `<option value="${level.id}">${level.level_name}</option>`;
+                });
+                levelSelect.disabled = false;
+            });
+    }
+
+    function fetchSeasons(orgId, levelId) {
+        return fetch('/dropdowns/filter_seasons', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ org_id: orgId, level_id: levelId })
+        })
+            .then(response => response.json())
+            .then(data => {
+                var seasonSelect = document.getElementById('season');
+                seasonSelect.innerHTML = '<option value="">Select Season</option>';
+                data.forEach(season => {
+                    seasonSelect.innerHTML += `<option value="${season.id}">${season.season_name}</option>`;
+                });
+                seasonSelect.disabled = false;
+            });
+    }
+
+    function updateDropdownsCGI(orgId, levelId, seasonId, topN) {
+        const url = new URL(window.location);
+        url.searchParams.set('org_id', orgId);
+        url.searchParams.set('level_id', levelId);
+        url.searchParams.set('season_id', seasonId);
+        url.searchParams.set('top_n', topN);
+        updatePageSpecificCGI(url);
+        window.history.pushState({}, '', url);
+    }
+
+    document.addEventListener('dropdownChange', function (event) {
+        var orgId = document.getElementById('organization').value;
+        var levelId = document.getElementById('level').value;
+        var seasonId = document.getElementById('season').value;
+        var topN = document.getElementById('top_n').value;
+
+        updateDropdownsCGI(orgId, levelId, seasonId, topN);
+        fetchContent(orgId, levelId, seasonId, topN);
+    });
+    window.addEventListener('load', function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const orgId = urlParams.get('org_id');
+        const levelId = urlParams.get('level_id');
+        const seasonId = urlParams.get('season_id');
+        const topN = urlParams.get('top_n') || 50;
+
+        document.getElementById('top_n').value = topN;
+        onWindowLoad();
+
+        if (orgId) {
+            document.getElementById('organization').value = orgId;
+            fetchLevels(orgId).then(() => {
+                if (levelId) {
+                    document.getElementById('level').value = levelId;
+                    fetchSeasons(orgId, levelId).then(() => {
+                        if (seasonId) {
+                            document.getElementById('season').value = seasonId;
+                            fetchContent(orgId, levelId, seasonId, topN);
+                        } else {
+                            document.getElementById('season').disabled = false;
+                            fetchContent(orgId, levelId, null, topN);
+                        }
+                    });
+                } else {
+                    document.getElementById('level').disabled = false;
+                    fetchContent(orgId, null, null, topN);
+                }
+            });
+        } else {
+            fetchContent(null, null, null, topN);
+        }
+    });
+
 </script>

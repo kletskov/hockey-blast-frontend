@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify
 from hockey_blast_common_lib.models import db, Organization, Game, Team, Division
+from datetime import datetime, date
 
 games_bp = Blueprint('games', __name__)
 
@@ -10,13 +11,17 @@ MAX_TOP_N = 200
 def games():
     organizations = db.session.query(Organization).all()
     top_n = request.args.get('top_n', default=DEFAULT_TOP_N)
+    org_id = request.args.get('org_id')
+    level_id = request.args.get('level_id')
+    season_id = request.args.get('season_id')
+    game_status = request.args.get('game_status', 'completed')
     try:
         top_n = int(top_n)
     except ValueError:
         top_n = DEFAULT_TOP_N
     if top_n > MAX_TOP_N:
         top_n = MAX_TOP_N
-    return render_template('games.html', organizations=organizations, top_n=top_n)
+    return render_template('games.html', organizations=organizations, top_n=top_n, org_id=org_id, level_id=level_id, season_id=season_id, game_status=game_status)
 
 @games_bp.route('/filter_games', methods=['POST'])
 def filter_games():
@@ -32,19 +37,23 @@ def filter_games():
     if top_n > MAX_TOP_N:
         top_n = MAX_TOP_N
 
-    query = db.session.query(Game).filter(Game.org_id == org_id)
+    query = db.session.query(Game)
+
+    if org_id:
+        query = query.filter(Game.org_id == org_id)
 
     if game_status == 'completed':
-        query = query.filter(Game.status.ilike("Final%"))
+        query = query.filter(Game.status.ilike("Final%")).order_by(Game.date.desc(), Game.time.desc())
     else:
-        query = query.filter(~Game.status.ilike("Final%"))
+        today = date.today()
+        query = query.filter(~Game.status.ilike("Final%"), Game.date >= today).order_by(Game.date.asc(), Game.time.asc())
 
     if level_id:
         query = query.join(Division, Game.division_id == Division.id).filter(Division.level_id == level_id)
     if season_id:
         query = query.filter(Division.season_id == season_id)
 
-    games = query.order_by(Game.date.desc(), Game.time.desc()).limit(top_n).all()
+    games = query.limit(top_n).all()
 
     games_data = []
     for game in games:
@@ -60,6 +69,7 @@ def filter_games():
             'home_team_id': home_team.id,
             'visitor_score': game.visitor_final_score if game.status.lower().startswith("final") else "TBD",
             'home_score': game.home_final_score if game.status.lower().startswith("final") else "TBD",
+            'location': game.location,
             'status': game.status
         })
 

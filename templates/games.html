@@ -4,15 +4,13 @@
 
 {% block content %}
 <div style="text-align: center;">
-    <h1 class="mb-4 outlined-text" style="font-size: 2.5rem; margin-left: 0px;">
-        Recent Games
-    </h1>
     <div>
-        <label for="game_status">Show Games:</label>
+        <label for="game_status">Show</label>
         <select id="game_status" name="game_status">
             <option value="completed" selected>Completed</option>
             <option value="scheduled">Scheduled</option>
         </select>
+        <label for="game_status">Games</label>
     </div>
     {% include 'dropdowns.html' %}
     <div id="games-list">
@@ -21,71 +19,17 @@
 </div>
 
 <script>
-    document.addEventListener('dropdownChange', function (event) {
-        var orgId = document.getElementById('organization').value;
-        var levelId = document.getElementById('level').value;
-        var seasonId = document.getElementById('season').value;
-        var topN = document.getElementById('top_n').value;
-        var gameStatus = document.getElementById('game_status').value;
-
-        if (event.detail.orgId) {
-            fetchLevels(event.detail.orgId);
-        } else if (event.detail.levelId) {
-            fetchSeasons(orgId, event.detail.levelId);
-        } else if (event.detail.seasonId || event.detail.topN || event.detail.gameStatus) {
-            fetchGames(orgId, levelId, seasonId, topN, gameStatus);
-        }
-    });
-
     document.getElementById('game_status').addEventListener('change', function () {
         var orgId = document.getElementById('organization').value;
         var levelId = document.getElementById('level').value;
         var seasonId = document.getElementById('season').value;
         var topN = document.getElementById('top_n').value;
-        var gameStatus = this.value;
-        updateURL(orgId, levelId, seasonId, topN, gameStatus);
-        fetchGames(orgId, levelId, seasonId, topN, gameStatus);
+        updateDropdownsCGI(orgId, levelId, seasonId, topN);
+        fetchContent(orgId, levelId, seasonId, topN);
     });
 
-    function fetchLevels(orgId) {
-        fetch('/dropdowns/filter_levels', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ org_id: orgId })
-        })
-            .then(response => response.json())
-            .then(data => {
-                var levelSelect = document.getElementById('level');
-                levelSelect.innerHTML = '<option value="">Select Level</option>';
-                data.forEach(level => {
-                    levelSelect.innerHTML += `<option value="${level.id}">${level.level_name}</option>`;
-                });
-                levelSelect.disabled = false;
-            });
-    }
-
-    function fetchSeasons(orgId, levelId) {
-        fetch('/dropdowns/filter_seasons', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ org_id: orgId, level_id: levelId })
-        })
-            .then(response => response.json())
-            .then(data => {
-                var seasonSelect = document.getElementById('season');
-                seasonSelect.innerHTML = '<option value="">Select Season</option>';
-                data.forEach(season => {
-                    seasonSelect.innerHTML += `<option value="${season.id}">${season.season_name}</option>`;
-                });
-                seasonSelect.disabled = false;
-            });
-    }
-
-    function fetchGames(orgId, levelId, seasonId, topN, gameStatus) {
+    function fetchContent(orgId, levelId, seasonId, topN) {
+        var gameStatus = document.getElementById('game_status').value;
         fetch('/games/filter_games', {
             method: 'POST',
             headers: {
@@ -96,13 +40,14 @@
             .then(response => response.json())
             .then(data => {
                 var gamesList = document.getElementById('games-list');
+                var header = gameStatus === 'completed' ? 'Final Score' : 'Location';
                 gamesList.innerHTML = `
                     <table class="table table-striped">
                         <thead>
                             <tr>
                                 <th>Date Time</th>
                                 <th>Team Names</th>
-                                <th>Final Score</th>
+                                <th>${header}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -111,60 +56,29 @@
                 `;
                 var tbody = gamesList.querySelector('tbody');
                 data.forEach(game => {
-                    var finalScore = game.status.startsWith('Final') ? `<a href="/game_card?game_id=${game.id}">${game.visitor_score} : ${game.home_score}</a>` : `<a href="/game_card?game_id=${game.id}">TBD</a>`;
+                    var finalScoreOrLocation = gameStatus === 'completed' ?
+                        (game.status.startsWith('Final') ? `<a href="/game_card?game_id=${game.id}">${game.visitor_score} : ${game.home_score}</a>` : `<a href="/game_card?game_id=${game.id}">TBD</a>`) :
+                        `<a href="/game_card?game_id=${game.id}">${game.location}</a>`;
                     tbody.innerHTML += `
                         <tr>
                             <td><a href="/game_card?game_id=${game.id}">${game.date} ${game.time}</a></td>
                             <td><a href="/team_stats?team_id=${game.visitor_team_id}">${game.visitor_team}</a> at <a href="/team_stats?team_id=${game.home_team_id}">${game.home_team}</a></td>
-                            <td>${finalScore}</td>
+                            <td>${finalScoreOrLocation}</td>
                         </tr>
                     `;
                 });
             });
     }
 
-    function updateURL(orgId, levelId, seasonId, topN, gameStatus) {
-        const url = new URL(window.location);
-        url.searchParams.set('org_id', orgId);
-        url.searchParams.set('level_id', levelId);
-        url.searchParams.set('season_id', seasonId);
-        url.searchParams.set('top_n', topN);
+    function updatePageSpecificCGI(url) {
+        var gameStatus = document.getElementById('game_status').value;
         url.searchParams.set('game_status', gameStatus);
-        window.history.pushState({}, '', url);
     }
 
-    // Initialize dropdowns based on URL parameters
-    window.addEventListener('load', function () {
+    function onWindowLoad() {
         const urlParams = new URLSearchParams(window.location.search);
-        const orgId = urlParams.get('org_id');
-        const levelId = urlParams.get('level_id');
-        const seasonId = urlParams.get('season_id');
-        const topN = urlParams.get('top_n') || 50;
         const gameStatus = urlParams.get('game_status') || 'completed';
-
-        document.getElementById('top_n').value = topN;
         document.getElementById('game_status').value = gameStatus;
-
-        if (orgId) {
-            document.getElementById('organization').value = orgId;
-            fetchLevels(orgId).then(() => {
-                if (levelId) {
-                    document.getElementById('level').value = levelId;
-                    fetchSeasons(orgId, levelId).then(() => {
-                        if (seasonId) {
-                            document.getElementById('season').value = seasonId;
-                            fetchGames(orgId, levelId, seasonId, topN, gameStatus);
-                        } else {
-                            document.getElementById('season').disabled = false;
-                            fetchGames(orgId, levelId, null, topN, gameStatus);
-                        }
-                    });
-                } else {
-                    document.getElementById('level').disabled = false;
-                    fetchGames(orgId, null, null, topN, gameStatus);
-                }
-            });
-        }
-    });
+    }
 </script>
 {% endblock %}
