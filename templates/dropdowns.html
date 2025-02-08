@@ -1,7 +1,7 @@
 <div>
     <label for="organization">Organization:</label>
     <select id="organization" name="organization">
-        <option value="">Select Organization</option>
+        <option value="">All Organizations</option>
         {% for org in organizations %}
         <option value="{{ org.id }}">{{ org.organization_name }}</option>
         {% endfor %}
@@ -9,12 +9,12 @@
 
     <label for="level">Level:</label>
     <select id="level" name="level" disabled>
-        <option value="">Select Level</option>
+        <option value="">All Levels</option>
     </select>
 
     <label for="season">Season:</label>
     <select id="season" name="season" disabled>
-        <option value="">Select Season</option>
+        <option value="">All Seasons</option>
     </select>
 
     <label for="top_n">Show Top:</label>
@@ -29,12 +29,30 @@
 <script>
     document.getElementById('organization').addEventListener('change', function () {
         var orgId = this.value;
+        if (orgId) {
+            fetchLevels(orgId);
+        } else {
+            document.getElementById('level').innerHTML = '<option value="">All Levels</option>';
+            document.getElementById('level').disabled = true;
+            document.getElementById('season').innerHTML = '<option value="">All Seasons</option>';
+            document.getElementById('season').disabled = true;
+        }
+        var url = new URL(window.location);
+        url.searchParams.delete('location');
+        window.history.pushState({}, '', url);
         var event = new CustomEvent('dropdownChange', { detail: { orgId: orgId } });
         document.dispatchEvent(event);
     });
 
     document.getElementById('level').addEventListener('change', function () {
         var levelId = this.value;
+        var orgId = document.getElementById('organization').value;
+        if (levelId) {
+            fetchSeasons(orgId, levelId);
+        } else {
+            document.getElementById('season').innerHTML = '<option value="">All Seasons</option>';
+            document.getElementById('season').disabled = true;
+        }
         var event = new CustomEvent('dropdownChange', { detail: { levelId: levelId } });
         document.dispatchEvent(event);
     });
@@ -71,7 +89,7 @@
             .then(response => response.json())
             .then(data => {
                 var levelSelect = document.getElementById('level');
-                levelSelect.innerHTML = '<option value="">Select Level</option>';
+                levelSelect.innerHTML = '<option value="">All Levels</option>';
                 data.forEach(level => {
                     levelSelect.innerHTML += `<option value="${level.id}">${level.level_name}</option>`;
                 });
@@ -90,7 +108,7 @@
             .then(response => response.json())
             .then(data => {
                 var seasonSelect = document.getElementById('season');
-                seasonSelect.innerHTML = '<option value="">Select Season</option>';
+                seasonSelect.innerHTML = '<option value="">All Seasons</option>';
                 data.forEach(season => {
                     seasonSelect.innerHTML += `<option value="${season.id}">${season.season_name}</option>`;
                 });
@@ -117,6 +135,7 @@
         updateDropdownsCGI(orgId, levelId, seasonId, topN);
         fetchContent(orgId, levelId, seasonId, topN);
     });
+
     window.addEventListener('load', function () {
         const urlParams = new URLSearchParams(window.location.search);
         const orgId = urlParams.get('org_id');

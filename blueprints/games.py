@@ -15,13 +15,14 @@ def games():
     level_id = request.args.get('level_id')
     season_id = request.args.get('season_id')
     game_status = request.args.get('game_status', 'completed')
+    location = request.args.get('location')
     try:
         top_n = int(top_n)
     except ValueError:
         top_n = DEFAULT_TOP_N
     if top_n > MAX_TOP_N:
         top_n = MAX_TOP_N
-    return render_template('games.html', organizations=organizations, top_n=top_n, org_id=org_id, level_id=level_id, season_id=season_id, game_status=game_status)
+    return render_template('games.html', organizations=organizations, top_n=top_n, org_id=org_id, level_id=level_id, season_id=season_id, game_status=game_status, location=location)
 
 @games_bp.route('/filter_games', methods=['POST'])
 def filter_games():
@@ -30,6 +31,7 @@ def filter_games():
     season_id = request.json.get('season_id')
     top_n = request.json.get('top_n', DEFAULT_TOP_N)
     game_status = request.json.get('game_status', 'completed')
+    location = request.json.get('location')
     try:
         top_n = int(top_n)
     except ValueError:
@@ -52,6 +54,8 @@ def filter_games():
         query = query.join(Division, Game.division_id == Division.id).filter(Division.level_id == level_id)
     if season_id:
         query = query.filter(Division.season_id == season_id)
+    if location:
+        query = query.filter(Game.location.ilike(f"%{location}%"))
 
     games = query.limit(top_n).all()
 
