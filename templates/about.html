@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}About Hockey B.L.A.S.T{% endblock %}
+
+{% block content %}
+<div style="text-align: center;">
+    <h1>About Hockey B.L.A.S.T</h1>
+    <p>This site provides information about hockey - people, teams, games, leagues along with analytics and statistics.
+    </p>
+    <p>Author: <a href="https://hockey-blast.com/human_stats/human_stats?human_id=117076&top_n=20">Pavel Kletskov</a>
+        (<a href="mailto:kletskov@gmail.com">kletskov@gmail.com</a>)</p>
+
+    <h2>GitHub Repositories</h2>
+    <p>
+        <a href="https://github.com/kletskov/hockey-blast-common-lib">Library for DB abstraction and stats
+            aggregation</a><br>
+        <a href="https://github.com/kletskov/hockey-blast-frontend">Frontend code for data presentation</a>
+    </p>
+
+    <h2>Project Background</h2>
+    <p>This site was created while I was in-between jobs and had enough time to make it happen. There are multiple ideas
+        to make it better and cooler. The list of feature requests resides in this <a
+            href="https://docs.google.com/spreadsheets/d/1S08CGLYeZUliNHHQxgy227yq5hlLcWjN2J44A8TnkXM/edit?usp=sharing">spreadsheet</a>.
+    </p>
+
+    <h2>Future of this Project</h2>
+    <p>I am starting a new daytime job soon, so the features will be implemented at a much slower pace. If you have your
+        own idea of what to add or would like to handle something from the features list, it should be straightforward.
+        Follow the simple setup described in the frontend's <a
+            href="https://github.com/kletskov/hockey-blast-frontend/blob/main/README.md">README.md</a> and then see how
+        the code is structured. A pair of blueprint Python and template HTML files define every endpoint. Modify
+        existing ones or create a new one, verify in your local setup that it works, and submit a request to add it to
+        the repo.</p>
+    <p>With the help of modern LLM (I use VSCode + Copilot), there is no need to know Python, JavaScript, or HTML. Just
+        explain what you want to do, and it will most likely do the job for you. I am looking forward to working with
+        you and approving your requests. Let's have a BLAST!</p>
+    <p><a href="https://hockey-blast.com/human_stats/human_stats?human_id=117076&top_n=20">Pavel</a></p>
+</div>
+{% endblock %}
