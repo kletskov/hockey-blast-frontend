@@ -2,7 +2,7 @@ import logging
 from flask import Flask, render_template, request, g, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from threading import Thread
-from hockey_blast_common_lib.models import db, Organization, Game, Human
+from hockey_blast_common_lib.models import db, Organization, Game, Human, RequestLog
 from hockey_blast_common_lib.stats_models import OrgStatsWeeklyHuman, OrgStatsDailySkater, OrgStatsWeeklySkater, OrgStatsDailyGoalie, OrgStatsWeeklyGoalie, OrgStatsDailyReferee, OrgStatsWeeklyReferee, OrgStatsSkater, OrgStatsGoalie, OrgStatsReferee, OrgStatsDailyHuman, OrgStatsHuman
 from hockey_blast_common_lib.db_connection import get_db_params
 from markupsafe import Markup
@@ -13,6 +13,8 @@ import os
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from hockey_blast_common_lib.utils import get_fake_human_for_stats
+from datetime import datetime, timezone, timedelta
+import psycopg2
 
 # Debug: Print the DB_HOST environment variable
 flask_table.table.Markup = Markup
@@ -50,6 +52,7 @@ def get_client_ip():
         return request.headers.get('X-Forwarded-For').split(',')[0]
     return request.remote_addr
 
+
 def create_app(db_name):
     app = Flask(__name__)
     db_params = get_db_params(db_name)
@@ -59,7 +62,8 @@ def create_app(db_name):
     app.config['BACKGROUND_IMAGE'] = 'default_background.jpg'
     app.config['ORG_NAME'] = 'Hockey Blast'
     db.init_app(app)
-    
+
+    # Add middleware
     # Initialize Limiter
     # limiter = Limiter(
     #     key_func=get_client_ip,
@@ -92,15 +96,33 @@ def create_app(db_name):
     app.register_blueprint(dropdowns_bp, url_prefix='/dropdowns')
     app.register_blueprint(about_bp)
     
-    # @app.before_request
-    # def before_request():
-    #     g.limited = False
-    #     user_agent = get_user_agent()
-    #     client_ip = get_client_ip()
-    #     logger.info(f"Request from {client_ip} with User-Agent {user_agent}")
-    #     # if user_agent == BLOCKED_USER_AGENT or client_ip in BLOCKED_IPS:
-    #     #     logger.warning(f"Blocked request from {client_ip} with User-Agent {user_agent}")
-    #     #     return jsonify({"error": "Request blocked"}), 403
+    @app.before_request
+    def before_request():
+        if request.path in ['/favicon.ico', '/dropdowns', '/dropdowns/filter_levels', '/dropdowns/filter_seasons', '/games/filter_games']:
+            return
+        try:
+            user_agent = request.headers.get('User-Agent')
+            client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+            path = request.path
+            cgi_params = request.query_string.decode('utf-8')  # Get CGI parameters
+            pst = timezone(timedelta(hours=-8))
+            timestamp = datetime.now(pst)
+
+            log_entry = RequestLog(
+                user_agent=user_agent,
+                client_ip=client_ip,
+                path=path,
+                timestamp=timestamp,
+                cgi_params=cgi_params  # Log CGI parameters
+            )
+            db.session.add(log_entry)
+            db.session.commit()
+        except psycopg2.errors.InsufficientPrivilege as e:
+            db.session.rollback()
+            logger.error(f"Failed to log request: {e}. User '{db_params['user']}' does not have permission to access the table.")
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Failed to log request: {e}")
 
     # @app.after_request
     # def after_request(response):
