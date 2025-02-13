@@ -79,21 +79,21 @@
             <tr>
                 <td><a href="{{ url_for('team_stats.team_stats', team_id=visitor_team.id) }}">{{ visitor_team.name
                         }}</a></td>
-                <td>{{ game.visitor_period_1_shots }}</td>
-                <td>{{ game.visitor_period_2_shots }}</td>
-                <td>{{ game.visitor_period_3_shots }}</td>
+                <td>{{ game.visitor_period_1_shots or 0 }}</td>
+                <td>{{ game.visitor_period_2_shots or 0 }}</td>
+                <td>{{ game.visitor_period_3_shots or 0 }}</td>
                 {% if game.visitor_ot_shots > 0 or game.home_ot_shots > 0 %}
-                <td>{{ game.visitor_ot_shots }}</td>
+                <td>{{ game.visitor_ot_shots or 0 }}</td>
                 {% endif %}
                 <td><strong>{{ visitor_total_shots }}</strong></td>
             </tr>
             <tr>
                 <td><a href="{{ url_for('team_stats.team_stats', team_id=home_team.id) }}">{{ home_team.name }}</a></td>
-                <td>{{ game.home_period_1_shots }}</td>
-                <td>{{ game.home_period_2_shots }}</td>
-                <td>{{ game.home_period_3_shots }}</td>
+                <td>{{ game.home_period_1_shots or 0 }}</td>
+                <td>{{ game.home_period_2_shots or 0 }}</td>
+                <td>{{ game.home_period_3_shots or 0 }}</td>
                 {% if game.visitor_ot_shots > 0 or game.home_ot_shots > 0 %}
-                <td>{{ game.home_ot_shots }}</td>
+                <td>{{ game.home_ot_shots or 0 }}</td>
                 {% endif %}
                 <td><strong>{{ home_total_shots }}</strong></td>
             </tr>

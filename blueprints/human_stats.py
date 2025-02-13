@@ -5,7 +5,7 @@ from flask import Blueprint, request, jsonify, render_template, url_for
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-from hockey_blast_common_lib.models import db, Organization, Team, GameRoster, Game, Division, Human, Goal, Penalty
+from hockey_blast_common_lib.models import db, Organization, Team, GameRoster, Game, Division, Human, Goal, Penalty, Level
 from hockey_blast_common_lib.stats_models import OrgStatsHuman, OrgStatsSkater, OrgStatsGoalie, OrgStatsReferee
 import pandas as pd
 import plotly.graph_objs as go
@@ -174,7 +174,7 @@ def human_stats():
     rosters_df = pd.DataFrame([(r.GameRoster.team_id,
                                 r.GameRoster.game_id,
                                 r.Game.division_id,
-                                r.Division.level,
+                                r.Division.level_id,
                                 r.Game.date,
                                 r.Game.time,
                                 r.GameRoster.role,
@@ -184,7 +184,7 @@ def human_stats():
                                 columns=['team_id',
                                          'game_id',
                                          'division_id',
-                                         'division_level',
+                                         'level_id',
                                          'game_date',
                                          'game_time',
                                          'role',
@@ -403,44 +403,50 @@ def human_stats():
             'games_played': row['games_played']
         })
     
-    # Count how many games were played for each division
-    division_game_counts = rosters_df.groupby('division_level').size().reset_index(name='games_played').sort_values(by='games_played', ascending=False)
+    # Convert level_id to integer
+    rosters_df['level_id'] = rosters_df['level_id'].astype(int)
+
+    # Count how many games were played for each level
+    level_game_counts = rosters_df.groupby('level_id').size().reset_index(name='games_played').sort_values(by='games_played', ascending=False)
     
-    # Get top N divisions
-    top_skater_divisions = division_game_counts.head(top_n)
+    # Get top N levels
+    top_skater_levels = level_game_counts.head(top_n)
     
-    # Count points (goals + assists) per division
+    # Count points (goals + assists) per level
     goals = db.session.query(Goal).filter((Goal.goal_scorer_id == human_id) | (Goal.assist_1_id == human_id) | (Goal.assist_2_id == human_id)).all()
     goals_df = pd.DataFrame([(g.game_id, g.goal_scorer_id, g.assist_1_id, g.assist_2_id) for g in goals], columns=['game_id', 'goal_scorer_id', 'assist_1_id', 'assist_2_id'])
-    goals_df = goals_df.merge(rosters_df[['game_id', 'division_level']], on='game_id', how='left')
-    points_per_division = goals_df.groupby('division_level').size().reset_index(name='points')
+    goals_df = goals_df.merge(rosters_df[['game_id', 'level_id']], on='game_id', how='left')
+    points_per_level = goals_df.groupby('level_id').size().reset_index(name='points')
     
-    # Merge points with division game counts
-    division_stats = top_skater_divisions.merge(points_per_division, on='division_level', how='left').fillna(0)
-    division_stats['points_per_game'] = division_stats['points'] / division_stats['games_played']
+    # Merge points with level game counts
+    level_stats = top_skater_levels.merge(points_per_level, on='level_id', how='left').fillna(0)
+    level_stats['points_per_game'] = level_stats['points'] / level_stats['games_played']
     
     # Prepare data for the template
-    skater_division_stats = []
-    for _, row in division_stats.iterrows():
-        skater_division_stats.append({
-            'division_level': row['division_level'],
+    skater_level_stats = []
+    for _, row in level_stats.iterrows():
+        level = db.session.query(Level).filter(Level.id == int(row['level_id'])).first()
+        level_name = f"{level.level_name} ({level.level_alternative_name})" if level.level_alternative_name else level.level_name
+        skater_level_stats.append({
+            'level_name': level_name,
             'games_played': row['games_played'],
             'points_per_game': row['points_per_game']
         })
 
-    goalie_division_stats = []
-    # Calculate most_division_games_goaltended
+    goalie_level_stats = []
+    # Calculate most_level_games_goaltended
     if goalie_games_count > 0:
-        goalie_division_game_counts = goalie_rosters_df.groupby('division_level').size().reset_index(name='games_played').sort_values(by='games_played', ascending=False)
-        for _, row in goalie_division_game_counts.iterrows():
-            division_level = row['division_level']
+        goalie_level_game_counts = goalie_rosters_df.groupby('level_id').size().reset_index(name='games_played').sort_values(by='games_played', ascending=False)
+        for _, row in goalie_level_game_counts.iterrows():
+            level = db.session.query(Level).filter(Level.id == int(row['level_id'])).first()
+            level_name = f"{level.level_name} ({level.level_alternative_name})" if level.level_alternative_name else level.level_name
             games_played = row['games_played']
-            goals_allowed = goalie_rosters_df[goalie_rosters_df['division_level'] == division_level]['goals_allowed'].sum()
-            shots_faced = goalie_rosters_df[goalie_rosters_df['division_level'] == division_level]['shots_faced'].sum()
+            goals_allowed = goalie_rosters_df[goalie_rosters_df['level_id'] == row['level_id']]['goals_allowed'].sum()
+            shots_faced = goalie_rosters_df[goalie_rosters_df['level_id'] == row['level_id']]['shots_faced'].sum()
             save_percentage = ((shots_faced - goals_allowed) / shots_faced) * 100 if shots_faced > 0 else 0
             goals_allowed_per_game = goals_allowed / games_played if games_played > 0 else 0
-            goalie_division_stats.append({
-                'division_level': division_level,
+            goalie_level_stats.append({
+                'level_name': level_name,
                 'games_played': games_played,
                 'goals_allowed': goals_allowed,
                 'goals_allowed_per_game': goals_allowed_per_game,
@@ -580,8 +586,8 @@ def human_stats():
         display_name=display_name,
         roles_data=roles_data if len(roles_data) > 0 else [],
         most_games_played=most_games_played,
-        skater_division_stats=skater_division_stats,
-        goalie_division_stats = goalie_division_stats,
+        skater_division_stats=skater_level_stats,
+        goalie_division_stats = goalie_level_stats,
         teammates=teammates,
         skater_performance=skater_performance,
         goalie_performance=goalie_performance,

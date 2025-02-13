@@ -132,32 +132,32 @@
 </table>
 {% endif %}
 
-<h2>Skater Per Popular Division</h2>
+<h2>Skater Per Level</h2>
 <table class="table table-striped">
     <thead>
         <tr>
-            <th>Division Level</th>
+            <th>Level</th>
             <th>Games Played</th>
             <th>Points Per Game</th>
         </tr>
     </thead>
     <tbody>
-        {% for division in skater_division_stats %}
+        {% for level in skater_division_stats %}
         <tr>
-            <td>{{ division.division_level }}</td>
-            <td>{{ division.games_played }}</td>
-            <td>{{ division.points_per_game | round(2) }}</td>
+            <td>{{ level.level_name }}</td>
+            <td>{{ level.games_played }}</td>
+            <td>{{ level.points_per_game | round(2) }}</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 
 {% if goalie_division_stats %}
-<h2>Goalie Per Popular Division</h2>
+<h2>Goalie Per Level</h2>
 <table class="table table-striped">
     <thead>
         <tr>
-            <th>Division Level</th>
+            <th>Level</th>
             <th>Games Played</th>
             <th>TGA</th>
             <th>GAA</th>
@@ -166,20 +166,20 @@
         </tr>
     </thead>
     <tbody>
-        {% for division in goalie_division_stats %}
+        {% for level in goalie_division_stats %}
         <tr>
-            <td>{{ division.division_level }}</td>
-            <td>{{ division.games_played }}</td>
-            <td>{{ division.goals_allowed }}</td>
-            <td>{{ division.goals_allowed_per_game | round(2) }}</td>
-            <td>{{ division.shots_faced }}</td>
-            <td>{{ division.save_percentage | round(2) }}%</td>
+            <td>{{ level.level_name }}</td>
+            <td>{{ level.games_played }}</td>
+            <td>{{ level.goals_allowed }}</td>
+            <td>{{ level.goals_allowed_per_game | round(2) }}</td>
+            <td>{{ level.shots_faced }}</td>
+            <td>{{ level.save_percentage | round(2) }}%</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 {% endif %}
-<h2>Games Per Popular Team</h2>
+<h2>Games Per Team</h2>
 <table class="table table-striped">
     <thead>
         <tr>
@@ -197,7 +197,7 @@
         {% endfor %}
     </tbody>
 </table>
-<h2>Games Per Popular Buddy</h2>
+<h2>Games Per Teammate</h2>
 <table class="table table-striped">
     <thead>
         <tr>
