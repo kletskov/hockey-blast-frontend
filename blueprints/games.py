@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify
 from hockey_blast_common_lib.models import db, Organization, Game, Team, Division
+from hockey_blast_common_lib.stats_utils import ALL_ORGS_ID
 from datetime import datetime, date
 
 games_bp = Blueprint('games', __name__)
@@ -22,6 +23,12 @@ def games():
         top_n = DEFAULT_TOP_N
     if top_n > MAX_TOP_N:
         top_n = MAX_TOP_N
+
+    try:
+        org_id = int(org_id)
+    except (ValueError, TypeError):
+        org_id = ALL_ORGS_ID
+
     return render_template('games.html', organizations=organizations, top_n=top_n, org_id=org_id, level_id=level_id, season_id=season_id, game_status=game_status, location=location)
 
 @games_bp.route('/filter_games', methods=['POST'])
@@ -41,7 +48,12 @@ def filter_games():
 
     query = db.session.query(Game)
 
-    if org_id:
+    try:
+        org_id = int(org_id)
+    except (ValueError, TypeError):
+        org_id = ALL_ORGS_ID
+
+    if org_id != ALL_ORGS_ID:
         query = query.filter(Game.org_id == org_id)
 
     if game_status == 'completed':

@@ -81,39 +81,5 @@
         const gameStatus = urlParams.get('game_status') || 'completed';
         document.getElementById('game_status').value = gameStatus;
     }
-
-    window.addEventListener('load', function () {
-        const urlParams = new URLSearchParams(window.location.search);
-        const orgId = urlParams.get('org_id');
-        const levelId = urlParams.get('level_id');
-        const seasonId = urlParams.get('season_id');
-        const topN = urlParams.get('top_n') || 50;
-
-        document.getElementById('top_n').value = topN;
-        onWindowLoad();
-
-        if (orgId) {
-            document.getElementById('organization').value = orgId;
-            fetchLevels(orgId).then(() => {
-                if (levelId) {
-                    document.getElementById('level').value = levelId;
-                    fetchSeasons(orgId, levelId).then(() => {
-                        if (seasonId) {
-                            document.getElementById('season').value = seasonId;
-                            fetchContent(orgId, levelId, seasonId, topN);
-                        } else {
-                            document.getElementById('season').disabled = false;
-                            fetchContent(orgId, levelId, null, topN);
-                        }
-                    });
-                } else {
-                    document.getElementById('level').disabled = false;
-                    fetchContent(orgId, null, null, topN);
-                }
-            });
-        } else {
-            fetchContent(null, null, null, topN);
-        }
-    });
 </script>
 {% endblock %}

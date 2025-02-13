@@ -1,9 +1,9 @@
 <div>
     <label for="organization">Organization:</label>
     <select id="organization" name="organization">
-        <option value="">All Organizations</option>
         {% for org in organizations %}
-        <option value="{{ org.id }}">{{ org.organization_name }}</option>
+        <option value="{{ org.id }}" {% if org.id==ALL_ORGS_ID %}selected{% endif %}>{{ org.organization_name }}
+        </option>
         {% endfor %}
     </select>
 
@@ -29,7 +29,7 @@
 <script>
     document.getElementById('organization').addEventListener('change', function () {
         var orgId = this.value;
-        if (orgId) {
+        if (orgId && orgId != "-1") {
             fetchLevels(orgId);
         } else {
             document.getElementById('level').innerHTML = '<option value="">All Levels</option>';
@@ -148,6 +148,9 @@
 
         if (orgId) {
             document.getElementById('organization').value = orgId;
+        }
+
+        if (orgId && orgId != -1) {
             fetchLevels(orgId).then(() => {
                 if (levelId) {
                     document.getElementById('level').value = levelId;
