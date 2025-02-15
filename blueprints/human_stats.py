@@ -574,9 +574,15 @@ def human_stats():
         player_stats.extend(non_numeric_penalties)
         player_stats_str = " ".join(player_stats)
         
+        # Make the team for which the human played bold
+        if game.home_team_id == row['team_id']:
+            team_names = f"<a href='{url_for('team_stats.team_stats', team_id=visitor_team.id)}'>{visitor_team.name}</a> at <strong><a href='{url_for('team_stats.team_stats', team_id=home_team.id)}'>{home_team.name}</a></strong>"
+        else:
+            team_names = f"<strong><a href='{url_for('team_stats.team_stats', team_id=visitor_team.id)}'>{visitor_team.name}</a></strong> at <a href='{url_for('team_stats.team_stats', team_id=home_team.id)}'>{home_team.name}</a>"
+
         recent_games_data.append({
             'date_time': f"<a href='{url_for('game_card.game_card', game_id=game.id)}'>{date_time}</a>",
-            'team_names': f"<a href='{url_for('team_stats.team_stats', team_id=visitor_team.id)}'>{visitor_team.name}</a> at <a href='{url_for('team_stats.team_stats', team_id=home_team.id)}'>{home_team.name}</a>",
+            'team_names': team_names,
             'final_score': f"<a href='{url_for('game_card.game_card', game_id=game.id)}'>{final_score}</a>",
             'player_stats': player_stats_str
         })

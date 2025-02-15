@@ -1,18 +1,16 @@
 {% extends "base.html" %}
 
-{% block title %}Penalties{% endblock %}
-
 {% block content %}
 <div class="container mt-5">
     <h1 class="mb-4">Penalties</h1>
     <div style="text-align: center;">
         <div>
-            <label for="penalty_type">Show</label>
+            <label for="penalty_type">Count</label>
             <select id="penalty_type" name="penalty_type">
                 <option value="all" selected>All</option>
                 <option value="gm">Game Misconduct</option>
             </select>
-            <label for="penalty_type">penalties</label>
+            <label for="penalty_type">Penalties</label>
         </div>
     </div>
     {% include "dropdowns.html" %}
@@ -23,14 +21,14 @@
                 <tr>
                     <th>Rank</th>
                     <th>Player</th>
-                    <th>Penalties Per Game</th>
+                    <th>Per Game</th>
                 </tr>
             </thead>
             <tbody id="penalties-per-game-table">
                 <!-- Data will be populated here -->
             </tbody>
         </table>
-        <h2>Total Penalties</h2>
+        <h2>Penalties Count</h2>
         <table class="table table-striped">
             <thead>
                 <tr>
