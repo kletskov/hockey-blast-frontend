@@ -5,6 +5,16 @@
 {% block content %}
 <div class="container mt-5">
     <h1 class="mb-4">Penalties</h1>
+    <div style="text-align: center;">
+        <div>
+            <label for="penalty_type">Show</label>
+            <select id="penalty_type" name="penalty_type">
+                <option value="all" selected>All</option>
+                <option value="gm">Game Misconduct</option>
+            </select>
+            <label for="penalty_type">penalties</label>
+        </div>
+    </div>
     {% include "dropdowns.html" %}
     <div id="penalties-results">
         <h2>Penalties Per Game</h2>
@@ -12,7 +22,7 @@
             <thead>
                 <tr>
                     <th>Rank</th>
-                    <th>Name</th>
+                    <th>Player</th>
                     <th>Penalties Per Game</th>
                 </tr>
             </thead>
@@ -25,7 +35,7 @@
             <thead>
                 <tr>
                     <th>Rank</th>
-                    <th>Name</th>
+                    <th>Player</th>
                     <th>Penalties</th>
                 </tr>
             </thead>
@@ -37,38 +47,53 @@
 </div>
 
 <script>
+    document.getElementById('penalty_type').addEventListener('change', function () {
+        var orgId = document.getElementById('organization').value;
+        var levelId = document.getElementById('level').value;
+        var seasonId = document.getElementById('season').value;
+        var topN = document.getElementById('top_n').value;
+        updateDropdownsCGI(orgId, levelId, seasonId, topN);
+        fetchContent(orgId, levelId, seasonId, topN);
+    });
+
     function fetchContent(orgId, levelId, seasonId, topN) {
+        var penaltyType = document.getElementById('penalty_type').value;
         fetch('/penalties/filter_penalties', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ org_id: orgId, level_id: levelId, season_id: seasonId, top_n: topN })
+            body: JSON.stringify({ org_id: orgId, level_id: levelId, season_id: seasonId, top_n: topN, penalty_type: penaltyType })
         })
             .then(response => response.json())
             .then(data => {
                 var penaltiesTable = document.getElementById('penalties-table');
                 penaltiesTable.innerHTML = '';
                 data.penalties.forEach(item => {
-                    penaltiesTable.innerHTML += `<tr><td>${item.rank}</td><td>${item.name}</td><td>${item.penalties}</td></tr>`;
+                    if (item.penalties > 0) {
+                        penaltiesTable.innerHTML += `<tr><td>${item.rank}</td><td>${item.name} (${item.first_game_link} - ${item.last_game_link})</td><td>${item.penalties}</td></tr>`;
+                    }
                 });
 
                 var penaltiesPerGameTable = document.getElementById('penalties-per-game-table');
                 penaltiesPerGameTable.innerHTML = '';
                 data.penalties_per_game.forEach(item => {
-                    penaltiesPerGameTable.innerHTML += `<tr><td>${item.rank}</td><td>${item.name}</td><td>${item.penalties_per_game.toFixed(2)}</td></tr>`;
+                    if (item.penalties_per_game > 0) {
+                        penaltiesPerGameTable.innerHTML += `<tr><td>${item.rank}</td><td>${item.name} (${item.first_game_link} - ${item.last_game_link})</td><td>${item.penalties_per_game.toFixed(2)}</td></tr>`;
+                    }
                 });
             });
     }
 
     function updatePageSpecificCGI(url) {
-        // No additional parameters needed for penalties
+        var penaltyType = document.getElementById('penalty_type').value;
+        url.searchParams.set('penalty_type', penaltyType);
     }
 
     function onWindowLoad() {
-        // No additional parameters needed for penalties
-        // updateDropdownsCGI(orgId, levelId, seasonId, topN);
-        // fetchContent(orgId, levelId, seasonId, topN);
+        const urlParams = new URLSearchParams(window.location.search);
+        const penaltyType = urlParams.get('penalty_type') || 'all';
+        document.getElementById('penalty_type').value = penaltyType;
     }
 </script>
 {% endblock %}

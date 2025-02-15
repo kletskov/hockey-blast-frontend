@@ -77,7 +77,7 @@ def filter_games():
         home_team = db.session.query(Team).filter(Team.id == game.home_team_id).first()
         games_data.append({
             'id': game.id,
-            'date': game.date.strftime('%m/%d/%Y'),
+            'date': game.date.strftime('%m/%d/%y'),
             'time': game.time.strftime('%I:%M %p'),
             'visitor_team': visitor_team.name,
             'visitor_team_id': visitor_team.id,
