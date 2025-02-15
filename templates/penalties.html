@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Penalties{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">Penalties</h1>
+    {% include "dropdowns.html" %}
+    <div id="penalties-results">
+        <h2>Penalties Per Game</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Name</th>
+                    <th>Penalties Per Game</th>
+                </tr>
+            </thead>
+            <tbody id="penalties-per-game-table">
+                <!-- Data will be populated here -->
+            </tbody>
+        </table>
+        <h2>Total Penalties</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Name</th>
+                    <th>Penalties</th>
+                </tr>
+            </thead>
+            <tbody id="penalties-table">
+                <!-- Data will be populated here -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function fetchContent(orgId, levelId, seasonId, topN) {
+        fetch('/penalties/filter_penalties', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ org_id: orgId, level_id: levelId, season_id: seasonId, top_n: topN })
+        })
+            .then(response => response.json())
+            .then(data => {
+                var penaltiesTable = document.getElementById('penalties-table');
+                penaltiesTable.innerHTML = '';
+                data.penalties.forEach(item => {
+                    penaltiesTable.innerHTML += `<tr><td>${item.rank}</td><td>${item.name}</td><td>${item.penalties}</td></tr>`;
+                });
+
+                var penaltiesPerGameTable = document.getElementById('penalties-per-game-table');
+                penaltiesPerGameTable.innerHTML = '';
+                data.penalties_per_game.forEach(item => {
+                    penaltiesPerGameTable.innerHTML += `<tr><td>${item.rank}</td><td>${item.name}</td><td>${item.penalties_per_game.toFixed(2)}</td></tr>`;
+                });
+            });
+    }
+
+    function updatePageSpecificCGI(url) {
+        // No additional parameters needed for penalties
+    }
+
+    function onWindowLoad() {
+        // No additional parameters needed for penalties
+        // updateDropdownsCGI(orgId, levelId, seasonId, topN);
+        // fetchContent(orgId, levelId, seasonId, topN);
+    }
+</script>
+{% endblock %}

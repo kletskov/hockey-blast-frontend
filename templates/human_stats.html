@@ -40,7 +40,7 @@
         {% for role in roles_data %}
         <tr>
             <td>{{ role.role }}</td>
-            <td>{{ role.games_count }}</td>
+            <td>{{ role.games_count|int }}</td>
             <td>{{ role.first_date|safe }}</td>
             <td>{{ role.last_date|safe }}</td>
         </tr>
@@ -145,7 +145,7 @@
         {% for level in skater_division_stats %}
         <tr>
             <td>{{ level.level_name }}</td>
-            <td>{{ level.games_played }}</td>
+            <td>{{ level.games_played|int }}</td>
             <td>{{ level.points_per_game | round(2) }}</td>
         </tr>
         {% endfor %}
@@ -169,7 +169,7 @@
         {% for level in goalie_division_stats %}
         <tr>
             <td>{{ level.level_name }}</td>
-            <td>{{ level.games_played }}</td>
+            <td>{{ level.games_played|int }}</td>
             <td>{{ level.goals_allowed }}</td>
             <td>{{ level.goals_allowed_per_game | round(2) }}</td>
             <td>{{ level.shots_faced }}</td>
@@ -192,7 +192,7 @@
         <tr>
             <td><a href="{{ url_for('team_stats.team_stats', team_id=team.team_id) }}">{{ team.team_name }}</a>
             </td>
-            <td>{{ team.games_played }}</td>
+            <td>{{ team.games_played|int }}</td>
         </tr>
         {% endfor %}
     </tbody>
@@ -210,7 +210,7 @@
         <tr>
             <td><a href="{{ url_for('human_stats.human_stats', human_id=teammate.teammate_id) }}">{{
                     teammate.teammate_name }}</a></td>
-            <td>{{ teammate.games_played }}</td>
+            <td>{{ teammate.games_played|int }}</td>
         </tr>
         {% endfor %}
     </tbody>

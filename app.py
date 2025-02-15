@@ -41,6 +41,7 @@ from blueprints.version import version_bp
 from blueprints.dropdowns import dropdowns_bp
 from blueprints.games import games_bp
 from blueprints.about import about_bp
+from blueprints.penalties import penalties_bp
 
 # BLOCKED_USER_AGENT = "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.6834.83 Mobile Safari/537.36 (compatible; GoogleOther)"
 # BLOCKED_IPS = ["66.249.72.103", "66.249.72.204"]
@@ -96,6 +97,7 @@ def create_app(db_name):
     app.register_blueprint(games_bp, url_prefix='/games')
     app.register_blueprint(dropdowns_bp, url_prefix='/dropdowns')
     app.register_blueprint(about_bp)
+    app.register_blueprint(penalties_bp, url_prefix='/penalties')
     
     @app.before_request
     def before_request():
