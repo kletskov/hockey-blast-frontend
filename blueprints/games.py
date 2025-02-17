@@ -53,6 +53,16 @@ def filter_games():
     except (ValueError, TypeError):
         org_id = ALL_ORGS_ID
 
+    try:
+        level_id = int(level_id)
+    except (ValueError, TypeError):
+        level_id = None
+
+    try:
+        season_id = int(season_id)
+    except (ValueError, TypeError):
+        season_id = None
+
     if org_id != ALL_ORGS_ID:
         query = query.filter(Game.org_id == org_id)
 

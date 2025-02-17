@@ -21,6 +21,8 @@
                 <tr>
                     <th>Rank</th>
                     <th>Player</th>
+                    <th>From</th>
+                    <th>To</th>
                     <th>Per Game</th>
                 </tr>
             </thead>
@@ -34,6 +36,8 @@
                 <tr>
                     <th>Rank</th>
                     <th>Player</th>
+                    <th>From</th>
+                    <th>To</th>
                     <th>Penalties</th>
                 </tr>
             </thead>
@@ -69,7 +73,7 @@
                 penaltiesTable.innerHTML = '';
                 data.penalties.forEach(item => {
                     if (item.penalties > 0) {
-                        penaltiesTable.innerHTML += `<tr><td>${item.rank}</td><td>${item.name} (${item.first_game_link} - ${item.last_game_link})</td><td>${item.penalties}</td></tr>`;
+                        penaltiesTable.innerHTML += `<tr><td>${item.rank}</td><td>${item.name}</td><td>${item.first_game_link}</td><td>${item.last_game_link}</td><td>${item.penalties}</td></tr>`;
                     }
                 });
 
@@ -77,7 +81,7 @@
                 penaltiesPerGameTable.innerHTML = '';
                 data.penalties_per_game.forEach(item => {
                     if (item.penalties_per_game > 0) {
-                        penaltiesPerGameTable.innerHTML += `<tr><td>${item.rank}</td><td>${item.name} (${item.first_game_link} - ${item.last_game_link})</td><td>${item.penalties_per_game.toFixed(2)}</td></tr>`;
+                        penaltiesPerGameTable.innerHTML += `<tr><td>${item.rank}</td><td>${item.name}</td><td>${item.first_game_link}</td><td>${item.last_game_link}</td><td>${item.penalties_per_game.toFixed(2)}</td></tr>`;
                     }
                 });
             });

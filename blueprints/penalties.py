@@ -33,6 +33,16 @@ def filter_penalties():
     except (ValueError, TypeError):
         org_id = ALL_ORGS_ID
 
+    try:
+        level_id = int(level_id)
+    except (ValueError, TypeError):
+        level_id = None
+
+    try:
+        season_id = int(season_id)
+    except (ValueError, TypeError):
+        season_id = None
+
     if level_id and season_id:
         division = db.session.query(Division).filter(Division.org_id == org_id, Division.level_id == level_id, Division.season_id == season_id).first()
         if not division:
@@ -65,7 +75,7 @@ def filter_penalties():
             penalties = stats.gm_penalties
         else:
             penalties = stats.penalties
-        if penalties > 0:
+        if penalties and penalties > 0:
             link_text = f"{human.first_name} {human.middle_name} {human.last_name}".strip()
             link = f'<a href="{url_for("human_stats.human_stats", human_id=human.id, top_n=20)}">{link_text}</a>'
             first_game_link = f"<a href='{url_for('game_card.game_card', game_id=stats.first_game_id)}'>{db.session.query(Game.date).filter(Game.id == stats.first_game_id).first()[0].strftime('%m/%d/%y')}</a>" if stats.first_game_id else None
@@ -84,7 +94,7 @@ def filter_penalties():
             penalties_per_game = stats.gm_penalties_per_game
         else:
             penalties_per_game = stats.penalties_per_game
-        if penalties_per_game > 0:
+        if penalties_per_game and penalties_per_game > 0:
             link_text = f"{human.first_name} {human.middle_name} {human.last_name}".strip()
             link = f'<a href="{url_for("human_stats.human_stats", human_id=human.id, top_n=20)}">{link_text}</a>'
             first_game_link = f"<a href='{url_for('game_card.game_card', game_id=stats.first_game_id)}'>{db.session.query(Game.date).filter(Game.id == stats.first_game_id).first()[0].strftime('%m/%d/%y')}</a>" if stats.first_game_id else None
