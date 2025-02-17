@@ -10,38 +10,33 @@
                 <option value="all" selected>All</option>
                 <option value="gm">Game Misconduct</option>
             </select>
-            <label for="penalty_type">Penalties</label>
+            <label for="penalty_type">Penalties for</label>
+            <select id="player_status" name="player_status">
+                <option value="all" selected>All</option>
+                <option value="active">Active</option>
+            </select>
+            <label for="player_status">players</label>
+            <label for="display_value">Display</label>
+            <select id="display_value" name="display_value">
+                <option value="per_game" selected>Per Game</option>
+                <option value="sum">Sum</option>
+            </select>
         </div>
     </div>
     {% include "dropdowns.html" %}
     <div id="penalties-results">
-        <h2>Penalties Per Game</h2>
-        <table class="table table-striped">
+        <h2 id="table-title">Penalties Per Game</h2>
+        <table class="table table-striped" id="penalties-table">
             <thead>
                 <tr>
                     <th>Rank</th>
                     <th>Player</th>
                     <th>From</th>
                     <th>To</th>
-                    <th>Per Game</th>
+                    <th id="table-header">Per Game</th>
                 </tr>
             </thead>
-            <tbody id="penalties-per-game-table">
-                <!-- Data will be populated here -->
-            </tbody>
-        </table>
-        <h2>Penalties Count</h2>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Rank</th>
-                    <th>Player</th>
-                    <th>From</th>
-                    <th>To</th>
-                    <th>Penalties</th>
-                </tr>
-            </thead>
-            <tbody id="penalties-table">
+            <tbody id="penalties-table-body">
                 <!-- Data will be populated here -->
             </tbody>
         </table>
@@ -59,44 +54,83 @@
         fetchContent(orgId, levelId, seasonId, teamId, topN);
     });
 
+    document.getElementById('player_status').addEventListener('change', function () {
+        var orgId = document.getElementById('organization').value;
+        var levelId = document.getElementById('level').value;
+        var seasonId = document.getElementById('season').value;
+        var teamId = document.getElementById('team').value;
+        var topN = document.getElementById('top_n').value;
+        updateDropdownsCGI(orgId, levelId, seasonId, teamId, topN);
+        fetchContent(orgId, levelId, seasonId, teamId, topN);
+    });
+
+    document.getElementById('display_value').addEventListener('change', function () {
+        var orgId = document.getElementById('organization').value;
+        var levelId = document.getElementById('level').value;
+        var seasonId = document.getElementById('season').value;
+        var teamId = document.getElementById('team').value;
+        var topN = document.getElementById('top_n').value;
+        updateDropdownsCGI(orgId, levelId, seasonId, teamId, topN);
+        fetchContent(orgId, levelId, seasonId, teamId, topN);
+    });
+
     function fetchContent(orgId, levelId, seasonId, teamId, topN) {
         var penaltyType = document.getElementById('penalty_type').value;
+        var playerStatus = document.getElementById('player_status').value;
+        var displayValue = document.getElementById('display_value').value;
         fetch('/penalties/filter_penalties', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ org_id: orgId, level_id: levelId, season_id: seasonId, team_id: teamId, top_n: topN, penalty_type: penaltyType })
+            body: JSON.stringify({ org_id: orgId, level_id: levelId, season_id: seasonId, team_id: teamId, top_n: topN, penalty_type: penaltyType, player_status: playerStatus, display_value: displayValue })
         })
             .then(response => response.json())
             .then(data => {
-                var penaltiesTable = document.getElementById('penalties-table');
-                penaltiesTable.innerHTML = '';
-                data.penalties.forEach(item => {
-                    if (item.penalties > 0) {
-                        penaltiesTable.innerHTML += `<tr><td>${item.rank}</td><td>${item.name}</td><td>${item.first_game_link}</td><td>${item.last_game_link}</td><td>${item.penalties}</td></tr>`;
-                    }
-                });
+                var penaltiesTableBody = document.getElementById('penalties-table-body');
+                penaltiesTableBody.innerHTML = '';
+                var tableTitle = document.getElementById('table-title');
+                var tableHeader = document.getElementById('table-header');
 
-                var penaltiesPerGameTable = document.getElementById('penalties-per-game-table');
-                penaltiesPerGameTable.innerHTML = '';
-                data.penalties_per_game.forEach(item => {
-                    if (item.penalties_per_game > 0) {
-                        penaltiesPerGameTable.innerHTML += `<tr><td>${item.rank}</td><td>${item.name}</td><td>${item.first_game_link}</td><td>${item.last_game_link}</td><td>${item.penalties_per_game.toFixed(2)}</td></tr>`;
-                    }
-                });
+                if (displayValue === 'per_game') {
+                    tableTitle.innerText = 'Penalties Per Game';
+                    tableHeader.innerText = 'Per Game';
+                    data.penalties_per_game.forEach(item => {
+                        if (item.penalties_per_game > 0) {
+                            penaltiesTableBody.innerHTML += `<tr><td>${item.rank}</td><td>${item.name}</td><td>${item.first_game_link}</td><td>${item.last_game_link}</td><td>${item.penalties_per_game.toFixed(2)}</td></tr>`;
+                        }
+                    });
+                } else {
+                    tableTitle.innerText = 'Penalties Count';
+                    tableHeader.innerText = 'Penalties';
+                    data.penalties.forEach(item => {
+                        if (item.penalties > 0) {
+                            penaltiesTableBody.innerHTML += `<tr><td>${item.rank}</td><td>${item.name}</td><td>${item.first_game_link}</td><td>${item.last_game_link}</td><td>${item.penalties}</td></tr>`;
+                        }
+                    });
+                }
             });
     }
 
     function updatePageSpecificCGI(url) {
         var penaltyType = document.getElementById('penalty_type').value;
+        var playerStatus = document.getElementById('player_status').value;
+        var displayValue = document.getElementById('display_value').value;
         url.searchParams.set('penalty_type', penaltyType);
+        url.searchParams.set('player_status', playerStatus);
+        url.searchParams.set('display_value', displayValue);
     }
 
     function onWindowLoad() {
         const urlParams = new URLSearchParams(window.location.search);
         const penaltyType = urlParams.get('penalty_type') || 'all';
+        const playerStatus = urlParams.get('player_status') || 'all';
+        const displayValue = urlParams.get('display_value') || 'per_game';
         document.getElementById('penalty_type').value = penaltyType;
+        document.getElementById('player_status').value = playerStatus;
+        document.getElementById('display_value').value = displayValue;
     }
+
+    window.addEventListener('load', onWindowLoad);
 </script>
 {% endblock %}

@@ -3,12 +3,20 @@ from flask import Blueprint, render_template, request, jsonify, url_for
 from hockey_blast_common_lib.models import db, Organization, Level, Division, Human, Game
 from hockey_blast_common_lib.stats_models import OrgStatsSkater, LevelStatsSkater, DivisionStatsSkater
 from hockey_blast_common_lib.stats_utils import ALL_ORGS_ID
+from datetime import datetime, timedelta
 
 penalties_bp = Blueprint('penalties', __name__)
 
 MIN_GAMES_ORG = 20
 MIN_GAMES_LEVEL = 10
 MIN_GAMES_DIVISION = 2
+
+# Coefficients for fetching more data in "active" player mode
+COEFF_ORG = 50 / 3
+COEFF_LEVEL = 50 / 4
+COEFF_DIVISION = 50 / 47
+
+ACTIVE_PLAYER_WINDOW = timedelta(days=90)
 
 @penalties_bp.route('/penalties', methods=['GET'])
 def penalties():
@@ -18,7 +26,9 @@ def penalties():
     level_id = request.args.get('level_id')
     season_id = request.args.get('season_id')
     penalty_type = request.args.get('penalty_type', 'all')
-    return render_template('penalties.html', organizations=organizations, top_n=top_n, org_id=org_id, level_id=level_id, season_id=season_id, penalty_type=penalty_type)
+    player_status = request.args.get('player_status', 'all')
+    display_value = request.args.get('display_value', 'per_game')
+    return render_template('penalties.html', organizations=organizations, top_n=top_n, org_id=org_id, level_id=level_id, season_id=season_id, penalty_type=penalty_type, player_status=player_status, display_value=display_value)
 
 @penalties_bp.route('/filter_penalties', methods=['POST'])
 def filter_penalties():
@@ -27,6 +37,8 @@ def filter_penalties():
     season_id = request.json.get('season_id')
     top_n = request.json.get('top_n', 50)
     penalty_type = request.json.get('penalty_type', 'all')
+    player_status = request.json.get('player_status', 'all')
+    display_value = request.json.get('display_value', 'per_game')
 
     try:
         org_id = int(org_id)
@@ -42,6 +54,20 @@ def filter_penalties():
         season_id = int(season_id)
     except (ValueError, TypeError):
         season_id = None
+
+    try:
+        top_n = int(top_n)
+    except (ValueError, TypeError):
+        top_n = 20
+
+    top_n_to_fetch = top_n
+    if player_status == 'active':
+        if level_id and season_id:
+            top_n_to_fetch = int(top_n * COEFF_DIVISION)
+        elif level_id:
+            top_n_to_fetch = int(top_n * COEFF_LEVEL)
+        else:
+            top_n_to_fetch = int(top_n * COEFF_ORG)
 
     if level_id and season_id:
         division = db.session.query(Division).filter(Division.org_id == org_id, Division.level_id == level_id, Division.season_id == season_id).first()
@@ -63,14 +89,19 @@ def filter_penalties():
         min_games = MIN_GAMES_ORG
 
     if penalty_type == 'gm':
-        penalties_data = db.session.query(stats_model, Human).join(Human, stats_model.human_id == Human.id).filter(getattr(stats_model, filter_column) == filter_value, stats_model.games_played >= min_games).order_by(stats_model.gm_penalties_rank).limit(top_n).all()
-        penalties_per_game_data = db.session.query(stats_model, Human).join(Human, stats_model.human_id == Human.id).filter(getattr(stats_model, filter_column) == filter_value, stats_model.games_played >= min_games).order_by(stats_model.gm_penalties_per_game_rank).limit(top_n).all()
+        penalties_data = db.session.query(stats_model, Human).join(Human, stats_model.human_id == Human.id).filter(getattr(stats_model, filter_column) == filter_value, stats_model.games_played >= min_games).order_by(stats_model.gm_penalties_rank).limit(top_n_to_fetch).all()
+        penalties_per_game_data = db.session.query(stats_model, Human).join(Human, stats_model.human_id == Human.id).filter(getattr(stats_model, filter_column) == filter_value, stats_model.games_played >= min_games).order_by(stats_model.gm_penalties_per_game_rank).limit(top_n_to_fetch).all()
     else:
-        penalties_data = db.session.query(stats_model, Human).join(Human, stats_model.human_id == Human.id).filter(getattr(stats_model, filter_column) == filter_value, stats_model.games_played >= min_games).order_by(stats_model.penalties_rank).limit(top_n).all()
-        penalties_per_game_data = db.session.query(stats_model, Human).join(Human, stats_model.human_id == Human.id).filter(getattr(stats_model, filter_column) == filter_value, stats_model.games_played >= min_games).order_by(stats_model.penalties_per_game_rank).limit(top_n).all()
+        penalties_data = db.session.query(stats_model, Human).join(Human, stats_model.human_id == Human.id).filter(getattr(stats_model, filter_column) == filter_value, stats_model.games_played >= min_games).order_by(stats_model.penalties_rank).limit(top_n_to_fetch).all()
+        penalties_per_game_data = db.session.query(stats_model, Human).join(Human, stats_model.human_id == Human.id).filter(getattr(stats_model, filter_column) == filter_value, stats_model.games_played >= min_games).order_by(stats_model.penalties_per_game_rank).limit(top_n_to_fetch).all()
+
+    if player_status == 'active':
+        active_threshold_date = datetime.now() - ACTIVE_PLAYER_WINDOW
+        penalties_data = [(stats, human) for stats, human in penalties_data if stats.last_game_id and datetime.combine(db.session.query(Game.date).filter(Game.id == stats.last_game_id).first()[0], datetime.min.time()) >= active_threshold_date]
+        penalties_per_game_data = [(stats, human) for stats, human in penalties_per_game_data if stats.last_game_id and datetime.combine(db.session.query(Game.date).filter(Game.id == stats.last_game_id).first()[0], datetime.min.time()) >= active_threshold_date]
 
     penalties_results = []
-    for index, (stats, human) in enumerate(penalties_data, start=1):
+    for index, (stats, human) in enumerate(penalties_data[:top_n], start=1):
         if penalty_type == 'gm':
             penalties = stats.gm_penalties
         else:
@@ -89,7 +120,7 @@ def filter_penalties():
             })
 
     penalties_per_game_results = []
-    for index, (stats, human) in enumerate(penalties_per_game_data, start=1):
+    for index, (stats, human) in enumerate(penalties_per_game_data[:top_n], start=1):
         if penalty_type == 'gm':
             penalties_per_game = stats.gm_penalties_per_game
         else:
