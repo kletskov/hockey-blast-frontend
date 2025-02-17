@@ -59,12 +59,12 @@
                 var tbody = gamesList.querySelector('tbody');
                 data.forEach(game => {
                     var finalScoreOrLocation = gameStatus === 'completed' ?
-                        (game.status.startsWith('Final') ? `<a href="/game_card?game_id=${game.id}">${game.visitor_score} : ${game.home_score}</a>` : `<a href="/game_card?game_id=${game.id}">TBD</a>`) :
+                        `<a href="/game_card?game_id=${game.id}">${game.final_score}</a>` :
                         `<a href="${window.location.pathname}?org_id=&level_id=&season_id=&game_status=${gameStatus}&location=${encodeURIComponent(game.location)}">${game.location}</a>`;
                     tbody.innerHTML += `
                         <tr>
                             <td><a href="/game_card?game_id=${game.id}">${game.date} ${game.time}</a></td>
-                            <td><a href="/team_stats?team_id=${game.visitor_team_id}">${game.visitor_team}</a> at <a href="/team_stats?team_id=${game.home_team_id}">${game.home_team}</a></td>
+                            <td>${game.team_names}</td>
                             <td>${finalScoreOrLocation}</td>
                         </tr>
                     `;

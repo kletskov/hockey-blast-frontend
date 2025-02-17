@@ -80,6 +80,12 @@
         document.dispatchEvent(event);
     });
 
+    document.getElementById('team').addEventListener('change', function () {
+        var teamId = this.value;
+        var event = new CustomEvent('dropdownChange', { detail: { teamId: teamId } });
+        document.dispatchEvent(event);
+    });
+
     document.getElementById('top_n').addEventListener('change', function () {
         var topN = this.value;
         var event = new CustomEvent('dropdownChange', { detail: { topN: topN } });

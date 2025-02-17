@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, url_for
 from hockey_blast_common_lib.models import db, Organization, Game, Team, Division
 from hockey_blast_common_lib.stats_utils import ALL_ORGS_ID
 from datetime import datetime, date
@@ -17,6 +17,7 @@ def games():
     season_id = request.args.get('season_id')
     game_status = request.args.get('game_status', 'completed')
     location = request.args.get('location')
+    team_id = request.args.get('team_id')
     try:
         top_n = int(top_n)
     except ValueError:
@@ -29,7 +30,7 @@ def games():
     except (ValueError, TypeError):
         org_id = ALL_ORGS_ID
 
-    return render_template('games.html', organizations=organizations, top_n=top_n, org_id=org_id, level_id=level_id, season_id=season_id, game_status=game_status, location=location)
+    return render_template('games.html', organizations=organizations, top_n=top_n, org_id=org_id, level_id=level_id, season_id=season_id, game_status=game_status, location=location, team_id=team_id)
 
 @games_bp.route('/filter_games', methods=['POST'])
 def filter_games():
@@ -39,6 +40,7 @@ def filter_games():
     top_n = request.json.get('top_n', DEFAULT_TOP_N)
     game_status = request.json.get('game_status', 'completed')
     location = request.json.get('location')
+    team_id = request.json.get('team_id')
     try:
         top_n = int(top_n)
     except ValueError:
@@ -63,6 +65,11 @@ def filter_games():
     except (ValueError, TypeError):
         season_id = None
 
+    try:
+        team_id = int(team_id)
+    except (ValueError, TypeError):
+        team_id = None
+
     if org_id != ALL_ORGS_ID:
         query = query.filter(Game.org_id == org_id)
 
@@ -78,6 +85,8 @@ def filter_games():
         query = query.filter(Division.season_id == season_id)
     if location:
         query = query.filter(Game.location.ilike(f"%{location}%"))
+    if team_id:
+        query = query.filter((Game.home_team_id == team_id) | (Game.visitor_team_id == team_id))
 
     games = query.limit(top_n).all()
 
@@ -85,16 +94,42 @@ def filter_games():
     for game in games:
         visitor_team = db.session.query(Team).filter(Team.id == game.visitor_team_id).first()
         home_team = db.session.query(Team).filter(Team.id == game.home_team_id).first()
+
+        if game.status.startswith('Final'):
+            if game.home_team_id == team_id:
+                if game.home_final_score > game.visitor_final_score:
+                    color = "#7CFC00"
+                elif game.home_final_score < game.visitor_final_score:
+                    color = "red"
+                else:
+                    color = "black"
+                final_score = f"<span style='color:black;'>{game.visitor_final_score}</span> : <strong style='color:{color};'>{game.home_final_score}</strong>"
+            elif game.visitor_team_id == team_id:
+                if game.visitor_final_score > game.home_final_score:
+                    color = "#7CFC00"
+                elif game.visitor_final_score < game.home_final_score:
+                    color = "red"
+                else:
+                    color = "black"
+                final_score = f"<strong style='color:{color};'>{game.visitor_final_score}</strong> : <span style='color:black;'>{game.home_final_score}</span>"
+            else:
+                final_score = f"<span style='color:black;'>{game.visitor_final_score}</span> : <span style='color:black;'>{game.home_final_score}</span>"
+        else:
+            final_score = "TBD"
+
+        if game.home_team_id == team_id:
+            team_names = f"<a href='{url_for('team_stats.team_stats', team_id=visitor_team.id)}'>{visitor_team.name}</a> at <strong><a href='{url_for('team_stats.team_stats', team_id=home_team.id)}'>{home_team.name}</a></strong>"
+        elif game.visitor_team_id == team_id:
+            team_names = f"<strong><a href='{url_for('team_stats.team_stats', team_id=visitor_team.id)}'>{visitor_team.name}</a></strong> at <a href='{url_for('team_stats.team_stats', team_id=home_team.id)}'>{home_team.name}</a>"
+        else:
+            team_names = f"<a href='{url_for('team_stats.team_stats', team_id=visitor_team.id)}'>{visitor_team.name}</a> at <a href='{url_for('team_stats.team_stats', team_id=home_team.id)}'>{home_team.name}</a>"
+
         games_data.append({
             'id': game.id,
             'date': game.date.strftime('%m/%d/%y'),
             'time': game.time.strftime('%I:%M %p'),
-            'visitor_team': visitor_team.name,
-            'visitor_team_id': visitor_team.id,
-            'home_team': home_team.name,
-            'home_team_id': home_team.id,
-            'visitor_score': game.visitor_final_score if game.status.lower().startswith("final") else "TBD",
-            'home_score': game.home_final_score if game.status.lower().startswith("final") else "TBD",
+            'final_score': final_score,
+            'team_names': team_names,
             'location': game.location,
             'status': game.status
         })
