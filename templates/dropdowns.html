@@ -17,6 +17,11 @@
         <option value="">All Seasons</option>
     </select>
 
+    <label for="team">Team:</label>
+    <select id="team" name="team" disabled>
+        <option value="">All Teams</option>
+    </select>
+
     <label for="top_n">Show Top:</label>
     <select id="top_n" name="top_n">
         <option value="20">20</option>
@@ -36,6 +41,8 @@
             document.getElementById('level').disabled = true;
             document.getElementById('season').innerHTML = '<option value="">All Seasons</option>';
             document.getElementById('season').disabled = true;
+            document.getElementById('team').innerHTML = '<option value="">All Teams</option>';
+            document.getElementById('team').disabled = true;
         }
         var url = new URL(window.location);
         url.searchParams.delete('location');
@@ -52,6 +59,8 @@
         } else {
             document.getElementById('season').innerHTML = '<option value="">All Seasons</option>';
             document.getElementById('season').disabled = true;
+            document.getElementById('team').innerHTML = '<option value="">All Teams</option>';
+            document.getElementById('team').disabled = true;
         }
         var event = new CustomEvent('dropdownChange', { detail: { levelId: levelId } });
         document.dispatchEvent(event);
@@ -59,6 +68,14 @@
 
     document.getElementById('season').addEventListener('change', function () {
         var seasonId = this.value;
+        var orgId = document.getElementById('organization').value;
+        var levelId = document.getElementById('level').value;
+        if (seasonId) {
+            fetchTeams(orgId, levelId, seasonId);
+        } else {
+            document.getElementById('team').innerHTML = '<option value="">All Teams</option>';
+            document.getElementById('team').disabled = true;
+        }
         var event = new CustomEvent('dropdownChange', { detail: { seasonId: seasonId } });
         document.dispatchEvent(event);
     });
@@ -68,15 +85,6 @@
         var event = new CustomEvent('dropdownChange', { detail: { topN: topN } });
         document.dispatchEvent(event);
     });
-
-    // document.getElementById('game_status').addEventListener('change', function () {
-    //     var orgId = document.getElementById('organization').value;
-    //     var levelId = document.getElementById('level').value;
-    //     var seasonId = document.getElementById('season').value;
-    //     var topN = document.getElementById('top_n').value;
-    //     updateDropdownsCGI(orgId, levelId, seasonId, topN);
-    //     fetchContent(orgId, levelId, seasonId, topN);
-    // });
 
     function fetchLevels(orgId) {
         return fetch('/dropdowns/filter_levels', {
@@ -98,7 +106,6 @@
     }
 
     function fetchSeasons(orgId, levelId) {
-        console.log('fetchSeasons:');
         return fetch('/dropdowns/filter_seasons', {
             method: 'POST',
             headers: {
@@ -117,11 +124,31 @@
             });
     }
 
-    function updateDropdownsCGI(orgId, levelId, seasonId, topN) {
+    function fetchTeams(orgId, levelId, seasonId) {
+        return fetch('/dropdowns/filter_teams', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ org_id: orgId, level_id: levelId, season_id: seasonId })
+        })
+            .then(response => response.json())
+            .then(data => {
+                var teamSelect = document.getElementById('team');
+                teamSelect.innerHTML = '<option value="">All Teams</option>';
+                data.forEach(team => {
+                    teamSelect.innerHTML += `<option value="${team.id}">${team.team_name}</option>`;
+                });
+                teamSelect.disabled = false;
+            });
+    }
+
+    function updateDropdownsCGI(orgId, levelId, seasonId, teamId, topN) {
         const url = new URL(window.location);
         url.searchParams.set('org_id', orgId);
         url.searchParams.set('level_id', levelId);
         url.searchParams.set('season_id', seasonId);
+        url.searchParams.set('team_id', teamId);
         url.searchParams.set('top_n', topN);
         updatePageSpecificCGI(url);
         window.history.pushState({}, '', url);
@@ -131,16 +158,11 @@
         var orgId = document.getElementById('organization').value;
         var levelId = document.getElementById('level').value;
         var seasonId = document.getElementById('season').value;
+        var teamId = document.getElementById('team').value;
         var topN = document.getElementById('top_n').value;
 
-        updateDropdownsCGI(orgId, levelId, seasonId, topN);
-        console.log('Fetching content with values:', {
-            orgId: orgId,
-            levelId: levelId,
-            seasonId: seasonId,
-            topN: topN
-        });
-        fetchContent(orgId, levelId, seasonId, topN);
+        updateDropdownsCGI(orgId, levelId, seasonId, teamId, topN);
+        fetchContent(orgId, levelId, seasonId, teamId, topN);
     });
 
     window.addEventListener('load', function () {
@@ -148,6 +170,7 @@
         const orgId = urlParams.get('org_id');
         const levelId = urlParams.get('level_id');
         const seasonId = urlParams.get('season_id');
+        const teamId = urlParams.get('team_id');
         const topN = urlParams.get('top_n') || 50;
 
         document.getElementById('top_n').value = topN;
@@ -164,20 +187,24 @@
                     fetchSeasons(orgId, levelId).then(() => {
                         if (seasonId) {
                             document.getElementById('season').value = seasonId;
-                            fetchContent(orgId, levelId, seasonId, topN);
+                            fetchTeams(orgId, levelId, seasonId).then(() => {
+                                if (teamId) {
+                                    document.getElementById('team').value = teamId;
+                                }
+                                fetchContent(orgId, levelId, seasonId, teamId, topN);
+                            });
                         } else {
                             document.getElementById('season').disabled = false;
-                            fetchContent(orgId, levelId, null, topN);
+                            fetchContent(orgId, levelId, null, null, topN);
                         }
                     });
                 } else {
                     document.getElementById('level').disabled = false;
-                    fetchContent(orgId, null, null, topN);
+                    fetchContent(orgId, null, null, null, topN);
                 }
             });
         } else {
-            fetchContent(null, null, null, topN);
+            fetchContent(null, null, null, null, topN);
         }
     });
-
 </script>

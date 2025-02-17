@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from hockey_blast_common_lib.models import db, Level, Division, Season, Organization
+from hockey_blast_common_lib.models import db, Level, Division, Season, Organization, Game, Team
 from hockey_blast_common_lib.utils import get_fake_level
 from hockey_blast_common_lib.stats_utils import ALL_ORGS_ID
 
@@ -47,3 +47,40 @@ def get_organizations():
         organizations.insert(0, all_orgs)
     organizations_data = [{'id': org.id, 'organization_name': org.organization_name} for org in organizations]
     return jsonify(organizations_data)
+
+@dropdowns_bp.route('/filter_teams', methods=['POST'])
+def filter_teams():
+    org_id = request.json.get('org_id')
+    level_id = request.json.get('level_id')
+    season_id = request.json.get('season_id')
+    try:
+        org_id = int(org_id)
+    except (ValueError, TypeError):
+        org_id = ALL_ORGS_ID
+
+    try:
+        level_id = int(level_id)
+    except (ValueError, TypeError):
+        level_id = None
+
+    try:
+        season_id = int(season_id)
+    except (ValueError, TypeError):
+        season_id = None
+
+    if org_id == ALL_ORGS_ID:
+        return jsonify([])  # Return an empty list if org_id is ALL_ORGS_ID
+
+    division = db.session.query(Division).filter(Division.org_id == org_id, Division.level_id == level_id, Division.season_id == season_id).first()
+    if not division:
+        return jsonify([])  # Return an empty list if division is not found
+
+    games = db.session.query(Game).filter(Game.division_id == division.id).all()
+    team_ids = set()
+    for game in games:
+        team_ids.add(game.home_team_id)
+        team_ids.add(game.visitor_team_id)
+
+    teams = db.session.query(Team).filter(Team.id.in_(team_ids)).all()
+    teams_data = [{'id': team.id, 'team_name': team.name} for team in teams]
+    return jsonify(teams_data)
