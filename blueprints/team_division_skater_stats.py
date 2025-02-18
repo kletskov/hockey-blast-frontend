@@ -1,5 +1,7 @@
 from flask import Blueprint, request, jsonify
 from hockey_blast_common_lib.models import db, Game, Goal, Penalty, GameRoster, Human
+from hockey_blast_common_lib.utils import get_human_ids_by_names
+from hockey_blast_common_lib.options import not_human_names
 from sqlalchemy.sql import func, case
 from collections import defaultdict
 
@@ -109,6 +111,13 @@ def compute_skater_stats(games, team_id):
         key = stat.human_id
         stats_dict[key]['penalties'] += stat.penalties
         stats_dict[key]['gm_penalties'] += stat.gm_penalties
+
+    human_ids_to_filter = get_human_ids_by_names(db.session, not_human_names)
+
+    # Remove items from stats_dict where key is in human_ids_to_filter
+    for human_id in human_ids_to_filter:
+        if human_id in stats_dict:
+            del stats_dict[human_id]
 
     # Calculate per game stats
     for key, stat in stats_dict.items():
