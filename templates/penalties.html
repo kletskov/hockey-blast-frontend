@@ -2,7 +2,6 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h1 class="mb-4">Penalties</h1>
     <div style="text-align: center;">
         <div>
             <label for="penalty_type">Count</label>
@@ -10,13 +9,13 @@
                 <option value="all" selected>All</option>
                 <option value="gm">Game Misconduct</option>
             </select>
-            <label for="penalty_type">Penalties for</label>
+            <label for="penalty_type">penalties for</label>
             <select id="player_status" name="player_status">
                 <option value="all" selected>All</option>
                 <option value="active">Active</option>
             </select>
-            <label for="player_status">players</label>
-            <label for="display_value">Display</label>
+            <label for="player_status">players,</label>
+            <label for="display_value">display</label>
             <select id="display_value" name="display_value">
                 <option value="per_game" selected>Per Game</option>
                 <option value="sum">Sum</option>
@@ -25,7 +24,6 @@
     </div>
     {% include "dropdowns.html" %}
     <div id="penalties-results">
-        <h2 id="table-title">Penalties Per Game</h2>
         <table class="table table-striped" id="penalties-table">
             <thead>
                 <tr>
@@ -89,11 +87,9 @@
             .then(data => {
                 var penaltiesTableBody = document.getElementById('penalties-table-body');
                 penaltiesTableBody.innerHTML = '';
-                var tableTitle = document.getElementById('table-title');
                 var tableHeader = document.getElementById('table-header');
 
                 if (displayValue === 'per_game') {
-                    tableTitle.innerText = 'Penalties Per Game';
                     tableHeader.innerText = 'Per Game';
                     data.penalties_per_game.forEach(item => {
                         if (item.penalties_per_game > 0) {
@@ -101,7 +97,6 @@
                         }
                     });
                 } else {
-                    tableTitle.innerText = 'Penalties Count';
                     tableHeader.innerText = 'Penalties';
                     data.penalties.forEach(item => {
                         if (item.penalties > 0) {

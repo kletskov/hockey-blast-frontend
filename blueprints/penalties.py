@@ -1,6 +1,6 @@
 import logging
 from flask import Blueprint, render_template, request, jsonify, url_for
-from hockey_blast_common_lib.models import db, Organization, Level, Division, Human, Game
+from hockey_blast_common_lib.models import db, Organization, Level, Division, Human, Game, GameRoster
 from hockey_blast_common_lib.stats_models import OrgStatsSkater, LevelStatsSkater, DivisionStatsSkater
 from hockey_blast_common_lib.stats_utils import ALL_ORGS_ID
 from datetime import datetime, timedelta
@@ -35,6 +35,7 @@ def filter_penalties():
     org_id = request.json.get('org_id')
     level_id = request.json.get('level_id')
     season_id = request.json.get('season_id')
+    team_id = request.json.get('team_id')
     top_n = request.json.get('top_n', 50)
     penalty_type = request.json.get('penalty_type', 'all')
     player_status = request.json.get('player_status', 'all')
@@ -54,6 +55,11 @@ def filter_penalties():
         season_id = int(season_id)
     except (ValueError, TypeError):
         season_id = None
+
+    try:
+        team_id = int(team_id)
+    except (ValueError, TypeError):
+        team_id = None
 
     try:
         top_n = int(top_n)
@@ -88,12 +94,39 @@ def filter_penalties():
         filter_value = org_id
         min_games = MIN_GAMES_ORG
 
-    if penalty_type == 'gm':
-        penalties_data = db.session.query(stats_model, Human).join(Human, stats_model.human_id == Human.id).filter(getattr(stats_model, filter_column) == filter_value, stats_model.games_played >= min_games).order_by(stats_model.gm_penalties_rank).limit(top_n_to_fetch).all()
-        penalties_per_game_data = db.session.query(stats_model, Human).join(Human, stats_model.human_id == Human.id).filter(getattr(stats_model, filter_column) == filter_value, stats_model.games_played >= min_games).order_by(stats_model.gm_penalties_per_game_rank).limit(top_n_to_fetch).all()
+    if team_id:
+        # Fetch all GameRoster entries for the specified org, division, and team
+        game_rosters = db.session.query(GameRoster).join(Game, GameRoster.game_id == Game.id).filter(
+            Game.org_id == org_id,
+            Game.division_id == filter_value,
+            GameRoster.team_id == team_id
+        ).all()
+        human_ids = {roster.human_id for roster in game_rosters}
     else:
-        penalties_data = db.session.query(stats_model, Human).join(Human, stats_model.human_id == Human.id).filter(getattr(stats_model, filter_column) == filter_value, stats_model.games_played >= min_games).order_by(stats_model.penalties_rank).limit(top_n_to_fetch).all()
-        penalties_per_game_data = db.session.query(stats_model, Human).join(Human, stats_model.human_id == Human.id).filter(getattr(stats_model, filter_column) == filter_value, stats_model.games_played >= min_games).order_by(stats_model.penalties_per_game_rank).limit(top_n_to_fetch).all()
+        human_ids = None
+
+    if penalty_type == 'gm':
+        penalties_data = db.session.query(stats_model, Human).join(Human, stats_model.human_id == Human.id).filter(
+            getattr(stats_model, filter_column) == filter_value,
+            stats_model.games_played >= min_games,
+            Human.id.in_(human_ids) if human_ids else True
+        ).order_by(stats_model.gm_penalties_rank).limit(top_n_to_fetch).all()
+        penalties_per_game_data = db.session.query(stats_model, Human).join(Human, stats_model.human_id == Human.id).filter(
+            getattr(stats_model, filter_column) == filter_value,
+            stats_model.games_played >= min_games,
+            Human.id.in_(human_ids) if human_ids else True
+        ).order_by(stats_model.gm_penalties_per_game_rank).limit(top_n_to_fetch).all()
+    else:
+        penalties_data = db.session.query(stats_model, Human).join(Human, stats_model.human_id == Human.id).filter(
+            getattr(stats_model, filter_column) == filter_value,
+            stats_model.games_played >= min_games,
+            Human.id.in_(human_ids) if human_ids else True
+        ).order_by(stats_model.penalties_rank).limit(top_n_to_fetch).all()
+        penalties_per_game_data = db.session.query(stats_model, Human).join(Human, stats_model.human_id == Human.id).filter(
+            getattr(stats_model, filter_column) == filter_value,
+            stats_model.games_played >= min_games,
+            Human.id.in_(human_ids) if human_ids else True
+        ).order_by(stats_model.penalties_per_game_rank).limit(top_n_to_fetch).all()
 
     if player_status == 'active':
         active_threshold_date = datetime.now() - ACTIVE_PLAYER_WINDOW
