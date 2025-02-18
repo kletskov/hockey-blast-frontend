@@ -47,8 +47,8 @@ def human_stats():
         if org_stats.games_skater > 0:
             skater_first_game = db.session.query(Game.date, Game.time).filter(Game.id == org_stats.first_game_id_skater).first()
             skater_last_game = db.session.query(Game.date, Game.time).filter(Game.id == org_stats.last_game_id_skater).first()
-            skater_first_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.first_game_id_skater)}'>{skater_first_game.date.strftime('%m/%d/%y %I:%M%p')}</a>" if skater_first_game else None
-            skater_last_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.last_game_id_skater)}'>{skater_last_game.date.strftime('%m/%d/%y %I:%M%p')}</a>" if skater_last_game else None
+            skater_first_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.first_game_id_skater)}'>{skater_first_game.date.strftime('%m/%d/%y')}</a>" if skater_first_game else None
+            skater_last_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.last_game_id_skater)}'>{skater_last_game.date.strftime('%m/%d/%y')}</a>" if skater_last_game else None
             roles_data.append({
                 'role': 'Skater',
                 'games_count': org_stats.games_skater,
@@ -59,8 +59,8 @@ def human_stats():
         if org_stats.games_goalie > 0:
             goalie_first_game = db.session.query(Game.date, Game.time).filter(Game.id == org_stats.first_game_id_goalie).first()
             goalie_last_game = db.session.query(Game.date, Game.time).filter(Game.id == org_stats.last_game_id_goalie).first()
-            goalie_first_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.first_game_id_goalie)}'>{goalie_first_game.date.strftime('%m/%d/%y %I:%M%p')}</a>" if goalie_first_game else None
-            goalie_last_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.last_game_id_goalie)}'>{goalie_last_game.date.strftime('%m/%d/%y %I:%M%p')}</a>" if goalie_last_game else None
+            goalie_first_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.first_game_id_goalie)}'>{goalie_first_game.date.strftime('%m/%d/%y')}</a>" if goalie_first_game else None
+            goalie_last_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.last_game_id_goalie)}'>{goalie_last_game.date.strftime('%m/%d/%y')}</a>" if goalie_last_game else None
             roles_data.append({
                 'role': 'Goalie',
                 'games_count': org_stats.games_goalie,
@@ -71,8 +71,8 @@ def human_stats():
         if org_stats.games_scorekeeper > 0:
             scorekeeper_first_game = db.session.query(Game.date, Game.time).filter(Game.id == org_stats.first_game_id_scorekeeper).first()
             scorekeeper_last_game = db.session.query(Game.date, Game.time).filter(Game.id == org_stats.last_game_id_scorekeeper).first()
-            scorekeeper_first_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.first_game_id_scorekeeper)}'>{scorekeeper_first_game.date.strftime('%m/%d/%y %I:%M%p')}</a>" if scorekeeper_first_game else None
-            scorekeeper_last_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.last_game_id_scorekeeper)}'>{scorekeeper_last_game.date.strftime('%m/%d/%y %I:%M%p')}</a>" if scorekeeper_last_game else None
+            scorekeeper_first_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.first_game_id_scorekeeper)}'>{scorekeeper_first_game.date.strftime('%m/%d/%y')}</a>" if scorekeeper_first_game else None
+            scorekeeper_last_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.last_game_id_scorekeeper)}'>{scorekeeper_last_game.date.strftime('%m/%d/%y')}</a>" if scorekeeper_last_game else None
             roles_data.append({
                 'role': 'Scorekeeper',
                 'games_count': org_stats.games_scorekeeper,
@@ -83,8 +83,8 @@ def human_stats():
         if org_stats.games_referee > 0:
             referee_first_game = db.session.query(Game.date, Game.time).filter(Game.id == org_stats.first_game_id_referee).first()
             referee_last_game = db.session.query(Game.date, Game.time).filter(Game.id == org_stats.last_game_id_referee).first()
-            referee_first_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.first_game_id_referee)}'>{referee_first_game.date.strftime('%m/%d/%y %I:%M%p')}</a>" if referee_first_game else None
-            referee_last_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.last_game_id_referee)}'>{referee_last_game.date.strftime('%m/%d/%y %I:%M%p')}</a>" if referee_last_game else None
+            referee_first_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.first_game_id_referee)}'>{referee_first_game.date.strftime('%m/%d/%y')}</a>" if referee_first_game else None
+            referee_last_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.last_game_id_referee)}'>{referee_last_game.date.strftime('%m/%d/%y')}</a>" if referee_last_game else None
             roles_data.append({
                 'role': 'Referee',
                 'games_count': org_stats.games_referee,
