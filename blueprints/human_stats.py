@@ -414,14 +414,15 @@ def human_stats():
     scorekeeper_games_per_month = pd.Series(scorekeeper_game_dates).dt.to_period('M').value_counts().sort_index()
     referee_games_per_month = pd.Series(referee_game_dates).dt.to_period('M').value_counts().sort_index()
     
-    # Check if player_games_per_month is not empty
-    if not player_games_per_month.empty:
-        all_months = pd.period_range(start=player_games_per_month.index.min(), end=player_games_per_month.index.max(), freq='M')
+    # Determine the overall date range for the plot
+    all_dates = pd.concat([player_games_per_month, goalie_games_per_month, scorekeeper_games_per_month, referee_games_per_month]).index
+    if not all_dates.empty:
+        all_months = pd.period_range(start=all_dates.min(), end=all_dates.max(), freq='M')
         player_games_per_month = player_games_per_month.reindex(all_months, fill_value=0)
         goalie_games_per_month = goalie_games_per_month.reindex(all_months, fill_value=0)
         scorekeeper_games_per_month = scorekeeper_games_per_month.reindex(all_months, fill_value=0)
         referee_games_per_month = referee_games_per_month.reindex(all_months, fill_value=0)
-    
+        
     plot_data = []
     if player_games_per_month.sum() > 0:
         plot_data.append(go.Scatter(x=player_games_per_month.index.astype(str), y=player_games_per_month.values, mode='lines', name='Skater', line=dict(color='#FF6347')))  # Tomato
