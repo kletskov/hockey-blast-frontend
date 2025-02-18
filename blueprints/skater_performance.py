@@ -4,12 +4,12 @@ from hockey_blast_common_lib.models import db, Organization, Level, Division, Se
 from hockey_blast_common_lib.stats_models import OrgStatsSkater, LevelStatsSkater, DivisionStatsSkater
 from hockey_blast_common_lib.stats_utils import ALL_ORGS_ID
 from .skater_performance_dropdowns import filter_levels, filter_seasons, filter_teams, get_levels_for_skater_in_org, get_divisions_and_seasons
-from .team_division_human_stats import team_division_stats_bp, compute_skater_stats
+from .team_division_skater_stats import team_division_skater_stats_bp, compute_skater_stats
 import re
 from datetime import datetime
 
 skater_performance_bp = Blueprint('skater_performance', __name__)
-skater_performance_bp.register_blueprint(team_division_stats_bp, url_prefix='/team_division_stats')
+skater_performance_bp.register_blueprint(team_division_skater_stats_bp, url_prefix='/team_division_skater_stats')
 
 def format_rank_percentile(rank, total):
     percentile = (total - rank) / total * 100

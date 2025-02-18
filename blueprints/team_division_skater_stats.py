@@ -3,7 +3,7 @@ from hockey_blast_common_lib.models import db, Game, Goal, Penalty, GameRoster, 
 from sqlalchemy.sql import func, case
 from collections import defaultdict
 
-team_division_stats_bp = Blueprint('team_division_stats', __name__)
+team_division_skater_stats_bp = Blueprint('team_division_skater_stats', __name__)
 
 def compute_skater_stats(games, team_id):
     # Initialize stats dictionary
@@ -153,8 +153,8 @@ def compute_skater_stats(games, team_id):
 
     return stats_dict
 
-@team_division_stats_bp.route('/team_division_stats', methods=['POST'])
-def team_division_stats():
+@team_division_skater_stats_bp.route('/team_division_skater_stats', methods=['POST'])
+def team_division_skater_stats():
     team_id = request.json.get('team_id')
     division_id = request.json.get('division_id')
     role = request.json.get('role', 'skater')
