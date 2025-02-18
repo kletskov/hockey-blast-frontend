@@ -34,8 +34,9 @@
 <script>
     document.getElementById('organization').addEventListener('change', function () {
         var orgId = this.value;
+        var humanId = document.getElementById('human_id') ? document.getElementById('human_id').value : null;
         if (orgId && orgId != "-1") {
-            fetchLevels(orgId);
+            fetchLevels(orgId, humanId);
         } else {
             document.getElementById('level').innerHTML = '<option value="">All Levels</option>';
             document.getElementById('level').disabled = true;
@@ -54,8 +55,9 @@
     document.getElementById('level').addEventListener('change', function () {
         var levelId = this.value;
         var orgId = document.getElementById('organization').value;
+        var humanId = document.getElementById('human_id') ? document.getElementById('human_id').value : null;
         if (levelId) {
-            fetchSeasons(orgId, levelId);
+            fetchSeasons(orgId, levelId, humanId);
         } else {
             document.getElementById('season').innerHTML = '<option value="">All Seasons</option>';
             document.getElementById('season').disabled = true;
@@ -70,8 +72,9 @@
         var seasonId = this.value;
         var orgId = document.getElementById('organization').value;
         var levelId = document.getElementById('level').value;
+        var humanId = document.getElementById('human_id') ? document.getElementById('human_id').value : null;
         if (seasonId) {
-            fetchTeams(orgId, levelId, seasonId);
+            fetchTeams(orgId, levelId, seasonId, humanId);
         } else {
             document.getElementById('team').innerHTML = '<option value="">All Teams</option>';
             document.getElementById('team').disabled = true;
@@ -95,13 +98,14 @@
         document.dispatchEvent(event);
     });
 
-    function fetchLevels(orgId) {
-        return fetch('/dropdowns/filter_levels', {
+    function fetchLevels(orgId, humanId) {
+        var endpoint = window.location.pathname.includes('/skater_performance') ? '/skater_performance/filter_levels' : '/dropdowns/filter_levels';
+        return fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ org_id: orgId })
+            body: JSON.stringify({ org_id: orgId, human_id: humanId })
         })
             .then(response => response.json())
             .then(data => {
@@ -114,13 +118,14 @@
             });
     }
 
-    function fetchSeasons(orgId, levelId) {
-        return fetch('/dropdowns/filter_seasons', {
+    function fetchSeasons(orgId, levelId, humanId) {
+        var endpoint = window.location.pathname.includes('/skater_performance') ? '/skater_performance/filter_seasons' : '/dropdowns/filter_seasons';
+        return fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ org_id: orgId, level_id: levelId })
+            body: JSON.stringify({ org_id: orgId, level_id: levelId, human_id: humanId })
         })
             .then(response => response.json())
             .then(data => {
@@ -133,13 +138,14 @@
             });
     }
 
-    function fetchTeams(orgId, levelId, seasonId) {
-        return fetch('/dropdowns/filter_teams', {
+    function fetchTeams(orgId, levelId, seasonId, humanId) {
+        var endpoint = window.location.pathname.includes('/skater_performance') ? '/skater_performance/filter_teams' : '/dropdowns/filter_teams';
+        return fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ org_id: orgId, level_id: levelId, season_id: seasonId })
+            body: JSON.stringify({ org_id: orgId, level_id: levelId, season_id: seasonId, human_id: humanId })
         })
             .then(response => response.json())
             .then(data => {
@@ -175,28 +181,28 @@
     });
 
     window.addEventListener('load', function () {
+        onWindowLoad();
         const urlParams = new URLSearchParams(window.location.search);
-        const orgId = urlParams.get('org_id');
+        const orgId = urlParams.get('org_id') || '-1';
         const levelId = urlParams.get('level_id');
         const seasonId = urlParams.get('season_id');
         const teamId = urlParams.get('team_id');
         const topN = urlParams.get('top_n') || 50;
 
         document.getElementById('top_n').value = topN;
-        onWindowLoad();
 
         if (orgId) {
             document.getElementById('organization').value = orgId;
         }
 
         if (orgId && orgId != -1) {
-            fetchLevels(orgId).then(() => {
+            fetchLevels(orgId, document.getElementById('human_id') ? document.getElementById('human_id').value : null).then(() => {
                 if (levelId) {
                     document.getElementById('level').value = levelId;
-                    fetchSeasons(orgId, levelId).then(() => {
+                    fetchSeasons(orgId, levelId, document.getElementById('human_id') ? document.getElementById('human_id').value : null).then(() => {
                         if (seasonId) {
                             document.getElementById('season').value = seasonId;
-                            fetchTeams(orgId, levelId, seasonId).then(() => {
+                            fetchTeams(orgId, levelId, seasonId, document.getElementById('human_id') ? document.getElementById('human_id').value : null).then(() => {
                                 if (teamId) {
                                     document.getElementById('team').value = teamId;
                                     document.getElementById('top_n').value = 200;

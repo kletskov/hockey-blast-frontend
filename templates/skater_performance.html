@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-3">
+    <h4>Skater Performance for {{ human_name }}</h4>
+    {% include "dropdowns.html" %}
+    <div id="skater-performance-results">
+        <table class="table table-striped" id="skater-performance-table">
+            <thead>
+                <tr>
+                    <th>Context</th>
+                    <th>Points Per Game</th>
+                    <th>Points Per Game Rank</th>
+                    <th>Games Played</th>
+                    <th>Games Played Rank</th>
+                </tr>
+            </thead>
+            <tbody id="skater-performance-table-body">
+                <!-- Data will be populated here -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function fetchContent(orgId, levelId, seasonId, teamId, topN) {
+        var humanId = document.getElementById('human_id').value;
+        fetch('/skater_performance/filter_skater_performance', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ org_id: orgId, level_id: levelId, season_id: seasonId, team_id: teamId, top_n: topN, human_id: humanId })
+        })
+            .then(response => response.json())
+            .then(data => {
+                var skaterPerformanceTableBody = document.getElementById('skater-performance-table-body');
+                skaterPerformanceTableBody.innerHTML = '';
+
+                data.skater_performance.forEach(item => {
+                    skaterPerformanceTableBody.innerHTML += `<tr><td>${item.context}</td><td>${item.points_per_game.toFixed(2)}</td><td>${item.points_per_game_rank}</td><td>${item.games_played}</td><td>${item.games_played_rank}</td></tr>`;
+                });
+            });
+    }
+
+    function updatePageSpecificCGI(url) {
+        // Empty for now
+    }
+
+    function onWindowLoad() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const humanId = urlParams.get('human_id');
+        document.getElementById('human_id').value = humanId;
+    }
+
+</script>
+<input type="hidden" id="human_id" value="{{ human_id }}">
+{% endblock %}
