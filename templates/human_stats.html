@@ -4,6 +4,33 @@
 
 {% block content %}
 <h1 class="mb-4">{{ display_name|safe }}</h1>
+
+{% if roles_data %}
+<h4>Roles</h4>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Role</th>
+            <th>Games</th>
+            <th>Rank</th>
+            <th>First Game</th>
+            <th>Last Game</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for role in roles_data %}
+        <tr>
+            <td>{{ role.role }}</td>
+            <td>{{ role.games_count|int }}</td>
+            <td>{{ role.rank }}</td>
+            <td>{{ role.first_date|safe }}</td>
+            <td>{{ role.last_date|safe }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
 <h4>Recent Games</h4>
 <table class="table table-striped">
     <thead>
@@ -25,31 +52,9 @@
         {% endfor %}
     </tbody>
 </table>
-{% if roles_data %}
-<h2>Roles</h2>
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Role</th>
-            <th>Games Count</th>
-            <th>First Game</th>
-            <th>Last Game</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for role in roles_data %}
-        <tr>
-            <td>{{ role.role }}</td>
-            <td>{{ role.games_count|int }}</td>
-            <td>{{ role.first_date|safe }}</td>
-            <td>{{ role.last_date|safe }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% endif %}
+
 {% if skater_performance %}
-<h2>Skater Performance</h2>
+<h4>Skater Performance</h4>
 <table class="table table-striped">
     <thead>
         <tr>
@@ -84,7 +89,7 @@
 {% endif %}
 
 {% if goalie_performance %}
-<h2>Goalie Performance</h2>
+<h4>Goalie Performance</h4>
 <table class="table table-striped">
     <thead>
         <tr>
@@ -108,7 +113,7 @@
 {% endif %}
 
 {% if referee_performance %}
-<h2>Referee Performance</h2>
+<h4>Referee Performance</h4>
 <table class="table table-striped">
     <thead>
         <tr>
@@ -132,13 +137,13 @@
 </table>
 {% endif %}
 
-<h2>Skater Per Level</h2>
+<h4>Skater Per Level</h4>
 <table class="table table-striped">
     <thead>
         <tr>
             <th>Level</th>
             <th>Games Played</th>
-            <th>Points Per Game</th>
+            <th>Points Per Game</h2>
         </tr>
     </thead>
     <tbody>
@@ -153,7 +158,7 @@
 </table>
 
 {% if goalie_division_stats %}
-<h2>Goalie Per Level</h2>
+<h4>Goalie Per Level</h4>
 <table class="table table-striped">
     <thead>
         <tr>
@@ -179,7 +184,8 @@
     </tbody>
 </table>
 {% endif %}
-<h2>Games Per Team</h2>
+
+<h4>Games Per Team</h4>
 <table class="table table-striped">
     <thead>
         <tr>
@@ -197,7 +203,8 @@
         {% endfor %}
     </tbody>
 </table>
-<h2>Games Per Teammate</h2>
+
+<h4>Games Per Teammate</h4>
 <table class="table table-striped">
     <thead>
         <tr>
@@ -215,6 +222,7 @@
         {% endfor %}
     </tbody>
 </table>
+
 <div id="plot-div">
     {{ plot_div|safe }}
 </div>
