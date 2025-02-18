@@ -13,6 +13,30 @@
         <label for="game_status">Games</label>
     </div>
     {% include 'dropdowns.html' %}
+    <div id="team-stats" style="display: none;">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Team</th>
+                    <th>GP</th>
+                    <th>W</th>
+                    <th>L</th>
+                    <th>T</th>
+                    <th>OTL</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td id="team-name"></td>
+                    <td id="team-gp"><strong></strong></td>
+                    <td id="team-w" style="color: #7CFC00;"><strong></strong></td>
+                    <td id="team-l" style="color: red;"><strong></strong></td>
+                    <td id="team-t" style="color: black;"><strong></strong></td>
+                    <td id="team-otl" style="color: red;"><strong></strong></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
     <div id="games-list">
         <!-- Games will be dynamically loaded here -->
     </div>
@@ -57,7 +81,7 @@
                     </table>
                 `;
                 var tbody = gamesList.querySelector('tbody');
-                data.forEach(game => {
+                data.games.forEach(game => {
                     var finalScoreOrLocation = gameStatus === 'completed' ?
                         `<a href="/game_card?game_id=${game.id}">${game.final_score}</a>` :
                         `<a href="${window.location.pathname}?org_id=&level_id=&season_id=&game_status=${gameStatus}&location=${encodeURIComponent(game.location)}">${game.location}</a>`;
@@ -69,6 +93,18 @@
                         </tr>
                     `;
                 });
+
+                if (teamId && gameStatus === 'completed') {
+                    document.getElementById('team-stats').style.display = 'block';
+                    document.getElementById('team-name').innerHTML = `<a href="/team_stats?team_id=${teamId}">${document.getElementById('team').selectedOptions[0].text}</a>`;
+                    document.getElementById('team-gp').innerHTML = `<strong>${data.team_stats.GP}</strong>`;
+                    document.getElementById('team-w').innerHTML = `<strong>${data.team_stats.W}</strong>`;
+                    document.getElementById('team-l').innerHTML = `<strong>${data.team_stats.L}</strong>`;
+                    document.getElementById('team-t').innerHTML = `<strong>${data.team_stats.T}</strong>`;
+                    document.getElementById('team-otl').innerHTML = `<strong>${data.team_stats.OTL}</strong>`;
+                } else {
+                    document.getElementById('team-stats').style.display = 'none';
+                }
             });
     }
 

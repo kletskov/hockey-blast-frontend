@@ -91,25 +91,48 @@ def filter_games():
     games = query.limit(top_n).all()
 
     games_data = []
+    team_stats = {
+        'GP': 0,
+        'W': 0,
+        'L': 0,
+        'T': 0,
+        'OTL': 0
+    }
+
     for game in games:
         visitor_team = db.session.query(Team).filter(Team.id == game.visitor_team_id).first()
         home_team = db.session.query(Team).filter(Team.id == game.home_team_id).first()
 
         if game.status.startswith('Final'):
+            home_period_scores = (game.home_period_1_score or 0) + (game.home_period_2_score or 0) + (game.home_period_3_score or 0)
+            visitor_period_scores = (game.visitor_period_1_score or 0) + (game.visitor_period_2_score or 0) + (game.visitor_period_3_score or 0)
+
             if game.home_team_id == team_id:
                 if game.home_final_score > game.visitor_final_score:
                     color = "#7CFC00"
+                    team_stats['W'] += 1
                 elif game.home_final_score < game.visitor_final_score:
+                    if visitor_period_scores == game.visitor_final_score:
+                        team_stats['L'] += 1
+                    else:
+                        team_stats['OTL'] += 1
                     color = "red"
                 else:
+                    team_stats['T'] += 1
                     color = "black"
                 final_score = f"<span style='color:black;'>{game.visitor_final_score}</span> : <strong style='color:{color};'>{game.home_final_score}</strong>"
             elif game.visitor_team_id == team_id:
                 if game.visitor_final_score > game.home_final_score:
                     color = "#7CFC00"
+                    team_stats['W'] += 1
                 elif game.visitor_final_score < game.home_final_score:
+                    if home_period_scores == game.home_final_score:
+                        team_stats['L'] += 1
+                    else:
+                        team_stats['OTL'] += 1
                     color = "red"
                 else:
+                    team_stats['T'] += 1
                     color = "black"
                 final_score = f"<strong style='color:{color};'>{game.visitor_final_score}</strong> : <span style='color:black;'>{game.home_final_score}</span>"
             else:
@@ -134,4 +157,9 @@ def filter_games():
             'status': game.status
         })
 
-    return jsonify(games_data)
+        team_stats['GP'] += 1
+
+    return jsonify({
+        'games': games_data,
+        'team_stats': team_stats
+    })

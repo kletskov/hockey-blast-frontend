@@ -82,6 +82,9 @@
 
     document.getElementById('team').addEventListener('change', function () {
         var teamId = this.value;
+        if (teamId) {
+            document.getElementById('top_n').value = 200;
+        }
         var event = new CustomEvent('dropdownChange', { detail: { teamId: teamId } });
         document.dispatchEvent(event);
     });
@@ -196,6 +199,7 @@
                             fetchTeams(orgId, levelId, seasonId).then(() => {
                                 if (teamId) {
                                     document.getElementById('team').value = teamId;
+                                    document.getElementById('top_n').value = 200;
                                 }
                                 fetchContent(orgId, levelId, seasonId, teamId, topN);
                             });
