@@ -2,31 +2,29 @@ from flask import jsonify
 from hockey_blast_common_lib.models import db, Level, Division, Season, Team, GameRoster, Game
 from hockey_blast_common_lib.stats_models import DivisionStatsSkater, LevelStatsSkater
 
-def filter_levels(org_id, human_id):
+def get_levels_for_skater_in_org(org_id, human_id):
     try:
         org_id = int(org_id)
     except (ValueError, TypeError):
-        return jsonify([])
+        return []
 
     levels = db.session.query(Level).join(LevelStatsSkater, Level.id == LevelStatsSkater.level_id).filter(
         LevelStatsSkater.human_id == human_id,
         Level.org_id == org_id
     ).all()
 
-    levels_data = [{'id': level.id, 'level_name': level.level_name} for level in levels]
+    return levels
 
-    return jsonify(levels_data)
-
-def filter_seasons(org_id, level_id, human_id):
+def get_divisions_and_seasons(org_id, level_id, human_id):
     try:
         org_id = int(org_id)
     except (ValueError, TypeError):
-        return jsonify([])
+        return [], []
 
     try:
         level_id = int(level_id)
     except (ValueError, TypeError):
-        return jsonify([])
+        return [], []
 
     divisions = db.session.query(Division).join(DivisionStatsSkater, Division.id == DivisionStatsSkater.division_id).filter(
         DivisionStatsSkater.human_id == human_id,
@@ -37,8 +35,16 @@ def filter_seasons(org_id, level_id, human_id):
     season_ids = {division.season_id for division in divisions}
     seasons = db.session.query(Season).filter(Season.id.in_(season_ids)).order_by(Season.season_number.desc()).all()
 
-    seasons_data = [{'id': season.id, 'season_name': season.season_name} for season in seasons]
+    return divisions, seasons
 
+def filter_levels(org_id, human_id):
+    levels = get_levels_for_skater_in_org(org_id, human_id)
+    levels_data = [{'id': level.id, 'level_name': level.level_name} for level in levels]
+    return jsonify(levels_data)
+
+def filter_seasons(org_id, level_id, human_id):
+    divisions, seasons = get_divisions_and_seasons(org_id, level_id, human_id)
+    seasons_data = [{'id': season.id, 'season_name': season.season_name} for season in seasons]
     return jsonify(seasons_data)
 
 def filter_teams(org_id, level_id, season_id, human_id):

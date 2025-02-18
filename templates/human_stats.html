@@ -20,9 +20,9 @@
     <tbody>
         {% for role in roles_data %}
         <tr>
-            <td>{{ role.role }}</td>
-            <td>{{ role.games_count|int }}</td>
-            <td>{{ role.rank }}</td>
+            <td>{{ role.role|safe }}</td>
+            <td>{{ role.games_count|safe }}</td>
+            <td>{{ role.rank|safe }}</td>
             <td>{{ role.first_date|safe }}</td>
             <td>{{ role.last_date|safe }}</td>
         </tr>
@@ -196,8 +196,7 @@
     <tbody>
         {% for team in most_games_played %}
         <tr>
-            <td><a href="{{ url_for('team_stats.team_stats', team_id=team.team_id) }}">{{ team.team_name }}</a>
-            </td>
+            <td><a href="{{ url_for('team_stats.team_stats', team_id=team.team_id) }}">{{ team.team_name }}</a></td>
             <td>{{ team.games_played|int }}</td>
         </tr>
         {% endfor %}

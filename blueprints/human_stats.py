@@ -50,7 +50,7 @@ def human_stats():
             skater_first_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.first_game_id_skater)}'>{skater_first_game.date.strftime('%m/%d/%y')}</a>" if skater_first_game else None
             skater_last_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.last_game_id_skater)}'>{skater_last_game.date.strftime('%m/%d/%y')}</a>" if skater_last_game else None
             roles_data.append({
-                'role': 'Skater',
+                'role': f"Skater <a href='{url_for('skater_performance.skater_performance', human_id=human_id)}'>(Click here for all stats)</a>",
                 'games_count': org_stats.games_skater,
                 'rank': calculate_rank(org_stats.games_skater_rank, org_stats.skaters_in_rank),
                 'first_date': skater_first_game_link,

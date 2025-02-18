@@ -1,11 +1,77 @@
 import logging
 from flask import Blueprint, render_template, request, jsonify, url_for
-from hockey_blast_common_lib.models import db, Organization, Level, Division, Season, Team, Human
+from hockey_blast_common_lib.models import db, Organization, Level, Division, Season, Team, Human, Game, GameRoster
 from hockey_blast_common_lib.stats_models import OrgStatsSkater, LevelStatsSkater, DivisionStatsSkater
 from hockey_blast_common_lib.stats_utils import ALL_ORGS_ID
-from .skater_performance_dropdowns import filter_levels, filter_seasons, filter_teams
+from .skater_performance_dropdowns import filter_levels, filter_seasons, filter_teams, get_levels_for_skater_in_org, get_divisions_and_seasons
+from .team_division_human_stats import team_division_stats_bp, compute_skater_stats
+import re
+from datetime import datetime
 
 skater_performance_bp = Blueprint('skater_performance', __name__)
+skater_performance_bp.register_blueprint(team_division_stats_bp, url_prefix='/team_division_stats')
+
+def format_rank_percentile(rank, total):
+    percentile = (total - rank) / total * 100
+    return f"{rank}/{total}<br>{percentile:.0f}th pctl"
+
+def append_skater_performance_result(skater_performance_results, stats, context):
+    if isinstance(stats, dict):
+        first_game_id = stats.get('first_game_id')
+        last_game_id = stats.get('last_game_id')
+        points_per_game = stats.get('points_per_game')
+        points_per_game_rank = stats.get('points_per_game_rank')
+        games_played = stats.get('games_played')
+        games_played_rank = stats.get('games_played_rank')
+        goals_per_game = stats.get('goals_per_game')
+        goals_per_game_rank = stats.get('goals_per_game_rank')
+        assists_per_game = stats.get('assists_per_game')
+        assists_per_game_rank = stats.get('assists_per_game_rank')
+        penalties_per_game = stats.get('penalties_per_game')
+        penalties_per_game_rank = stats.get('penalties_per_game_rank')
+        gm_penalties_per_game = stats.get('gm_penalties_per_game')
+        gm_penalties_per_game_rank = stats.get('gm_penalties_per_game_rank')
+    else:
+        first_game_id = stats.first_game_id
+        last_game_id = stats.last_game_id
+        points_per_game = stats.points_per_game
+        points_per_game_rank = stats.points_per_game_rank
+        games_played = stats.games_played
+        games_played_rank = stats.games_played_rank
+        goals_per_game = stats.goals_per_game
+        goals_per_game_rank = stats.goals_per_game_rank
+        assists_per_game = stats.assists_per_game
+        assists_per_game_rank = stats.assists_per_game_rank
+        penalties_per_game = stats.penalties_per_game
+        penalties_per_game_rank = stats.penalties_per_game_rank
+        gm_penalties_per_game = stats.gm_penalties_per_game
+        gm_penalties_per_game_rank = stats.gm_penalties_per_game_rank
+
+    first_game = db.session.query(Game.date).filter(Game.id == first_game_id).first() if first_game_id else None
+    last_game = db.session.query(Game.date).filter(Game.id == last_game_id).first() if last_game_id else None
+    skater_performance_results.append({
+        'context': context,
+        'points_per_game': f"{points_per_game:.2f}",
+        'points_per_game_rank': format_rank_percentile(points_per_game_rank, stats['total_in_rank'] if isinstance(stats, dict) else stats.total_in_rank),
+        'games_played': games_played,
+        'games_played_rank': format_rank_percentile(games_played_rank, stats['total_in_rank'] if isinstance(stats, dict) else stats.total_in_rank),
+        'goals_per_game': f"{goals_per_game:.2f}",
+        'goals_per_game_rank': format_rank_percentile(goals_per_game_rank, stats['total_in_rank'] if isinstance(stats, dict) else stats.total_in_rank),
+        'assists_per_game': f"{assists_per_game:.2f}",
+        'assists_per_game_rank': format_rank_percentile(assists_per_game_rank, stats['total_in_rank'] if isinstance(stats, dict) else stats.total_in_rank),
+        'penalties_per_game': f"{penalties_per_game:.2f}",
+        'penalties_per_game_rank': format_rank_percentile(penalties_per_game_rank, stats['total_in_rank'] if isinstance(stats, dict) else stats.total_in_rank),
+        'gm_penalties_per_game': f"{gm_penalties_per_game:.2f}",
+        'gm_penalties_per_game_rank': format_rank_percentile(gm_penalties_per_game_rank, stats['total_in_rank'] if isinstance(stats, dict) else stats.total_in_rank),
+        'first_game': f"<a href='{url_for('game_card.game_card', game_id=first_game_id)}'>{first_game.date.strftime('%m/%d/%y')}</a>" if first_game else None,
+        'last_game': f"<a href='{url_for('game_card.game_card', game_id=last_game_id)}'>{last_game.date.strftime('%m/%d/%y')}</a>" if last_game else None
+    })
+
+def extract_date_from_link(link):
+    match = re.search(r'>(\d{2}/\d{2}/\d{2})<', link)
+    if match:
+        return datetime.strptime(match.group(1), '%m/%d/%y')
+    return None
 
 @skater_performance_bp.route('/', methods=['GET'])
 def skater_performance():
@@ -59,56 +125,91 @@ def filter_skater_performance():
     except (ValueError, TypeError):
         top_n = 20
 
+    try:
+        human_id = int(human_id)
+    except (ValueError, TypeError):
+        return jsonify({'error': 'Invalid human_id'}), 400
+
     skater_performance_results = []
+    team_performance_results = []
 
     if org_id == ALL_ORGS_ID:
         org_stats = db.session.query(OrgStatsSkater).filter(
             OrgStatsSkater.human_id == human_id
-        ).order_by(OrgStatsSkater.points_per_game_rank).limit(top_n).all()
+        ).order_by(OrgStatsSkater.org_id).limit(top_n).all()
 
-        for index, stats in enumerate(org_stats, start=1):
+        for stats in org_stats:
             organization = db.session.query(Organization).filter(Organization.id == stats.org_id).first()
-            skater_performance_results.append({
-                'context': f'<a href="{organization.website}">{organization.organization_name}</a>',
-                'points_per_game': stats.points_per_game,
-                'points_per_game_rank': stats.points_per_game_rank,
-                'games_played': stats.games_played,
-                'games_played_rank': stats.games_played_rank
-            })
+            context = f'<a href="{organization.website}">{organization.organization_name}</a>'
+            append_skater_performance_result(skater_performance_results, stats, context)
     else:
-        if level_id and season_id:
-            division = db.session.query(Division).filter(Division.org_id == org_id, Division.level_id == level_id, Division.season_id == season_id).first()
-            if not division:
-                return jsonify({"error": "Division not found"}), 404
-            stats_model = DivisionStatsSkater
-            filter_column = 'division_id'
-            filter_value = division.id
-        elif level_id:
-            stats_model = LevelStatsSkater
-            filter_column = 'level_id'
-            filter_value = level_id
+        if level_id is None:
+            levels = get_levels_for_skater_in_org(org_id, human_id)
+            for level in levels:
+                level_stats = db.session.query(LevelStatsSkater).filter(
+                    LevelStatsSkater.level_id == level.id,
+                    LevelStatsSkater.human_id == human_id
+                ).order_by(LevelStatsSkater.points_per_game_rank).limit(top_n).all()
+
+                for stats in level_stats:
+                    context = level.level_name
+                    append_skater_performance_result(skater_performance_results, stats, context)
         else:
-            stats_model = OrgStatsSkater
-            filter_column = 'org_id'
-            filter_value = org_id
+            if team_id is None:
+                divisions, seasons = get_divisions_and_seasons(org_id, level_id, human_id)
+                for division in divisions:
+                    division_stats = db.session.query(DivisionStatsSkater).filter(
+                        DivisionStatsSkater.division_id == division.id,
+                        DivisionStatsSkater.human_id == human_id
+                    ).order_by(DivisionStatsSkater.points_per_game_rank).limit(top_n).all()
 
-        skater_performance_data = db.session.query(stats_model).filter(
-            getattr(stats_model, filter_column) == filter_value,
-            stats_model.human_id == human_id
-        ).order_by(stats_model.points_per_game_rank).limit(top_n).all()
+                    for stats in division_stats:
+                        season = next((s for s in seasons if s.id == division.season_id), None)
+                        context = season.season_name if season else "Unknown Season"
+                        append_skater_performance_result(skater_performance_results, stats, context)
+            else:
+                # Fetch the unique division_id using org_id, season_id, and level_id
+                division = db.session.query(Division.id).filter(
+                    Division.org_id == org_id,
+                    Division.season_id == season_id,
+                    Division.level_id == level_id
+                ).first()
 
-        for index, stats in enumerate(skater_performance_data, start=1):
-            organization = db.session.query(Organization).filter(Organization.id == org_id).first()
-            skater_performance_results.append({
-                'context': f'<a href="{organization.website}">{organization.organization_name}</a>',
-                'points_per_game': stats.points_per_game,
-                'points_per_game_rank': stats.points_per_game_rank,
-                'games_played': stats.games_played,
-                'games_played_rank': stats.games_played_rank
-            })
+                if division:
+                    division_id = division.id
+
+                    # Fetch team and division stats
+                    games = db.session.query(Game.id).filter(
+                        Game.division_id == division_id,
+                        (Game.home_team_id == team_id) | (Game.visitor_team_id == team_id)
+                    ).all()
+                    games = [game.id for game in games]
+
+                    # Compute skater stats
+                    stats_dict = compute_skater_stats(games, team_id)
+
+                    # Fetch team names for context
+                    team = db.session.query(Team).filter(Team.id == team_id).first()
+                    context = f'<a href="{url_for("team_stats.team_stats", team_id=team.id)}">{team.name}</a>'
+
+                    # Return the stats for the specific human
+                    human_stats = stats_dict.get(human_id, {})
+                    append_skater_performance_result(skater_performance_results, human_stats, context)
+
+                    # Add team performance results
+                    for key, stats in stats_dict.items():
+                        player = db.session.query(Human).filter(Human.id == key).first()
+                        if player:
+                            link_text = f"{player.first_name} {player.middle_name} {player.last_name}".strip()
+                            link = f'<a href="{url_for("human_stats.human_stats", human_id=player.id, top_n=20)}">{link_text}</a>'
+                            append_skater_performance_result(team_performance_results, stats, link)
+
+    # Sort the results by last game date (descending) and first game date (ascending)
+    team_performance_results.sort(key=lambda x: (x['points_per_game']), reverse=True)
 
     return jsonify({
-        'skater_performance': skater_performance_results
+        'skater_performance': skater_performance_results,
+        'team_performance': team_performance_results
     })
 
 @skater_performance_bp.route('/filter_levels', methods=['POST'])

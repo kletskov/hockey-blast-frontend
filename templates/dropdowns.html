@@ -181,15 +181,14 @@
     });
 
     window.addEventListener('load', function () {
-        onWindowLoad();
         const urlParams = new URLSearchParams(window.location.search);
         const orgId = urlParams.get('org_id') || '-1';
         const levelId = urlParams.get('level_id');
         const seasonId = urlParams.get('season_id');
         const teamId = urlParams.get('team_id');
         const topN = urlParams.get('top_n') || 50;
-
         document.getElementById('top_n').value = topN;
+        onWindowLoad();
 
         if (orgId) {
             document.getElementById('organization').value = orgId;
