@@ -99,7 +99,9 @@
     });
 
     function fetchLevels(orgId, humanId) {
-        var endpoint = window.location.pathname.includes('/skater_performance') ? '/skater_performance/filter_levels' : '/dropdowns/filter_levels';
+        var endpoint = window.location.pathname.includes('/skater_performance') ? '/skater_performance/filter_levels' :
+            window.location.pathname.includes('/goalie_performance') ? '/goalie_performance/filter_levels' :
+                '/dropdowns/filter_levels';
         return fetch(endpoint, {
             method: 'POST',
             headers: {
@@ -119,7 +121,9 @@
     }
 
     function fetchSeasons(orgId, levelId, humanId) {
-        var endpoint = window.location.pathname.includes('/skater_performance') ? '/skater_performance/filter_seasons' : '/dropdowns/filter_seasons';
+        var endpoint = window.location.pathname.includes('/skater_performance') ? '/skater_performance/filter_seasons' :
+            window.location.pathname.includes('/goalie_performance') ? '/goalie_performance/filter_seasons' :
+                '/dropdowns/filter_seasons';
         return fetch(endpoint, {
             method: 'POST',
             headers: {
@@ -139,7 +143,9 @@
     }
 
     function fetchTeams(orgId, levelId, seasonId, humanId) {
-        var endpoint = window.location.pathname.includes('/skater_performance') ? '/skater_performance/filter_teams' : '/dropdowns/filter_teams';
+        var endpoint = window.location.pathname.includes('/skater_performance') ? '/skater_performance/filter_teams' :
+            window.location.pathname.includes('/goalie_performance') ? '/goalie_performance/filter_teams' :
+                '/dropdowns/filter_teams';
         return fetch(endpoint, {
             method: 'POST',
             headers: {

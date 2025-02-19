@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-3">
+    <h4>Goalie Performance for {{ human_name }}</h4>
+    <p>Note: Each data point in the table below comes with rank in format "<span
+            style="color: rgb(123, 0, 0);">goalie_rank / total_in_rank, Kth <a
+                href="https://en.wikipedia.org/wiki/Percentile" target="_blank">Percentile</a></span>".</p>
+    {% include "dropdowns.html" %}
+    <div id="goalie-performance-results">
+        <table class="table table-striped text-center" id="goalie-performance-table">
+            <thead class="text-center">
+                <tr>
+                    <th style="color: black;">Context</th>
+                    <th style="color: black;">From</th>
+                    <th style="color: black;">To</th>
+                    <th><strong style="color: black;">GP</strong></th>
+                    <th><strong style="color: black;">GA</strong></th>
+                    <th><strong style="color: black;">GAA</strong></th>
+                    <th><strong style="color: black;">SF</strong></th>
+                    <th><strong style="color: black;">SV%</strong></th>
+                </tr>
+            </thead>
+            <tbody id="goalie-performance-table-body" class="text-center">
+                <!-- Data will be populated here -->
+            </tbody>
+        </table>
+        <div id="team-performance-section" style="display: none;">
+            <h4>Team Performance, sorted by Goals Allowed Per Game</h4>
+            <table class="table table-striped text-center" id="team-performance-table">
+                <thead class="text-center">
+                    <tr>
+                        <th style="color: black;">Player</th>
+                        <th style="color: black;">From</th>
+                        <th style="color: black;">To</th>
+                        <th><strong style="color: black;">GP</strong></th>
+                        <th><strong style="color: black;">GA</strong></th>
+                        <th><strong style="color: black;">GAA</strong></th>
+                        <th><strong style="color: black;">SF</strong></th>
+                        <th><strong style="color: black;">SV%</strong></th>
+                    </tr>
+                </thead>
+                <tbody id="team-performance-table-body" class="text-center">
+                    <!-- Data will be populated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    function fetchContent(orgId, levelId, seasonId, teamId, topN) {
+        var humanId = document.getElementById('human_id').value;
+        fetch('/goalie_performance/filter_goalie_performance', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ org_id: orgId, level_id: levelId, season_id: seasonId, team_id: teamId, top_n: topN, human_id: humanId })
+        })
+            .then(response => response.json())
+            .then(data => {
+                var goaliePerformanceTableBody = document.getElementById('goalie-performance-table-body');
+                goaliePerformanceTableBody.innerHTML = '';
+
+                data.goalie_performance.forEach(item => {
+                    goaliePerformanceTableBody.innerHTML += `<tr>
+                        <td style="color: black;">${item.context}</td>
+                        <td>${item.first_game}</td>
+                        <td>${item.last_game}</td>
+                        <td><strong style="color: black;">${item.games_played}</strong><br><span style="color: rgb(123, 0, 0);">${item.games_played_rank}</span></td>
+                        <td><strong style="color: black;">${item.goals_allowed}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_allowed_rank}</span></td>
+                        <td><strong style="color: black;">${item.goals_allowed_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_allowed_per_game_rank}</span></td>
+                        <td><strong style="color: black;">${item.shots_faced}</strong><br><span style="color: rgb(123, 0, 0);">${item.shots_faced_rank}</span></td>
+                        <td><strong style="color: black;">${item.save_percentage}</strong><br><span style="color: rgb(123, 0, 0);">${item.save_percentage_rank}</span></td>
+                    </tr>`;
+                });
+
+                var teamPerformanceTableBody = document.getElementById('team-performance-table-body');
+                teamPerformanceTableBody.innerHTML = '';
+
+                if (data.team_performance && data.team_performance.length > 0) {
+                    // Sort team performance by goals_allowed_per_game in descending order
+                    data.team_performance.forEach(item => {
+                        const rowClass = item.human_id === humanId ? 'font-weight-bold' : '';
+                        teamPerformanceTableBody.innerHTML += `<tr class="${rowClass}">
+                            <td style="color: black;">${item.context}</td>
+                            <td>${item.first_game}</td>
+                            <td>${item.last_game}</td>
+                            <td><strong style="color: black;">${item.games_played}</strong><br><span style="color: rgb(123, 0, 0);">${item.games_played_rank}</span></td>
+                            <td><strong style="color: black;">${item.goals_allowed}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_allowed_rank}</span></td>
+                            <td><strong style="color: black;">${item.goals_allowed_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_allowed_per_game_rank}</span></td>
+                            <td><strong style="color: black;">${item.shots_faced}</strong><br><span style="color: rgb(123, 0, 0);">${item.shots_faced_rank}</span></td>
+                            <td><strong style="color: black;">${item.save_percentage}</strong><br><span style="color: rgb(123, 0, 0);">${item.save_percentage_rank}</span></td>
+                        </tr>`;
+                    });
+
+                    document.getElementById('team-performance-section').style.display = 'block';
+                } else {
+                    document.getElementById('team-performance-section').style.display = 'none';
+                }
+            });
+    }
+
+    function updatePageSpecificCGI(url) {
+        // Empty for now
+    }
+
+    function onWindowLoad() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const humanId = urlParams.get('human_id');
+        document.getElementById('human_id').value = humanId;
+        document.getElementById('top_n').value = 200;
+    }
+
+    window.onload = onWindowLoad;
+</script>
+<input type="hidden" id="human_id" value="{{ human_id }}">
+{% endblock %}
