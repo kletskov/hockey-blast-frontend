@@ -74,7 +74,8 @@ def filter_teams(org_id, level_id, season_id, human_id):
 
     game_rosters = db.session.query(GameRoster).join(Game, GameRoster.game_id == Game.id).filter(
         Game.division_id == division.id,
-        GameRoster.human_id == human_id
+        GameRoster.human_id == human_id,
+        ~GameRoster.role.ilike('g')
     ).all()
 
     team_ids = {roster.team_id for roster in game_rosters}
