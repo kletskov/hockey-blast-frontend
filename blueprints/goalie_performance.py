@@ -13,10 +13,11 @@ goalie_performance_bp.register_blueprint(team_division_goalie_stats_bp, url_pref
 
 def format_rank_percentile(rank, total):
     percentile = (total - rank) / total * 100
-    return f"{rank}/{total}<br>{percentile:.0f}th pctl"
+    return f"{rank}/{total}<br>{percentile:.0f}th"
 
 def append_goalie_performance_result(goalie_performance_results, stats, context):
     if isinstance(stats, dict):
+        human_id = stats.get('human_id')
         first_game_id = stats.get('first_game_id')
         last_game_id = stats.get('last_game_id')
         games_played = stats.get('games_played')
@@ -30,6 +31,7 @@ def append_goalie_performance_result(goalie_performance_results, stats, context)
         save_percentage = stats.get('save_percentage')
         save_percentage_rank = stats.get('save_percentage_rank')
     else:
+        human_id = stats.human_id
         first_game_id = stats.first_game_id
         last_game_id = stats.last_game_id
         games_played = stats.games_played
@@ -46,6 +48,7 @@ def append_goalie_performance_result(goalie_performance_results, stats, context)
     first_game = db.session.query(Game.date).filter(Game.id == first_game_id).first() if first_game_id else None
     last_game = db.session.query(Game.date).filter(Game.id == last_game_id).first() if last_game_id else None
     goalie_performance_results.append({
+        'human_id': human_id,
         'context': context,
         'games_played': games_played,
         'games_played_rank': format_rank_percentile(games_played_rank, stats['total_in_rank'] if isinstance(stats, dict) else stats.total_in_rank),
@@ -126,6 +129,9 @@ def filter_goalie_performance():
 
     goalie_performance_results = []
     team_performance_results = []
+    all_goalies_results = []
+    level_name = ""
+    season_name = ""
 
     if org_id == ALL_ORGS_ID:
         org_stats = db.session.query(OrgStatsGoalie).filter(
@@ -149,7 +155,7 @@ def filter_goalie_performance():
                     context = level.level_name
                     append_goalie_performance_result(goalie_performance_results, stats, context)
         else:
-            if team_id is None:
+            if season_id is None:
                 divisions, seasons = get_divisions_and_seasons(org_id, level_id, human_id)
                 for division in divisions:
                     division_stats = db.session.query(DivisionStatsGoalie).filter(
@@ -172,7 +178,26 @@ def filter_goalie_performance():
                 if division:
                     division_id = division.id
 
-                    # Fetch team and division stats
+                if team_id is None:
+                    # Fetch level and season names
+                    level = db.session.query(Level).filter(Level.id == level_id).first()
+                    season = db.session.query(Season).filter(Season.id == season_id).first()
+                    level_name = level.level_name if level else ""
+                    season_name = season.season_name if season else ""
+
+                    # Fetch all goalies for the selected division and season
+                    all_goalies_stats = db.session.query(DivisionStatsGoalie).filter(
+                        DivisionStatsGoalie.division_id == division_id
+                    ).order_by(DivisionStatsGoalie.goals_allowed_per_game_rank).all()
+
+                    for stats in all_goalies_stats:
+                        player = db.session.query(Human).filter(Human.id == stats.human_id).first()
+                        if player:
+                            link_text = f"{player.first_name} {player.middle_name} {player.last_name}".strip()
+                            link = f'<a href="{url_for("human_stats.human_stats", human_id=player.id, top_n=20)}">{link_text}</a>'
+                            append_goalie_performance_result(all_goalies_results, stats, link)
+                else:
+                    # Fetch team stats in division
                     games = db.session.query(Game.id).filter(
                         Game.division_id == division_id,
                         (Game.home_team_id == team_id) | (Game.visitor_team_id == team_id)
@@ -186,10 +211,6 @@ def filter_goalie_performance():
                     team = db.session.query(Team).filter(Team.id == team_id).first()
                     context = f'<a href="{url_for("team_stats.team_stats", team_id=team.id)}">{team.name}</a>'
 
-                    # Return the stats for the specific human
-                    human_stats = stats_dict.get(human_id, {})
-                    append_goalie_performance_result(goalie_performance_results, human_stats, context)
-
                     # Add team performance results
                     for key, stats in stats_dict.items():
                         player = db.session.query(Human).filter(Human.id == key).first()
@@ -201,10 +222,14 @@ def filter_goalie_performance():
     # Sort the results by last game date (descending) and first game date (ascending)
     goalie_performance_results.sort(key=lambda x: (x['games_played']), reverse=True)
     team_performance_results.sort(key=lambda x: (x['games_played']), reverse=True)
+    all_goalies_results.sort(key=lambda x: (x['games_played']), reverse=True)
 
     return jsonify({
         'goalie_performance': goalie_performance_results,
-        'team_performance': team_performance_results
+        'team_performance': team_performance_results,
+        'all_goalies': all_goalies_results,
+        'level_name': level_name,
+        'season_name': season_name
     })
 
 @goalie_performance_bp.route('/filter_levels', methods=['POST'])

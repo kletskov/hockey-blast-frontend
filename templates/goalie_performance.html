@@ -3,9 +3,10 @@
 {% block content %}
 <div class="container mt-3">
     <h4>Goalie Performance for {{ human_name }}</h4>
-    <p>Note: Each data point in the table below comes with rank in format "<span
+    <p>Note: Each data point below includes goalie's rank among other goalies in the following format: "<span
             style="color: rgb(123, 0, 0);">goalie_rank / total_in_rank, Kth <a
-                href="https://en.wikipedia.org/wiki/Percentile" target="_blank">Percentile</a></span>".</p>
+                href="https://en.wikipedia.org/wiki/Percentile" target="_blank">Percentile</a></span>"<br>Dropdown
+        options represent where {{ human_name }} played in net. Click on data header to sort by it!</p>
     {% include "dropdowns.html" %}
     <div id="goalie-performance-results">
         <table class="table table-striped text-center" id="goalie-performance-table">
@@ -14,11 +15,11 @@
                     <th style="color: black;">Context</th>
                     <th style="color: black;">From</th>
                     <th style="color: black;">To</th>
-                    <th><strong style="color: black;">GP</strong></th>
-                    <th><strong style="color: black;">GA</strong></th>
-                    <th><strong style="color: black;">GAA</strong></th>
-                    <th><strong style="color: black;">SF</strong></th>
-                    <th><strong style="color: black;">SV%</strong></th>
+                    <th style="color: black;" onclick="sortTable(3)">GP</th>
+                    <th style="color: black;" onclick="sortTable(4)">GA</th>
+                    <th style="color: black;" onclick="sortTable(5)">GAA</th>
+                    <th style="color: black;" onclick="sortTable(6)">SF</th>
+                    <th style="color: black;" onclick="sortTable(7)">SV%</th>
                 </tr>
             </thead>
             <tbody id="goalie-performance-table-body" class="text-center">
@@ -26,18 +27,18 @@
             </tbody>
         </table>
         <div id="team-performance-section" style="display: none;">
-            <h4>Goalies Performance, sorted Games Played</h4>
+            <h4>Goalies performance for the team:</h4>
             <table class="table table-striped text-center" id="team-performance-table">
                 <thead class="text-center">
                     <tr>
-                        <th style="color: black;">Player</th>
-                        <th style="color: black;">From</th>
-                        <th style="color: black;">To</th>
-                        <th><strong style="color: black;">GP</strong></th>
-                        <th><strong style="color: black;">GA</strong></th>
-                        <th><strong style="color: black;">GAA</strong></th>
-                        <th><strong style="color: black;">SF</strong></th>
-                        <th><strong style="color: black;">SV%</strong></th>
+                        <th style="color: black;" onclick="sortTable(0, 'team-performance-table')">Player</th>
+                        <th style="color: black;" onclick="sortTable(1, 'team-performance-table')">From</th>
+                        <th style="color: black;" onclick="sortTable(2, 'team-performance-table')">To</th>
+                        <th style="color: black;" onclick="sortTable(3, 'team-performance-table')">GP</th>
+                        <th style="color: black;" onclick="sortTable(4, 'team-performance-table')">GA</th>
+                        <th style="color: black;" onclick="sortTable(5, 'team-performance-table')">GAA</th>
+                        <th style="color: black;" onclick="sortTable(6, 'team-performance-table')">SF</th>
+                        <th style="color: black;" onclick="sortTable(7, 'team-performance-table')">SV%</th>
                     </tr>
                 </thead>
                 <tbody id="team-performance-table-body" class="text-center">
@@ -45,8 +46,34 @@
                 </tbody>
             </table>
         </div>
+        <div id="all-goalies-section" style="display: none;">
+            <h4>Goalies for <span id="level-name"></span> in <span id="season-name"></span> season:</h4>
+            <table class="table table-striped text-center" id="all-goalies-table">
+                <thead class="text-center">
+                    <tr>
+                        <th style="color: black;" onclick="sortTable(0, 'all-goalies-table')">Player</th>
+                        <th style="color: black;" onclick="sortTable(1, 'all-goalies-table')">From</th>
+                        <th style="color: black;" onclick="sortTable(2, 'all-goalies-table')">To</th>
+                        <th style="color: black;" onclick="sortTable(3, 'all-goalies-table')">GP</th>
+                        <th style="color: black;" onclick="sortTable(4, 'all-goalies-table')">GA</th>
+                        <th style="color: black;" onclick="sortTable(5, 'all-goalies-table')">GAA</th>
+                        <th style="color: black;" onclick="sortTable(6, 'all-goalies-table')">SF</th>
+                        <th style="color: black;" onclick="sortTable(7, 'all-goalies-table')">SV%</th>
+                    </tr>
+                </thead>
+                <tbody id="all-goalies-table-body" class="text-center">
+                    <!-- Data will be populated here -->
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
+
+<style>
+    .highlight-row {
+        background-color: white !important;
+    }
+</style>
 
 <script>
     function fetchContent(orgId, levelId, seasonId, teamId, topN) {
@@ -64,7 +91,8 @@
                 goaliePerformanceTableBody.innerHTML = '';
 
                 data.goalie_performance.forEach(item => {
-                    goaliePerformanceTableBody.innerHTML += `<tr>
+                    const rowClass = 'font-weight-bold';
+                    goaliePerformanceTableBody.innerHTML += `<tr class="${rowClass}">
                         <td style="color: black;">${item.context}</td>
                         <td>${item.first_game}</td>
                         <td>${item.last_game}</td>
@@ -80,9 +108,10 @@
                 teamPerformanceTableBody.innerHTML = '';
 
                 if (data.team_performance && data.team_performance.length > 0) {
-                    // Sort team performance by goals_allowed_per_game in descending order
+                    document.getElementById('level-name').innerText = data.level_name;
+                    document.getElementById('season-name').innerText = data.season_name;
                     data.team_performance.forEach(item => {
-                        const rowClass = item.human_id === humanId ? 'font-weight-bold' : '';
+                        const rowClass = String(item.human_id) === String(humanId) ? 'font-weight-bold highlight-row' : 'font-weight-bold';
                         teamPerformanceTableBody.innerHTML += `<tr class="${rowClass}">
                             <td style="color: black;">${item.context}</td>
                             <td>${item.first_game}</td>
@@ -99,17 +128,75 @@
                 } else {
                     document.getElementById('team-performance-section').style.display = 'none';
                 }
+
+                var allGoaliesTableBody = document.getElementById('all-goalies-table-body');
+                allGoaliesTableBody.innerHTML = '';
+
+                if (data.all_goalies && data.all_goalies.length > 0) {
+                    document.getElementById('level-name').innerText = data.level_name;
+                    document.getElementById('season-name').innerText = data.season_name;
+                    data.all_goalies.forEach(item => {
+                        const rowClass = String(item.human_id) === String(humanId) ? 'font-weight-bold highlight-row' : 'font-weight-bold';
+                        allGoaliesTableBody.innerHTML += `<tr class="${rowClass}">
+                            <td style="color: black;">${item.context}</td>
+                            <td>${item.first_game}</td>
+                            <td>${item.last_game}</td>
+                            <td><strong style="color: black;">${item.games_played}</strong><br><span style="color: rgb(123, 0, 0);">${item.games_played_rank}</span></td>
+                            <td><strong style="color: black;">${item.goals_allowed}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_allowed_rank}</span></td>
+                            <td><strong style="color: black;">${item.goals_allowed_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_allowed_per_game_rank}</span></td>
+                            <td><strong style="color: black;">${item.shots_faced}</strong><br><span style="color: rgb(123, 0, 0);">${item.shots_faced_rank}</span></td>
+                            <td><strong style="color: black;">${item.save_percentage}</strong><br><span style="color: rgb(123, 0, 0);">${item.save_percentage_rank}</span></td>
+                        </tr>`;
+                    });
+
+                    document.getElementById('all-goalies-section').style.display = 'block';
+                } else {
+                    document.getElementById('all-goalies-section').style.display = 'none';
+                }
             });
+    }
+
+    function sortTable(columnIndex, tableId = 'goalie-performance-table') {
+        var table = document.getElementById(tableId);
+        var rows = Array.from(table.rows).slice(1); // Exclude header row
+
+        // Only allow sorting for specific columns
+        if (![3, 4, 5, 6, 7].includes(columnIndex)) {
+            return;
+        }
+
+        rows.sort((a, b) => {
+            var aText = a.cells[columnIndex].innerText.trim();
+            var bText = b.cells[columnIndex].innerText.trim();
+
+            // Extract the rank value from the cell content
+            var aRank = extractRank(aText);
+            var bRank = extractRank(bText);
+
+            return aRank - bRank; // Sort by rank (ascending)
+        });
+
+        // Append sorted rows back to the table body
+        var tbody = table.getElementsByTagName('tbody')[0];
+        rows.forEach(row => tbody.appendChild(row));
+    }
+
+    function extractRank(text) {
+        var match = text.match(/(\d+)\/\d+/);
+        if (match) {
+            return parseInt(match[1]);
+        }
+        return NaN;
     }
 
     function updatePageSpecificCGI(url) {
     }
 
     function onWindowLoad() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const humanId = urlParams.get('human_id');
-        document.getElementById('human_id').value = humanId;
-        document.getElementById('top_n').value = 200;
+        // const urlParams = new URLSearchParams(window.location.search);
+        // const humanId = urlParams.get('human_id');
+        // document.getElementById('human_id').value = humanId;
+        // document.getElementById('top_n').value = 200;
     }
 
 </script>

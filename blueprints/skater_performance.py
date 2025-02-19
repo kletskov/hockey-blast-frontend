@@ -13,7 +13,7 @@ skater_performance_bp.register_blueprint(team_division_skater_stats_bp, url_pref
 
 def format_rank_percentile(rank, total):
     percentile = (total - rank) / total * 100
-    return f"{rank}/{total}<br>{percentile:.0f}th pctl"
+    return f"{rank}/{total}<br>{percentile:.0f}th"
 
 def append_skater_performance_result(skater_performance_results, stats, context):
     if isinstance(stats, dict):
