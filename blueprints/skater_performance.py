@@ -17,6 +17,7 @@ def format_rank_percentile(rank, total):
 
 def append_skater_performance_result(skater_performance_results, stats, context):
     if isinstance(stats, dict):
+        human_id = stats.get('human_id')
         first_game_id = stats.get('first_game_id')
         last_game_id = stats.get('last_game_id')
         points_per_game = stats.get('points_per_game')
@@ -32,6 +33,7 @@ def append_skater_performance_result(skater_performance_results, stats, context)
         gm_penalties_per_game = stats.get('gm_penalties_per_game')
         gm_penalties_per_game_rank = stats.get('gm_penalties_per_game_rank')
     else:
+        human_id = stats.human_id
         first_game_id = stats.first_game_id
         last_game_id = stats.last_game_id
         points_per_game = stats.points_per_game
@@ -50,6 +52,7 @@ def append_skater_performance_result(skater_performance_results, stats, context)
     first_game = db.session.query(Game.date).filter(Game.id == first_game_id).first() if first_game_id else None
     last_game = db.session.query(Game.date).filter(Game.id == last_game_id).first() if last_game_id else None
     skater_performance_results.append({
+        'human_id': human_id,
         'context': context,
         'points_per_game': f"{points_per_game:.2f}",
         'points_per_game_rank': format_rank_percentile(points_per_game_rank, stats['total_in_rank'] if isinstance(stats, dict) else stats.total_in_rank),
@@ -132,6 +135,9 @@ def filter_skater_performance():
 
     skater_performance_results = []
     team_performance_results = []
+    all_skaters_results = []
+    level_name = ""
+    season_name = ""
 
     if org_id == ALL_ORGS_ID:
         org_stats = db.session.query(OrgStatsSkater).filter(
@@ -155,7 +161,7 @@ def filter_skater_performance():
                     context = level.level_name
                     append_skater_performance_result(skater_performance_results, stats, context)
         else:
-            if team_id is None:
+            if season_id is None:
                 divisions, seasons = get_divisions_and_seasons(org_id, level_id, human_id)
                 for division in divisions:
                     division_stats = db.session.query(DivisionStatsSkater).filter(
@@ -178,7 +184,26 @@ def filter_skater_performance():
                 if division:
                     division_id = division.id
 
-                    # Fetch team and division stats
+                if team_id is None:
+                    # Fetch level and season names
+                    level = db.session.query(Level).filter(Level.id == level_id).first()
+                    season = db.session.query(Season).filter(Season.id == season_id).first()
+                    level_name = level.level_name if level else ""
+                    season_name = season.season_name if season else ""
+
+                    # Fetch all skaters for the selected division and season
+                    all_skaters_stats = db.session.query(DivisionStatsSkater).filter(
+                        DivisionStatsSkater.division_id == division_id
+                    ).order_by(DivisionStatsSkater.points_per_game_rank).all()
+
+                    for stats in all_skaters_stats:
+                        player = db.session.query(Human).filter(Human.id == stats.human_id).first()
+                        if player:
+                            link_text = f"{player.first_name} {player.middle_name} {player.last_name}".strip()
+                            link = f'<a href="{url_for("human_stats.human_stats", human_id=player.id, top_n=20)}">{link_text}</a>'
+                            append_skater_performance_result(all_skaters_results, stats, link)
+                else:
+                    # Fetch team stats in division
                     games = db.session.query(Game.id).filter(
                         Game.division_id == division_id,
                         (Game.home_team_id == team_id) | (Game.visitor_team_id == team_id)
@@ -192,10 +217,6 @@ def filter_skater_performance():
                     team = db.session.query(Team).filter(Team.id == team_id).first()
                     context = f'<a href="{url_for("team_stats.team_stats", team_id=team.id)}">{team.name}</a>'
 
-                    # Return the stats for the specific human
-                    human_stats = stats_dict.get(human_id, {})
-                    append_skater_performance_result(skater_performance_results, human_stats, context)
-
                     # Add team performance results
                     for key, stats in stats_dict.items():
                         player = db.session.query(Human).filter(Human.id == key).first()
@@ -205,11 +226,16 @@ def filter_skater_performance():
                             append_skater_performance_result(team_performance_results, stats, link)
 
     # Sort the results by last game date (descending) and first game date (ascending)
+    skater_performance_results.sort(key=lambda x: (x['points_per_game']), reverse=True)
     team_performance_results.sort(key=lambda x: (x['points_per_game']), reverse=True)
+    all_skaters_results.sort(key=lambda x: (x['points_per_game']), reverse=True)
 
     return jsonify({
         'skater_performance': skater_performance_results,
-        'team_performance': team_performance_results
+        'team_performance': team_performance_results,
+        'all_skaters': all_skaters_results,
+        'level_name': level_name,
+        'season_name': season_name
     })
 
 @skater_performance_bp.route('/filter_levels', methods=['POST'])

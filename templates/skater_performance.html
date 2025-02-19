@@ -6,7 +6,7 @@
     <p>Note: Each data point below includes the skater's rank among other skaters in the following format: "<span
             style="color: rgb(123, 0, 0);">skater_rank / total_in_rank, Kth <a
                 href="https://en.wikipedia.org/wiki/Percentile" target="_blank">Percentile</a></span>".<br>Dropdown
-        options represent where {{ human_name }} skated.</p>
+        options represent where {{ human_name }} skated. Click on data header to sort by it!</p>
     {% include "dropdowns.html" %}
     <div id="skater-performance-results">
         <table class="table table-striped text-center" id="skater-performance-table">
@@ -15,12 +15,12 @@
                     <th style="color: black;">Context</th>
                     <th style="color: black;">From</th>
                     <th style="color: black;">To</th>
-                    <th><strong style="color: black;">GP</strong></th>
-                    <th><strong style="color: black;">Pts/G</strong></th>
-                    <th><strong style="color: black;">GFA</strong></th>
-                    <th><strong style="color: black;">A/GP</strong></th>
-                    <th><strong style="color: black;">Pen/GP</strong></th>
-                    <th><strong style="color: black;">GM/GP</strong></th>
+                    <th style="color: black;" onclick="sortTable(3)">GP</th>
+                    <th style="color: black;" onclick="sortTable(4)">Pts/G</th>
+                    <th style="color: black;" onclick="sortTable(5)">GFA</th>
+                    <th style="color: black;" onclick="sortTable(6)">A/GP</th>
+                    <th style="color: black;" onclick="sortTable(7)">Pen/GP</th>
+                    <th style="color: black;" onclick="sortTable(8)">GM/GP</th>
                 </tr>
             </thead>
             <tbody id="skater-performance-table-body" class="text-center">
@@ -28,19 +28,19 @@
             </tbody>
         </table>
         <div id="team-performance-section" style="display: none;">
-            <h4>Skaters performance, sorted by Points Per Game</h4>
+            <h4>Skaters performance for the team:</h4>
             <table class="table table-striped text-center" id="team-performance-table">
                 <thead class="text-center">
                     <tr>
                         <th style="color: black;">Player</th>
                         <th style="color: black;">From</th>
                         <th style="color: black;">To</th>
-                        <th><strong style="color: black;">GP</strong></th>
-                        <th><strong style="color: black;">Pts/G</strong></th>
-                        <th><strong style="color: black;">GFA</strong></th>
-                        <th><strong style="color: black;">A/GP</strong></th>
-                        <th><strong style="color: black;">Pen/GP</strong></th>
-                        <th><strong style="color: black;">GM/GP</strong></th>
+                        <th style="color: black;" onclick="sortTable(3, 'team-performance-table')">GP</th>
+                        <th style="color: black;" onclick="sortTable(4, 'team-performance-table')">Pts/G</th>
+                        <th style="color: black;" onclick="sortTable(5, 'team-performance-table')">GFA</th>
+                        <th style="color: black;" onclick="sortTable(6, 'team-performance-table')">A/GP</th>
+                        <th style="color: black;" onclick="sortTable(7, 'team-performance-table')">Pen/GP</th>
+                        <th style="color: black;" onclick="sortTable(8, 'team-performance-table')">GM/GP</th>
                     </tr>
                 </thead>
                 <tbody id="team-performance-table-body" class="text-center">
@@ -48,8 +48,35 @@
                 </tbody>
             </table>
         </div>
+        <div id="all-skaters-section" style="display: none;">
+            <h4>Skaters for <span id="level-name"></span> in <span id="season-name"></span> season:</h4>
+            <table class="table table-striped text-center" id="all-skaters-table">
+                <thead class="text-center">
+                    <tr>
+                        <th style="color: black;">Player</th>
+                        <th style="color: black;">From</th>
+                        <th style="color: black;">To</th>
+                        <th style="color: black;" onclick="sortTable(3, 'all-skaters-table')">GP</th>
+                        <th style="color: black;" onclick="sortTable(4, 'all-skaters-table')">Pts/G</th>
+                        <th style="color: black;" onclick="sortTable(5, 'all-skaters-table')">GFA</th>
+                        <th style="color: black;" onclick="sortTable(6, 'all-skaters-table')">A/GP</th>
+                        <th style="color: black;" onclick="sortTable(7, 'all-skaters-table')">Pen/GP</th>
+                        <th style="color: black;" onclick="sortTable(8, 'all-skaters-table')">GM/GP</th>
+                    </tr>
+                </thead>
+                <tbody id="all-skaters-table-body" class="text-center">
+                    <!-- Data will be populated here -->
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
+
+<style>
+    .highlight-row {
+        background-color: white !important;
+    }
+</style>
 
 <script>
     function fetchContent(orgId, levelId, seasonId, teamId, topN) {
@@ -84,9 +111,14 @@
                 teamPerformanceTableBody.innerHTML = '';
 
                 if (data.team_performance && data.team_performance.length > 0) {
-                    // Sort team performance by points_per_game in descending order
+                    document.getElementById('level-name').innerText = data.level_name;
+                    document.getElementById('season-name').innerText = data.season_name;
                     data.team_performance.forEach(item => {
-                        const rowClass = item.human_id === humanId ? 'font-weight-bold' : '';
+                        const rowClass = String(item.human_id) === String(humanId) ? 'font-weight-bold highlight-row' : 'font-weight-bold';
+                        console.log("Team Performance Item:", item); // Debug output
+                        console.log("Row Class:", rowClass); // Debug output
+                        console.log("humanId:", humanId); // Debug output
+                        console.log("item.human_id:", item.human_id); // Debug output
                         teamPerformanceTableBody.innerHTML += `<tr class="${rowClass}">
                             <td style="color: black;">${item.context}</td>
                             <td>${item.first_game}</td>
@@ -104,7 +136,66 @@
                 } else {
                     document.getElementById('team-performance-section').style.display = 'none';
                 }
+
+                var allSkatersTableBody = document.getElementById('all-skaters-table-body');
+                allSkatersTableBody.innerHTML = '';
+
+                if (data.all_skaters && data.all_skaters.length > 0) {
+                    document.getElementById('level-name').innerText = data.level_name;
+                    document.getElementById('season-name').innerText = data.season_name;
+                    data.all_skaters.forEach(item => {
+                        const rowClass = String(item.human_id) === String(humanId) ? 'font-weight-bold highlight-row' : 'font-weight-bold';
+                        allSkatersTableBody.innerHTML += `<tr class="${rowClass}">
+                            <td style="color: black;">${item.context}</td>
+                            <td>${item.first_game}</td>
+                            <td>${item.last_game}</td>
+                            <td><strong style="color: black;">${item.games_played}</strong><br><span style="color: rgb(123, 0, 0);">${item.games_played_rank}</span></td>
+                            <td><strong style="color: black;">${item.points_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.points_per_game_rank}</span></td>
+                            <td><strong style="color: black;">${item.goals_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_per_game_rank}</span></td>
+                            <td><strong style="color: black;">${item.assists_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.assists_per_game_rank}</span></td>
+                            <td><strong style="color: black;">${item.penalties_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.penalties_per_game_rank}</span></td>
+                            <td><strong style="color: black;">${item.gm_penalties_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.gm_penalties_per_game_rank}</span></td>
+                        </tr>`;
+                    });
+
+                    document.getElementById('all-skaters-section').style.display = 'block';
+                } else {
+                    document.getElementById('all-skaters-section').style.display = 'none';
+                }
             });
+    }
+
+    function sortTable(columnIndex, tableId = 'skater-performance-table') {
+        var table = document.getElementById(tableId);
+        var rows = Array.from(table.rows).slice(1); // Exclude header row
+
+        // Only allow sorting for specific columns
+        if (![3, 4, 5, 6, 7, 8].includes(columnIndex)) {
+            return;
+        }
+
+        rows.sort((a, b) => {
+            var aText = a.cells[columnIndex].innerText.trim();
+            var bText = b.cells[columnIndex].innerText.trim();
+
+            // Extract the rank value from the cell content
+            var aRank = extractRank(aText);
+            var bRank = extractRank(bText);
+
+            return aRank - bRank; // Sort by rank (ascending)
+        });
+
+        // Append sorted rows back to the table body
+        var tbody = table.getElementsByTagName('tbody')[0];
+        rows.forEach(row => tbody.appendChild(row));
+    }
+
+    function extractRank(text) {
+        var match = text.match(/(\d+)\/\d+/);
+        if (match) {
+            return parseInt(match[1]);
+        }
+        return NaN;
     }
 
     function updatePageSpecificCGI(url) {
