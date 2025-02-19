@@ -62,7 +62,7 @@ def human_stats():
             goalie_first_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.first_game_id_goalie)}'>{goalie_first_game.date.strftime('%m/%d/%y')}</a>" if goalie_first_game else None
             goalie_last_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.last_game_id_goalie)}'>{goalie_last_game.date.strftime('%m/%d/%y')}</a>" if goalie_last_game else None
             roles_data.append({
-                'role': 'Goalie',
+                'role': f"Goalie <a href='{url_for('goalie_performance.goalie_performance', human_id=human_id)}'>(Click here for all stats)</a>",
                 'games_count': org_stats.games_goalie,
                 'rank': calculate_rank(org_stats.games_goalie_rank, org_stats.goalies_in_rank),
                 'first_date': goalie_first_game_link,

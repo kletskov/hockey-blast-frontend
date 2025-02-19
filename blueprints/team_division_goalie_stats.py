@@ -53,14 +53,14 @@ def compute_goalie_stats(games, team_id):
         stats_dict[key]['total_in_rank'] = total_in_rank
 
     # Assign ranks within each level
-    def assign_ranks(stats_dict, field):
-        sorted_stats = sorted(stats_dict.items(), key=lambda x: x[1][field], reverse=True)
+    def assign_ranks(stats_dict, field, reverse=True):
+        sorted_stats = sorted(stats_dict.items(), key=lambda x: x[1][field], reverse=reverse)
         for rank, (key, stat) in enumerate(sorted_stats, start=1):
             stats_dict[key][f'{field}_rank'] = rank
 
     assign_ranks(stats_dict, 'games_played')
-    assign_ranks(stats_dict, 'goals_allowed')
-    assign_ranks(stats_dict, 'goals_allowed_per_game')
+    assign_ranks(stats_dict, 'goals_allowed', reverse=False)
+    assign_ranks(stats_dict, 'goals_allowed_per_game', reverse=False)
     assign_ranks(stats_dict, 'shots_faced')
     assign_ranks(stats_dict, 'save_percentage')
 

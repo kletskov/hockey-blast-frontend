@@ -200,7 +200,7 @@ def filter_goalie_performance():
 
     # Sort the results by last game date (descending) and first game date (ascending)
     goalie_performance_results.sort(key=lambda x: (x['games_played']), reverse=True)
-    # team_performance_results.sort(key=lambda x: (x['goals_allowed_per_game']), reverse=True)
+    team_performance_results.sort(key=lambda x: (x['games_played']), reverse=True)
 
     return jsonify({
         'goalie_performance': goalie_performance_results,

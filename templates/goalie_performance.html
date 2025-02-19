@@ -26,7 +26,7 @@
             </tbody>
         </table>
         <div id="team-performance-section" style="display: none;">
-            <h4>Team Performance, sorted by Goals Allowed Per Game</h4>
+            <h4>Goalies Performance, sorted Games Played</h4>
             <table class="table table-striped text-center" id="team-performance-table">
                 <thead class="text-center">
                     <tr>
@@ -103,7 +103,6 @@
     }
 
     function updatePageSpecificCGI(url) {
-        // Empty for now
     }
 
     function onWindowLoad() {
@@ -113,7 +112,6 @@
         document.getElementById('top_n').value = 200;
     }
 
-    window.onload = onWindowLoad;
 </script>
 <input type="hidden" id="human_id" value="{{ human_id }}">
 {% endblock %}
