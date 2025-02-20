@@ -132,7 +132,8 @@
                         human.last_name }}</a></td>
                 <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
                 <td>{{ referee.games_reffed }}</td>
-                <td>{{ referee.penalties_given }}PIM, {{ referee.gm_given }}GM</td>
+                <td>{{ referee.penalties_given }}PIM{% if referee.gm_given > 0 %}, {{ referee.gm_given }}GM{% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>
@@ -154,7 +155,8 @@
                         human.last_name }}</a></td>
                 <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
                 <td>{{ referee.games_reffed }}</td>
-                <td>{{ referee.penalties_given }}PIM, {{ referee.gm_given }}GM</td>
+                <td>{{ referee.penalties_given }}PIM{% if referee.gm_given > 0 %}, {{ referee.gm_given }}GM{% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>
