@@ -20,13 +20,61 @@
         Completed: <strong>{{ last_played.date }} {{ last_played_time }}</strong>
     </h5> -->
 
+    <h3>Search Teams and People</h3>
+    <table class="table table-striped">
+        <tr>
+            <td style="vertical-align: middle;">
+                <form method="post" class="mb-4">
+                    <div class="form-group">
+                        <input type="text" class="form-control" id="first_name" name="first_name"
+                            placeholder="Enter first name (or any portion of it)"
+                            oninput="clearOtherFields('first_name')">
+                    </div>
+            </td>
+            <td style="vertical-align: middle;">
+                <div class="form-group">
+                    <input type="text" class="form-control" id="last_name" name="last_name"
+                        placeholder="Enter last name (or any portion of it)" oninput="clearOtherFields('last_name')">
+                </div>
+            </td>
+            <td style="vertical-align: middle; text-align: center;">
+                <strong>OR</strong>
+            </td>
+            <td style="vertical-align: middle;">
+                <div class="form-group">
+                    <input type="text" class="form-control" id="team_name" name="team_name"
+                        placeholder="Enter team name (or any portion of it)" oninput="clearOtherFields('team_name')">
+                </div>
+            </td>
+            <td>
+                <button type="submit" class="btn btn-primary">Search</button>
+                </form>
+            </td>
+        </tr>
+    </table>
+
+    {% if search_results is not none %}
+    <div>
+        {% if search_results %}
+        <h6>Search Results: </h6>
+        <ul class="list-group">
+            {% for link in search_results %}
+            <li class="list-group-item">{{ link|safe }}</li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>No search results.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
     <h3>Top Skaters</h3>
     <h5>Day</h5>
     <table class="table table-striped">
         <thead>
             <tr>
                 <th>Name</th>
-                <th>Org</th>
+                <th>Org</h>
                 <th>GP</th>
                 <th>PTS(G,A)</th>
             </tr>
@@ -204,4 +252,15 @@
         </tbody>
     </table>
 </div>
+
+<script>
+    function clearOtherFields(focusedField) {
+        if (focusedField === 'first_name' || focusedField === 'last_name') {
+            document.getElementById('team_name').value = '';
+        } else if (focusedField === 'team_name') {
+            document.getElementById('first_name').value = '';
+            document.getElementById('last_name').value = '';
+        }
+    }
+</script>
 {% endblock %}

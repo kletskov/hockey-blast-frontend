@@ -1,8 +1,8 @@
 import logging
-from flask import Flask, render_template, request, g, jsonify, send_from_directory
+from flask import Flask, render_template, request, g, jsonify, send_from_directory, url_for
 from flask_sqlalchemy import SQLAlchemy
 from threading import Thread
-from hockey_blast_common_lib.models import db, Organization, Game, Human, RequestLog
+from hockey_blast_common_lib.models import db, Organization, Game, Human, RequestLog, Team, HumanAlias
 from hockey_blast_common_lib.stats_models import OrgStatsWeeklyHuman, OrgStatsDailySkater, OrgStatsWeeklySkater, OrgStatsDailyGoalie, OrgStatsWeeklyGoalie, OrgStatsDailyReferee, OrgStatsWeeklyReferee, OrgStatsSkater, OrgStatsGoalie, OrgStatsReferee, OrgStatsDailyHuman, OrgStatsHuman
 from hockey_blast_common_lib.db_connection import get_db_params
 from markupsafe import Markup
@@ -16,6 +16,9 @@ from hockey_blast_common_lib.utils import get_fake_human_for_stats
 from datetime import datetime, timezone, timedelta
 import psycopg2
 from hockey_blast_common_lib.stats_utils import ALL_ORGS_ID
+from options import MAX_TEAM_SEARCH_RESULTS
+from options import MAX_HUMAN_SEARCH_RESULTS
+import urllib.parse
 
 # Debug: Print the DB_HOST environment variable
 flask_table.table.Markup = Markup
@@ -67,21 +70,6 @@ def create_app(db_name):
     app.config['ORG_NAME'] = 'Hockey Blast'
     db.init_app(app)
 
-    # Add middleware
-    # Initialize Limiter
-    # limiter = Limiter(
-    #     key_func=get_client_ip,
-    #     app=app,
-    #     default_limits=["1 per 2 seconds", "1000 per day"]
-    # )
-    
-    # Custom limit for specific user agent
-    # user_agent_limiter = Limiter(
-    #     key_func=get_user_agent,
-    #     app=app,
-    #     default_limits=["1 per minute"]
-    # )
-    
     # Register blueprints
     app.register_blueprint(teams_per_season_bp)
     app.register_blueprint(human_stats_bp, url_prefix='/human_stats')
@@ -131,15 +119,8 @@ def create_app(db_name):
             db.session.rollback()
             logger.error(f"Failed to log request: {e}")
 
-    # @app.after_request
-    # def after_request(response):
-    #     client_ip = get_client_ip()
-    #     if response.status_code == 429:
-    #         g.limited = True
-    #     logger.info(f"Request to {request.path} from {client_ip} with User-Agent {request.headers.get('User-Agent')} - Status: {response.status_code} - Limited: {g.limited}")
-    #     return response
     
-    @app.route('/')
+    @app.route('/', methods=['GET', 'POST'])
     def index():
         try:
             top_n = request.args.get('top_n', default=5, type=int)
@@ -167,10 +148,60 @@ def create_app(db_name):
             weekly_referee_games_reffed = db.session.query(OrgStatsWeeklyReferee, Human, Organization).join(Human, OrgStatsWeeklyReferee.human_id == Human.id).join(Organization, OrgStatsWeeklyReferee.org_id == Organization.id).filter(OrgStatsWeeklyReferee.games_reffed > 0, OrgStatsWeeklyReferee.org_id != ALL_ORGS_ID).order_by(OrgStatsWeeklyReferee.games_reffed.desc(), (OrgStatsWeeklyReferee.gm_given + OrgStatsWeeklyReferee.penalties_given).desc()).limit(top_n).all()
             weekly_scorekeeper_games = db.session.query(OrgStatsWeeklyHuman, Human, Organization).join(Human, OrgStatsWeeklyHuman.human_id == Human.id).join(Organization, OrgStatsWeeklyHuman.org_id == Organization.id).filter(OrgStatsWeeklyHuman.games_scorekeeper > 0, OrgStatsWeeklyHuman.human_id != fake_human_id, OrgStatsWeeklyHuman.org_id != ALL_ORGS_ID).order_by(OrgStatsWeeklyHuman.games_scorekeeper.desc()).limit(top_n).all()
 
-            return render_template('index.html', 
-                                   last_scheduled=last_scheduled, last_scheduled_time=last_scheduled_time, last_played=last_played, last_played_time=last_played_time,
-                                   daily_skater_points=daily_skater_points, daily_goalie_games_played=daily_goalie_games_played, daily_referee_games_reffed=daily_referee_games_reffed, daily_scorekeeper_games=daily_scorekeeper_games,
-                                   weekly_skater_points=weekly_skater_points, weekly_goalie_games_played=weekly_goalie_games_played, weekly_referee_games_reffed=weekly_referee_games_reffed, weekly_scorekeeper_games=weekly_scorekeeper_games)
+            if request.method == 'POST':
+                team_name = request.form.get('team_name')
+                query = db.session.query(Team)
+                
+                if team_name:
+                    query = query.filter(Team.name.ilike(f'%{team_name}%'))
+                
+                    # Apply limit directly in the query
+                    results = query.limit(MAX_TEAM_SEARCH_RESULTS).all()
+                    
+                    if not results:
+                        return render_template('search_teams.html', no_results=True, max_results=MAX_TEAM_SEARCH_RESULTS)
+                    
+                    links = []
+                    for team in results:
+                        link_text = team.name
+                        encoded_link_text = urllib.parse.quote(link_text)
+                        link = f'<a href="{url_for("team_stats.team_stats", team_id=team.id)}">{link_text}</a>'
+                        links.append(link)
+                else:
+                        first_name = request.form.get('first_name')
+                        last_name = request.form.get('last_name')
+                        query = db.session.query(Human)
+                        
+                        if first_name:
+                            query = query.filter(Human.first_name.ilike(f'%{first_name}%'))
+                        if last_name:
+                            query = query.filter(Human.last_name.ilike(f'%{last_name}%'))
+                        
+                        # Apply limit directly in the query
+                        results = query.limit(MAX_HUMAN_SEARCH_RESULTS).all()
+                        
+                        if not results:
+                            return render_template('search_humans.html', no_results=True, max_results=MAX_HUMAN_SEARCH_RESULTS, top_humans=top_humans_data, top_games_played=top_games_played_data, top_points_per_game=top_points_per_game_data, top_penalties_per_game=top_penalties_per_game_data)
+                        
+                        links = []
+                        for player in results:
+                            aliases = db.session.query(HumanAlias).filter(HumanAlias.human_id == player.id).all()
+                            alias_names = [f"{alias.first_name} {alias.middle_name} {alias.last_name}".strip() for alias in aliases if f"{alias.first_name} {alias.middle_name} {alias.last_name}".strip() != f"{player.first_name} {player.middle_name} {player.last_name}".strip()]
+                            alias_text = f" A.K.A. {', '.join(alias_names)}" if alias_names else ""
+                            link_text = f"{player.first_name} {player.middle_name} {player.last_name}{alias_text}"
+                            link = f'<a href="{url_for("human_stats.human_stats", human_id=player.id, top_n=20)}">{link_text}</a>'
+                            links.append(link)
+
+                return render_template('index.html',
+                                       search_results=links, 
+                                last_scheduled=last_scheduled, last_scheduled_time=last_scheduled_time, last_played=last_played, last_played_time=last_played_time,
+                                daily_skater_points=daily_skater_points, daily_goalie_games_played=daily_goalie_games_played, daily_referee_games_reffed=daily_referee_games_reffed, daily_scorekeeper_games=daily_scorekeeper_games,
+                                weekly_skater_points=weekly_skater_points, weekly_goalie_games_played=weekly_goalie_games_played, weekly_referee_games_reffed=weekly_referee_games_reffed, weekly_scorekeeper_games=weekly_scorekeeper_games)
+            return render_template('index.html',
+                                search_results=None, 
+                                last_scheduled=last_scheduled, last_scheduled_time=last_scheduled_time, last_played=last_played, last_played_time=last_played_time,
+                                daily_skater_points=daily_skater_points, daily_goalie_games_played=daily_goalie_games_played, daily_referee_games_reffed=daily_referee_games_reffed, daily_scorekeeper_games=daily_scorekeeper_games,
+                                weekly_skater_points=weekly_skater_points, weekly_goalie_games_played=weekly_goalie_games_played, weekly_referee_games_reffed=weekly_referee_games_reffed, weekly_scorekeeper_games=weekly_scorekeeper_games)
         except Exception as e:
             error_info = {
                 "error": str(e),
@@ -179,11 +210,7 @@ def create_app(db_name):
             return render_template('error.html', error_info=error_info)
 
     @app.route('/special_stats')
-    # @limiter.limit("1 per 2 seconds")
-    # @limiter.limit("1000 per day")
-    # @user_agent_limiter.limit("1 per minute", key_func=lambda: BLOCKED_USER_AGENT)
     def special_stats():
-        # Your logic to get any data needed for special_stats.html
         return render_template('special_stats.html', background_image=app.config['BACKGROUND_IMAGE'])
 
     @app.route('/robots.txt')
