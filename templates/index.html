@@ -4,7 +4,7 @@
 
 {% block content %}
 <div style="text-align: center;">
-    <h1 class="mb-4 outlined-text" style="font-size: 2.5rem; margin-left: 0px;">
+    <!-- <h1 class="mb-4 outlined-text" style="font-size: 2.5rem; margin-left: 0px;">
         HOCKEY B.L.A.S.T.
         <br>
         <br>
@@ -12,16 +12,16 @@
         <br>
         Analytics and Stats
     </h1>
-    <h4 class="mb-4 outlined-text" style="margin-left: 0px;">
+    <h5 class="mb-4 outlined-text" style="margin-left: 0px;">
         Last Game Indexed:
         <br>
         Scheduled: <strong>{{ last_scheduled.date }} {{ last_scheduled_time }}</strong>
         <br>
         Completed: <strong>{{ last_played.date }} {{ last_played_time }}</strong>
-    </h4>
+    </h5> -->
 
-    <h2>Top Skaters</h2>
-    <h4>Day</h4>
+    <h3>Top Skaters</h3>
+    <h5>Day</h5>
     <table class="table table-striped">
         <thead>
             <tr>
@@ -44,7 +44,7 @@
             {% endfor %}
         </tbody>
     </table>
-    <h4>Week</h4>
+    <h5>Week</h5>
     <table class="table table-striped">
         <thead>
             <tr>
@@ -67,32 +67,9 @@
             {% endfor %}
         </tbody>
     </table>
-    <h4>All-Time</h4>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Org</th>
-                <th>GP</th>
-                <th>PTS(G,A)</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for skater, human, org in all_time_skater_points %}
-            <tr>
-                <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                        human.last_name }}</a></td>
-                <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
-                <td>{{ skater.games_played }}</td>
-                <td>{{ skater.points }}P{% if skater.goals > 0 %}({{ skater.goals }}G{% if skater.assists > 0 %},{{
-                    skater.assists }}A{% endif %}){% endif %}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
 
-    <h2>Top Goalies</h2>
-    <h4>Day</h4>
+    <h3>Top Goalies</h3>
+    <h5>Day</h5>
     <table class="table table-striped">
         <thead>
             <tr>
@@ -114,7 +91,7 @@
             {% endfor %}
         </tbody>
     </table>
-    <h4>Week</h4>
+    <h5>Week</h5>
     <table class="table table-striped">
         <thead>
             <tr>
@@ -136,31 +113,9 @@
             {% endfor %}
         </tbody>
     </table>
-    <h4>All-Time</h4>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Org</th>
-                <th>GP</th>
-                <th>SV%</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for goalie, human, org in all_time_goalie_games_played %}
-            <tr>
-                <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                        human.last_name }}</a></td>
-                <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
-                <td>{{ goalie.games_played }}</td>
-                <td>{{ "%.2f" % goalie.save_percentage }}SV%</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
 
-    <h2>Top Referees</h2>
-    <h4>Day</h4>
+    <h3>Top Referees</h3>
+    <h5>Day</h5>
     <table class="table table-striped">
         <thead>
             <tr>
@@ -182,7 +137,7 @@
             {% endfor %}
         </tbody>
     </table>
-    <h4>Week</h4>
+    <h5>Week</h5>
     <table class="table table-striped">
         <thead>
             <tr>
@@ -204,31 +159,9 @@
             {% endfor %}
         </tbody>
     </table>
-    <h4>All-Time</h4>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Org</th>
-                <th>GM</th>
-                <th>Whistle</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for referee, human, org in all_time_referee_games_reffed %}
-            <tr>
-                <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                        human.last_name }}</a></td>
-                <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
-                <td>{{ referee.games_reffed }}</td>
-                <td>{{ referee.penalties_given }}PIM, {{ referee.gm_given }}GM</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
 
-    <h2>Top Scorekeepers</h2>
-    <h4>Day</h4>
+    <h3>Top Scorekeepers</h3>
+    <h5>Day</h5>
     <table class="table table-striped">
         <thead>
             <tr>
@@ -248,7 +181,7 @@
             {% endfor %}
         </tbody>
     </table>
-    <h4>Week</h4>
+    <h5>Week</h5>
     <table class="table table-striped">
         <thead>
             <tr>
@@ -259,26 +192,6 @@
         </thead>
         <tbody>
             {% for scorekeeper, human, org in weekly_scorekeeper_games %}
-            <tr>
-                <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                        human.last_name }}</a></td>
-                <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
-                <td>{{ scorekeeper.games_scorekeeper }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <h4>All-Time</h4>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Org</th>
-                <th>GM</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for scorekeeper, human, org in all_time_scorekeeper_games %}
             <tr>
                 <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
                         human.last_name }}</a></td>
