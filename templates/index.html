@@ -20,38 +20,35 @@
         Completed: <strong>{{ last_played.date }} {{ last_played_time }}</strong>
     </h5> -->
 
-    <h3>Search Teams and People</h3>
-    <table class="table table-striped">
-        <tr>
-            <td style="vertical-align: middle;">
-                <form method="post" class="mb-4">
+    <!-- <h3>Search Teams and People</h3> -->
+    <form method="post" class="mb-4">
+        <table class="table table-striped">
+            <tr>
+                <td style="vertical-align: middle;">
                     <div class="form-group">
-                        <input type="text" class="form-control" id="first_name" name="first_name"
-                            placeholder="Enter first name (or any portion of it)"
+                        <input type="text" class="form-control" id="first_name" name="first_name" placeholder="First"
                             oninput="clearOtherFields('first_name')">
                     </div>
-            </td>
-            <td style="vertical-align: middle;">
-                <div class="form-group">
-                    <input type="text" class="form-control" id="last_name" name="last_name"
-                        placeholder="Enter last name (or any portion of it)" oninput="clearOtherFields('last_name')">
-                </div>
-            </td>
-            <td style="vertical-align: middle; text-align: center;">
-                <strong>OR</strong>
-            </td>
-            <td style="vertical-align: middle;">
-                <div class="form-group">
-                    <input type="text" class="form-control" id="team_name" name="team_name"
-                        placeholder="Enter team name (or any portion of it)" oninput="clearOtherFields('team_name')">
-                </div>
-            </td>
-            <td>
-                <button type="submit" class="btn btn-primary">Search</button>
-                </form>
-            </td>
-        </tr>
-    </table>
+                    <div class="form-group">
+                        <input type="text" class="form-control" id="last_name" name="last_name" placeholder="Last"
+                            oninput="clearOtherFields('last_name')">
+                    </div>
+                </td>
+                <td style="vertical-align: middle; text-align: center;">
+                    <strong>OR</strong>
+                </td>
+                <td style="vertical-align: middle;">
+                    <div class="form-group">
+                        <input type="text" class="form-control" id="team_name" name="team_name" placeholder="Team"
+                            oninput="clearOtherFields('team_name')">
+                    </div>
+                </td>
+                <td style="vertical-align: middle;">
+                    <button type="submit" class="btn btn-primary">Search</button>
+                </td>
+            </tr>
+        </table>
+    </form>
 
     {% if search_results is not none %}
     <div>
