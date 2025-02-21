@@ -50,9 +50,8 @@ def get_top_humans_data(session, org_id, top_n_stats=10):
 
 @search_players_bp.route('/search_humans', methods=['GET', 'POST'])
 def search_humans():
-    org_id = 1
-    top_n_stats = 10
-
+    org_id = -1
+    top_n_stats = request.args.get('top_n', default=10)
     # Fetch top humans by total games
     top_humans_data = get_top_humans_data(db.session, org_id, top_n_stats)
 

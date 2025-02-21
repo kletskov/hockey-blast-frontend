@@ -1,10 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}Search Humans{% endblock %}
+<!-- {% block title %}Search Humans{% endblock %} -->
 
 {% block content %}
-<h1 class="mb-4">People Search</h1>
-<form method="post" class="mb-4">
+<!-- <form method="post" class="mb-4">
     <div class="form-group">
         <input type="text" class="form-control" id="first_name" name="first_name"
             placeholder="Enter first name (or any portion of it)">
@@ -14,9 +13,9 @@
             placeholder="Enter last name (or any portion of it)">
     </div>
     <button type="submit" class="btn btn-primary">Search</button>
-</form>
+</form> -->
 {% if results %}
-<h2>Results (showing up to {{ max_results }} matches):</h2>
+<h4>Results (showing up to {{ max_results }} matches):</h4>
 <ul class="list-group">
     {% for link in results %}
     <li class="list-group-item">{{ link|safe }}</li>
@@ -24,7 +23,7 @@
 </ul>
 {% endif %}
 
-<h2 class="mt-4">Game Participation - all time rank</h2>
+<h5 class="mt-4">Game Participation</h5>
 <table class="table table-striped">
     <thead>
         <tr>
@@ -52,8 +51,8 @@
     </tbody>
 </table>
 
-<h2 class="mt-4">Skaters - all time ranks</h2>
-<h3>Games Played</h3>
+<h4 class="mt-4"></h4>
+<h5>Skaters - Games Played</h5>
 <table class="table table-striped">
     <thead>
         <tr>
@@ -73,7 +72,7 @@
     </tbody>
 </table>
 
-<h3>Points Per Game</h3>
+<h5>Skaters - Points Per Game</h5>
 <table class="table table-striped">
     <thead>
         <tr>
@@ -93,7 +92,7 @@
     </tbody>
 </table>
 
-<h3>Penalties Per Game</h3>
+<h5>Skaters - Penalties Per Game</h5>
 <table class="table table-striped">
     <thead>
         <tr>

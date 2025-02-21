@@ -80,11 +80,10 @@
     <nav>
         <br>
         <a href="{{ url_for('index') }}">Main</a> |
-        <a href="{{ url_for('search_humans.search_humans') }}">People Search</a> |
+        <a href="{{ url_for('search_humans.search_humans', top_n=20) }}">Hall Of Fame</a> |
         <a
             href="{{ url_for('games.games', top_n=20, org_id='1', level_id='', season_id='', game_status='completed') }}">Games</a>
         |
-        <a href="{{ url_for('search_teams.search_teams') }}">Teams</a> |
         <a href="{{ url_for('special_stats') }}">Special Stats</a> |
         <a
             href="{{ url_for('penalties.penalties', top_n=20, org_id='1', level_id='', season_id='', player_status='active', team_id='') }}">Penalties</a>
