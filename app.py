@@ -180,9 +180,6 @@ def create_app(db_name):
                         # Apply limit directly in the query
                         results = query.limit(MAX_HUMAN_SEARCH_RESULTS).all()
                         
-                        if not results:
-                            return render_template('search_humans.html', no_results=True, max_results=MAX_HUMAN_SEARCH_RESULTS, top_humans=top_humans_data, top_games_played=top_games_played_data, top_points_per_game=top_points_per_game_data, top_penalties_per_game=top_penalties_per_game_data)
-                        
                         links = []
                         for player in results:
                             aliases = db.session.query(HumanAlias).filter(HumanAlias.human_id == player.id).all()
