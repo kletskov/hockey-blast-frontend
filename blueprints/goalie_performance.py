@@ -140,7 +140,7 @@ def filter_goalie_performance():
 
         for stats in org_stats:
             organization = db.session.query(Organization).filter(Organization.id == stats.org_id).first()
-            context = f'<a href="{organization.website}">{organization.organization_name}</a>'
+            context = organization.organization_name
             append_goalie_performance_result(goalie_performance_results, stats, context)
     else:
         if level_id is None:
