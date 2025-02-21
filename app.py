@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 from blueprints.teams_per_season import teams_per_season_bp
 from blueprints.human_stats import human_stats_bp
-from blueprints.search_humans import search_players_bp
+from blueprints.hall_of_fame import hall_of_fame_bp
 from blueprints.players_per_season import players_per_season_bp
 from blueprints.active_players import active_players_bp
 from blueprints.day_of_week import day_of_week_bp
@@ -73,7 +73,7 @@ def create_app(db_name):
     # Register blueprints
     app.register_blueprint(teams_per_season_bp)
     app.register_blueprint(human_stats_bp, url_prefix='/human_stats')
-    app.register_blueprint(search_players_bp)
+    app.register_blueprint(hall_of_fame_bp, url_prefix='/hall_of_fame')
     app.register_blueprint(players_per_season_bp)
     app.register_blueprint(seasons_bp)
     app.register_blueprint(active_players_bp)

@@ -3,46 +3,32 @@
 {% block title %}Hockey B.L.A.S.T - Special Stats!{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-sm-3 col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <a href="{{ url_for('time_of_games.interactive_plot') }}" class="btn btn-primary">Game Start
-                    Times</a>
-                <p class="card-text"><strong>See who got lucky!</strong></p>
-            </div>
+<div style="text-align: center;">
+    <div class="card">
+        <div class="card-body">
+            <a href="{{ url_for('time_of_games.interactive_plot') }}" class="btn btn-primary">Game Start
+                Times</a>
+            <p class="card-text"><strong>See who got lucky!</strong></p>
         </div>
     </div>
-</div>
-<div class="row justify-content-center">
-    <div class="col-sm-3 col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <a href="{{ url_for('day_of_week.interactive_plot') }}" class="btn btn-primary">Days of Week</a>
-                <p class="card-text"><strong>Schedule stability/randomness.</strong></p>
-            </div>
+    <div class="card">
+        <div class="card-body">
+            <a href="{{ url_for('day_of_week.interactive_plot') }}" class="btn btn-primary">Days of Week</a>
+            <p class="card-text"><strong>Schedule stability/randomness.</strong></p>
         </div>
     </div>
-</div>
-<div class="row justify-content-center">
-    <div class="col-sm-3 col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <a href="{{ url_for('active_players.interactive_plot') }}" class="btn btn-primary">Players
-                    Count</a>
-                <p class="card-text"><strong>Per season, month or YoY.</strong></p>
-            </div>
+    <div class="card">
+        <div class="card-body">
+            <a href="{{ url_for('active_players.interactive_plot') }}" class="btn btn-primary">Players
+                Count</a>
+            <p class="card-text"><strong>Per season, month or YoY.</strong></p>
         </div>
     </div>
-</div>
-<div class="row justify-content-center">
-    <div class="col-sm-3 col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <a href="{{ url_for('game_shootout.interactive_plot') }}" class="btn btn-primary">Shootouts
-                    when tied</a>
-                <p class="card-text"><strong>How often it happens...</strong></p>
-            </div>
+    <div class="card">
+        <div class="card-body">
+            <a href="{{ url_for('game_shootout.interactive_plot') }}" class="btn btn-primary">Shootouts
+                when tied</a>
+            <p class="card-text"><strong>How often it happens...</strong></p>
         </div>
     </div>
 </div>

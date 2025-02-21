@@ -1,172 +1,120 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Percentage of Games by Day of the Week</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <style>
-        .container {
-            margin-top: 20px;
-        }
+{% block title %}Percentage of Games by Day of the Week{% endblock %}
 
-        .table-container {
-            overflow-x: auto;
-            margin-top: 20px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 12px;
-            /* Make the font smaller */
-        }
-
-        th,
-        td {
-            border: 1px solid #ddd;
-            padding: 4px;
-            /* Reduce padding */
-        }
-
-        th {
-            background-color: #f2f2f2;
-            text-align: center;
-        }
-
-        td {
-            text-align: center;
-        }
-
-        nav {
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 1.2rem;
-            /* Increase text size */
-        }
-
-        nav a {
-            color: orange;
-        }
-
-        nav a:hover {
-            color: darkorange;
-        }
-    </style>
-</head>
-
-<body style="background-color: lightgrey;">
-    <nav>
-        <br>
-        <a href="{{ url_for('index') }}">Main</a> |
-        <a href="{{ url_for('search_humans.search_humans') }}">Search Humans</a> |
-        <a href="{{ url_for('search_teams.search_teams') }}">Search Teams</a> |
-        <a href="{{ url_for('special_stats') }}">Special Stats</a> |
-        <a href="mailto:info@hockey-blast.com">Report a problem</a> |
-        <a href="https://forms.gle/YJuJ9Jw4Xxrz5JLQ9">Submit Feature Request</a>
-    </nav>
-    <div class="container">
-        <h1 class="mb-4">Percentage of Games by Day of the Week</h1>
-        <div class="form-group">
-            <label for="x-axis">Aggregate by:</label>
-            <select class="form-control" id="x-axis">
-                <option value="season_name">Seasons</option>
-                <option value="year_month">Year + Month</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="plot-level">Choose a Division:</label>
-            <select class="form-control" id="plot-level">
-                <option value="all">All</option>
-                {% for level in levels %}
-                <option value="{{ level }}">{{ level }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <button class="btn btn-primary" id="update-plot">Update Plot</button>
+{% block content %}
+<div class="container">
+    <h3> Percentage of Games by Day of the Week</h3>
+    <div class="form-group">
+        <label for="x-axis">Aggregate by:</label>
+        <select class="form-control" id="x-axis">
+            <option value="season_name">Seasons</option>
+            <option value="year_month">Year + Month</option>
+        </select>
+        <label for="plot-level">Choose a Division:</label>
+        <select class="form-control" id="plot-level">
+            <option value="all">All</option>
+            {% for level in levels %}
+            <option value="{{ level }}">{{ level }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button class="btn btn-primary" id="update-plot">Update Plot</button>
+    <div class="plot-container">
         <div id="plot"></div>
     </div>
-    <script>
-        document.getElementById('update-plot').addEventListener('click', function () {
-            var x_axis = document.getElementById('x-axis').value;
-            var plot_level = document.getElementById('plot-level').value;
+</div>
 
-            fetch('/get_day_of_week_data', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    x_axis: x_axis,
-                    plot_level: plot_level
-                })
+<style>
+    .plot-container {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    #plot {
+        width: 100%;
+        height: 600px;
+    }
+</style>
+
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+    document.getElementById('update-plot').addEventListener('click', function () {
+        var x_axis = document.getElementById('x-axis').value;
+        var plot_level = document.getElementById('plot-level').value;
+
+        fetch('/get_day_of_week_data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                x_axis: x_axis,
+                plot_level: plot_level
             })
-                .then(response => response.json())
-                .then(data => {
-                    var traces = [];
-                    var sortedX = data.x;
+        })
+            .then(response => response.json())
+            .then(data => {
+                var traces = [];
+                var sortedX = data.x;
 
-                    for (var day in data.y) {
-                        traces.push({
-                            x: sortedX,
-                            y: data.y[day],
-                            mode: 'lines',
-                            name: day
-                        });
-                    }
-                    var layout = {
-                        title: 'Percentage of Games by Day of the Week',
-                        xaxis: {
-                            title: x_axis === 'year_month' ? 'Year + Month' : 'Season Name',
-                            tickangle: x_axis === 'year_month' ? 90 : -45,
-                            tickformat: x_axis === 'year_month' ? '%b %Y' : '',
-                            dtick: x_axis === 'year_month' ? 'M4' : ''
-                        },
-                        yaxis: { title: 'Percentage of Games' },
-                        margin: x_axis === 'year_month' ? { b: 90 } : { b: 150 }
-                    };
-                    Plotly.newPlot('plot', traces, layout);
+                for (var day in data.y) {
+                    traces.push({
+                        x: sortedX,
+                        y: data.y[day],
+                        mode: 'lines',
+                        name: day
+                    });
+                }
+                var layout = {
+                    title: 'Percentage of Games by Day of the Week',
+                    xaxis: {
+                        title: x_axis === 'year_month' ? 'Year + Month' : 'Season Name',
+                        tickangle: x_axis === 'year_month' ? 90 : -45,
+                        tickformat: x_axis === 'year_month' ? '%b %Y' : '',
+                        dtick: x_axis === 'year_month' ? 'M4' : ''
+                    },
+                    yaxis: { title: 'Percentage of Games' },
+                    margin: x_axis === 'year_month' ? { b: 90 } : { b: 150 }
+                };
+                Plotly.newPlot('plot', traces, layout);
 
-                    // Update table
-                    var table = document.getElementById('data-table');
-                    var thead = table.querySelector('thead');
-                    var tbody = table.querySelector('tbody');
+                // Update table
+                var table = document.getElementById('data-table');
+                var thead = table.querySelector('thead');
+                var tbody = table.querySelector('tbody');
 
-                    // Clear existing table headers and rows
-                    thead.innerHTML = '';
-                    tbody.innerHTML = '';
+                // Clear existing table headers and rows
+                thead.innerHTML = '';
+                tbody.innerHTML = '';
 
-                    // Create table headers
-                    var headerRow = document.createElement('tr');
+                // Create table headers
+                var headerRow = document.createElement('tr');
+                var th = document.createElement('th');
+                th.innerText = 'Day of the Week';
+                headerRow.appendChild(th);
+
+                data.x.slice(-24).forEach(function (x_value) {
                     var th = document.createElement('th');
-                    th.innerText = 'Day of the Week';
+                    th.innerText = x_value;
                     headerRow.appendChild(th);
-
-                    data.x.slice(-24).forEach(function (x_value) {
-                        var th = document.createElement('th');
-                        th.innerText = x_value;
-                        headerRow.appendChild(th);
-                    });
-                    thead.appendChild(headerRow);
-
-                    // Create table rows
-                    ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].forEach(function (day) {
-                        var row = document.createElement('tr');
-                        var td = document.createElement('td');
-                        td.innerText = day;
-                        row.appendChild(td);
-                        data.y[day].slice(-24).forEach(function (value) {
-                            var td = document.createElement('td');
-                            td.innerText = (value * 100).toFixed(1) + '%';
-                            row.appendChild(td);
-                        });
-                        tbody.appendChild(row);
-                    });
                 });
-        });
-    </script>
-</body>
+                thead.appendChild(headerRow);
 
-</html>
+                // Create table rows
+                ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].forEach(function (day) {
+                    var row = document.createElement('tr');
+                    var td = document.createElement('td');
+                    td.innerText = day;
+                    row.appendChild(td);
+                    data.y[day].slice(-24).forEach(function (value) {
+                        var td = document.createElement('td');
+                        td.innerText = (value * 100).toFixed(1) + '%';
+                        row.appendChild(td);
+                    });
+                    tbody.appendChild(row);
+                });
+            });
+    });
+</script>
+{% endblock %}

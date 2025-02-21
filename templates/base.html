@@ -73,6 +73,23 @@
         nav a:hover {
             color: darkorange;
         }
+
+        .card {
+            background-color: #20B2AA;
+            /* Light teal */
+            color: white;
+        }
+
+        .card .btn {
+            background-color: #008080;
+            /* Dark teal */
+            color: white;
+        }
+
+        .card .btn:hover {
+            background-color: #006666;
+            /* Darker teal */
+        }
     </style>
 </head>
 
@@ -86,7 +103,7 @@
         <a
             href="{{ url_for('penalties.penalties', top_n=20, org_id='1', level_id='', season_id='', player_status='active', team_id='') }}">Penalties</a>
         |
-        <a href="{{ url_for('search_humans.search_humans', top_n=20) }}">Hall Of Fame</a> |
+        <a href="{{ url_for('hall_of_fame.hall_of_fame', top_n=20) }}">Hall Of Fame</a> |
         <a href="{{ url_for('special_stats') }}">Special Stats</a> |
         <a href="mailto:info@hockey-blast.com">Report a problem</a> |
         <a href="https://forms.gle/YJuJ9Jw4Xxrz5JLQ9">Submit Feature Request</a> |

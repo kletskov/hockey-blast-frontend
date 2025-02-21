@@ -9,9 +9,9 @@ game_shootout_bp = Blueprint('game_shootout', __name__)
 
 @game_shootout_bp.route('/game_shootout', methods=['GET'])
 def interactive_plot():
-    divisions = db.session.query(Division.level).distinct().all()
+    divisions = db.session.query(Division.level).filter(Division.org_id == 1).distinct().all()
     divisions = sorted([division[0] for division in divisions])  # Sort divisions alphabetically
-    leagues = db.session.query(League).all()
+    leagues = db.session.query(League).filter(League.org_id == 1).all()
     return render_template('game_shootout.html', divisions=divisions, leagues=leagues)
 
 @game_shootout_bp.route('/get_game_shootout_data', methods=['POST'])
@@ -41,10 +41,10 @@ def get_game_shootout_data():
     ).join(Division, Game.division_id == Division.id
     ).join(Season, and_(Division.season_number == Season.season_number, Division.league_number == Season.league_number))
 
-    # Remove old sharksice seasons where we got no scores as of now (broken data at some point or crawl)
-    org_name = current_app.config['ORG_NAME']
-    if (org_name == 'sharksice' and league_number == '1'):
-        query = query.filter(Season.season_number >= 22)
+    # # Remove old sharksice seasons where we got no scores as of now (broken data at some point or crawl)
+    # org_name = current_app.config['ORG_NAME']
+    # if (org_name == 'sharksice' and league_number == '1'):
+    #     query = query.filter(Season.season_number >= 22)
     
     if plot_level != 'all':
         query = query.filter(Division.level == plot_level)
@@ -86,20 +86,15 @@ def get_game_shootout_data():
     total_games = df_grouped.size()
     tie_games = df_grouped['is_tie'].sum()
     shootout_games = df_grouped.apply(lambda x: (x['is_tie'] & x['went_to_so']).sum())
-    # playoff_total_games = df_grouped.apply(lambda x: (x['game_type'].isin(['Playoff', 'Championship'])).sum())
-    # playoff_extratime_games = df_grouped.apply(lambda x: (x['game_type'].isin(['Playoff', 'Championship']) & x['went_to_so']).sum())
 
     # Remove rows where total_games is zero
     valid_indices = total_games[total_games > 0].index
     total_games = total_games[valid_indices]
     tie_games = tie_games[valid_indices]
     shootout_games = shootout_games[valid_indices]
-    # playoff_total_games = playoff_total_games[valid_indices]
-    # playoff_extratime_games = playoff_extratime_games[valid_indices]
 
     tie_percentage = (tie_games / total_games) * 100
     shootout_percentage = (shootout_games / tie_games).replace([float('inf'), -float('inf')], 0).fillna(0) * 100
-    # playoff_percentage = (playoff_extratime_games / playoff_total_games).replace([float('inf'), -float('inf')], 0).fillna(0) * 100
 
     # Get season names for the selected league_number
     season_names = db.session.query(Season.season_number, Season.season_name).filter(Season.league_number == league_number).all()
@@ -107,15 +102,19 @@ def get_game_shootout_data():
 
     # Replace season_number with season_name for display
     if x_axis == 'year_month':
-        x_names_for_display = total_games.index.tolist()
+        x_for_ordering = total_games.index.tolist()
     else:
-        x_names_for_display = [season_name_dict[season_number] for season_number in total_games.index]
+        x_names_for_display = total_games.index.tolist()
+        x_display_names = [season_name_dict[season_number] for season_number in x_names_for_display]
+        x_for_ordering = [season_number for season_number in x_names_for_display]
+
     result = {
-        'x': x_names_for_display,
+        'x': x_for_ordering,
         'y': {
             'Tied after 3rd': tie_percentage.tolist(),
             'Shootout when tied': shootout_percentage.tolist()
-        }
+        },
+        'season_names': x_display_names if x_axis != 'year_month' else []
     }
 
     return jsonify(result)

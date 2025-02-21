@@ -1,29 +1,27 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-5">
-    <div style="text-align: center;">
-        <div>
-            <label for="penalty_type">Count</label>
-            <select id="penalty_type" name="penalty_type">
-                <option value="all" selected>All</option>
-                <option value="gm">Game Misconduct</option>
-            </select>
-            <label for="penalty_type">penalties for</label>
-            <select id="player_status" name="player_status">
-                <option value="all" selected>All</option>
-                <option value="active">Active</option>
-            </select>
-            <label for="player_status">players,</label>
-            <label for="display_value">display</label>
-            <select id="display_value" name="display_value">
-                <option value="per_game" selected>Per Game</option>
-                <option value="sum">Sum</option>
-            </select>
-        </div>
+<div style="text-align: center;">
+    <div>
+        <label for="penalty_type">Count</label>
+        <select id="penalty_type" name="penalty_type">
+            <option value="all" selected>All</option>
+            <option value="gm">Game Misconduct</option>
+        </select>
+        <label for="penalty_type">penalties for</label>
+        <select id="player_status" name="player_status">
+            <option value="all" selected>All</option>
+            <option value="active">Active</option>
+        </select>
+        <label for="player_status">players,</label>
+        <label for="display_value">display</label>
+        <select id="display_value" name="display_value">
+            <option value="per_game" selected>Per Game</option>
+            <option value="sum">Sum</option>
+        </select>
     </div>
     {% include "dropdowns.html" %}
-    <div id="penalties-results">
+    <div id="penalties-results" class="table-responsive">
         <table class="table table-striped" id="penalties-table">
             <thead>
                 <tr>
@@ -40,6 +38,14 @@
         </table>
     </div>
 </div>
+
+<style>
+    #penalties-table th,
+    #penalties-table td {
+        padding: 0.5rem;
+        font-size: 0.875rem;
+    }
+</style>
 
 <script>
     document.getElementById('penalty_type').addEventListener('change', function () {

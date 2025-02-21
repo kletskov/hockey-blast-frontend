@@ -88,12 +88,11 @@ def get_plot_data():
     else:
         df_1 = df_1.sort_values('season_number')
         df_2 = df_2.sort_values('season_number')
-        df_1['x'] = df_1['season_name']
-        df_2['x'] = df_2['season_name']
         return jsonify({
-            'x': df_1['x'].tolist(),
+            'x': df_1['season_number'].tolist(),
             'y_1': df_1['active_players'].tolist(),
             'y_2': df_2['active_players'].tolist(),
             'plot_1_name': plot_1,
-            'plot_2_name': plot_2
+            'plot_2_name': plot_2,
+            'season_names': df_1['season_name'].tolist()
         })

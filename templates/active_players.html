@@ -1,147 +1,132 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Number Of Active Players over time or seasons</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <style>
-        .container {
-            margin-top: 20px;
-        }
+{% block title %}Number Of Active Players over time or seasons{% endblock %}
 
-        nav {
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 1.2rem;
-            /* Increase text size */
-        }
-
-        nav a {
-            color: orange;
-        }
-
-        nav a:hover {
-            color: darkorange;
-        }
-    </style>
-</head>
-
-<body style="background-color: lightgrey;">
-    <nav>
-        <br>
-        <a href="{{ url_for('index') }}">Main</a> |
-        <a href="{{ url_for('search_humans.search_humans') }}">Search Humans</a> |
-        <a href="{{ url_for('search_teams.search_teams') }}">Search Teams</a> |
-        <a href="{{ url_for('special_stats') }}">Special Stats</a> |
-        <a href="mailto:info@hockey-blast.com">Report a problem</a> |
-        <a href="https://forms.gle/YJuJ9Jw4Xxrz5JLQ9">Submit Feature Request</a>
-    </nav>
-    <div class="container">
-        <h1 class="mb-4">Number of Active Players over time</h1>
-        <div class="form-group">
-            <label for="x-axis">X Axis:</label>
-            <select class="form-control" id="x-axis">
-                <option value="season_name">Seasons</option>
-                <option value="year_month">Year + Month</option>
-                <option value="year_over_year">Year Over Year</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="plot-1">Plot 1:</label>
-            <select class="form-control" id="plot-1">
-                <option value="all">All</option>
-                {% for level in levels %}
-                <option value="{{ level }}">{{ level }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="form-group" id="plot-2-container">
-            <label for="plot-2">Plot 2:</label>
-            <select class="form-control" id="plot-2">
-                <option value="all">All</option>
-                {% for level in levels %}
-                <option value="{{ level }}">{{ level }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="min-games">Minimum Games Played:</label>
-            <select class="form-control" id="min-games">
-                {% for i in range(1, 11) %}
-                <option value="{{ i }}">{{ i }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <button class="btn btn-primary" id="update-plot">Update Plot</button>
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Number of Active Players over time</h1>
+    <div class="form-group">
+        <label for="x-axis">X Axis:</label>
+        <select class="form-control" id="x-axis">
+            <option value="season_name">Seasons</option>
+            <option value="year_month">Year + Month</option>
+            <option value="year_over_year">Year Over Year</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="plot-1">Plot 1:</label>
+        <select class="form-control" id="plot-1">
+            <option value="all">All</option>
+            {% for level in levels %}
+            <option value="{{ level }}">{{ level }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-group" id="plot-2-container">
+        <label for="plot-2">Plot 2:</label>
+        <select class="form-control" id="plot-2">
+            <option value="all">All</option>
+            {% for level in levels %}
+            <option value="{{ level }}">{{ level }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="min-games">Minimum Games Played:</label>
+        <select class="form-control" id="min-games">
+            {% for i in range(1, 11) %}
+            <option value="{{ i }}">{{ i }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button class="btn btn-primary" id="update-plot">Update Plot</button>
+    <div class="plot-container">
         <div id="plot"></div>
     </div>
-    <script>
-        document.getElementById('x-axis').addEventListener('change', function () {
-            var x_axis = document.getElementById('x-axis').value;
-            var plot_2_container = document.getElementById('plot-2-container');
-            if (x_axis === 'year_over_year') {
-                plot_2_container.style.display = 'none';
-            } else {
-                plot_2_container.style.display = 'block';
-            }
-        });
+</div>
 
-        document.getElementById('update-plot').addEventListener('click', function () {
-            var x_axis = document.getElementById('x-axis').value;
-            var plot_1 = document.getElementById('plot-1').value;
-            var plot_2 = document.getElementById('plot-2').value;
-            var min_games = document.getElementById('min-games').value;
+<style>
+    .plot-container {
+        width: 100%;
+        overflow-x: auto;
+    }
 
-            fetch('/get_plot_data', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    x_axis: x_axis,
-                    plot_1: plot_1,
-                    plot_2: plot_2,
-                    min_games: min_games
-                })
+    #plot {
+        width: 100%;
+        height: 600px;
+    }
+</style>
+
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+    document.getElementById('x-axis').addEventListener('change', function () {
+        var x_axis = document.getElementById('x-axis').value;
+        var plot_2_container = document.getElementById('plot-2-container');
+        if (x_axis === 'year_over_year') {
+            plot_2_container.style.display = 'none';
+        } else {
+            plot_2_container.style.display = 'block';
+        }
+    });
+
+    document.getElementById('update-plot').addEventListener('click', function () {
+        var x_axis = document.getElementById('x-axis').value;
+        var plot_1 = document.getElementById('plot-1').value;
+        var plot_2 = document.getElementById('plot-2').value;
+        var min_games = document.getElementById('min-games').value;
+
+        fetch('/get_plot_data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                x_axis: x_axis,
+                plot_1: plot_1,
+                plot_2: plot_2,
+                min_games: min_games
             })
-                .then(response => response.json())
-                .then(data => {
-                    var traces = [];
-                    if (x_axis === 'year_over_year') {
-                        for (var year in data.years) {
-                            traces.push({
-                                x: data.months,
-                                y: data.years[year],
-                                mode: 'lines',
-                                name: year
-                            });
-                        }
-                    } else {
+        })
+            .then(response => response.json())
+            .then(data => {
+                var traces = [];
+                var layout = {
+                    title: 'Active Players Over Time',
+                    xaxis: { title: x_axis === 'year_month' ? 'Year + Month' : (x_axis === 'season_name' ? 'Seasons' : 'Month') },
+                    yaxis: { title: 'Active Players' }
+                };
+
+                if (x_axis === 'year_over_year') {
+                    for (var year in data.years) {
                         traces.push({
-                            x: data.x,
-                            y: data.y_1,
+                            x: data.months,
+                            y: data.years[year],
                             mode: 'lines',
-                            name: data.plot_1_name
-                        });
-                        traces.push({
-                            x: data.x,
-                            y: data.y_2,
-                            mode: 'lines',
-                            name: data.plot_2_name
+                            name: year
                         });
                     }
-                    var layout = {
-                        title: 'Active Players Over Time',
-                        xaxis: { title: x_axis === 'year_month' ? 'Year + Month' : (x_axis === 'season_name' ? 'Seasons' : 'Month') },
-                        yaxis: { title: 'Active Players' }
-                    };
-                    Plotly.newPlot('plot', traces, layout);
-                });
-        });
-    </script>
-</body>
+                } else {
+                    traces.push({
+                        x: data.x,
+                        y: data.y_1,
+                        mode: 'lines',
+                        name: data.plot_1_name
+                    });
+                    traces.push({
+                        x: data.x,
+                        y: data.y_2,
+                        mode: 'lines',
+                        name: data.plot_2_name
+                    });
 
-</html>
+                    if (x_axis === 'season_name') {
+                        layout.xaxis.tickvals = data.x;
+                        layout.xaxis.ticktext = data.season_names;
+                    }
+                }
+
+                Plotly.newPlot('plot', traces, layout);
+            });
+    });
+</script>
+{% endblock %}
