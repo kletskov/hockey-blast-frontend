@@ -3,92 +3,207 @@
 {% block title %}Hall of Fame{% endblock %}
 
 {% block content %}
-<h5 class="mt-4">Game Participation</h5>
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Rank</th>
-            <th>Name</th>
-            <th>Total</th>
-            <th>Skater</th>
-            <th>Goalie</th>
-            <th>Referee</th>
-            <th>Scorekeeper</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for human in top_humans %}
-        <tr>
-            <td>{{ human.rank }}</td>
-            <td>{{ human.name|safe }}</td>
-            <td>{{ human.total }}</td>
-            <td>{{ human.skater }}</td>
-            <td>{{ human.goalie }}</td>
-            <td>{{ human.referee }}</td>
-            <td>{{ human.scorekeeper }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<style>
+    .table-responsive {
+        overflow-x: auto;
+    }
 
-<h4 class="mt-4"></h4>
-<h5>Skaters - Games Played</h5>
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Rank</th>
-            <th>Name</th>
-            <th>Games Played</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for player in top_games_played %}
-        <tr>
-            <td>{{ player.rank }}</td>
-            <td>{{ player.name|safe }}</td>
-            <td>{{ player.value }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+    .table th,
+    .table td {
+        white-space: normal;
+        padding: 3px;
+        /* Reduced padding */
+        /* font-size: 0.9rem; Slightly reduced font size */
+    }
 
-<h5>Skaters - Points Per Game</h5>
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Rank</th>
-            <th>Name</th>
-            <th>Points Per Game</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for player in top_points_per_game %}
-        <tr>
-            <td>{{ player.rank }}</td>
-            <td>{{ player.name|safe }}</td>
-            <td>{{ "%.2f"|format(player.value) }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+    .table {
+        table-layout: auto;
+        width: 100%;
+    }
+</style>
 
-<h5>Skaters - Penalties Per Game</h5>
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Rank</th>
-            <th>Name</th>
-            <th>Penalties Per Game</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for player in top_penalties_per_game %}
-        <tr>
-            <td>{{ player.rank }}</td>
-            <td>{{ player.name|safe }}</td>
-            <td>{{ "%.2f"|format(player.value) }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="table-responsive">
+    <h5> Game Participation</h5>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>All</th>
+                <th>Skater</th>
+                <th>Goalie</th>
+                <th>Ref</th>
+                <th>Scpr</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for human in top_humans %}
+            <tr>
+                <td>{{ human.rank }}</td>
+                <td>{{ human.name|safe }}</td>
+                <td>{{ human.total }}</td>
+                <td>{{ human.skater }}</td>
+                <td>{{ human.goalie }}</td>
+                <td>{{ human.referee }}</td>
+                <td>{{ human.scorekeeper }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="table-responsive">
+    <h4 class="mt-4"></h4>
+    <h5>Skaters - Games Played</h5>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Games Played</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for player in top_games_played %}
+            <tr>
+                <td>{{ player.rank }}</td>
+                <td>{{ player.name|safe }}</td>
+                <td>{{ player.value }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="table-responsive">
+    <h5>Skaters - Points Per Game</h5>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Points Per Game</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for player in top_points_per_game %}
+            <tr>
+                <td>{{ player.rank }}</td>
+                <td>{{ player.name|safe }}</td>
+                <td>{{ "%.2f"|format(player.value) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="table-responsive">
+    <h5>Skaters - Penalties Per Game</h5>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Penalties Per Game</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for player in top_penalties_per_game %}
+            <tr>
+                <td>{{ player.rank }}</td>
+                <td>{{ player.name|safe }}</td>
+                <td>{{ "%.2f"|format(player.value) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="table-responsive">
+    <h5>Goalies - Games Played</h5>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Games Played</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for player in top_goalies %}
+            <tr>
+                <td>{{ player.rank }}</td>
+                <td>{{ player.name|safe }}</td>
+                <td>{{ player.value }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="table-responsive">
+    <h5>Goalies - Save Percentage</h5>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Save Percentage</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for player in top_goalies_save_percentage %}
+            <tr>
+                <td>{{ player.rank }}</td>
+                <td>{{ player.name|safe }}</td>
+                <td>{{ "%.2f"|format(player.value) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="table-responsive">
+    <h5>Referees - Games Reffed</h5>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Games Reffed</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for player in top_referees %}
+            <tr>
+                <td>{{ player.rank }}</td>
+                <td>{{ player.name|safe }}</td>
+                <td>{{ player.value }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="table-responsive">
+    <h5>Scorekeepers - Games Recorded (TO BE DONE)</h5>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Games Recorded</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for player in top_scorekeepers %}
+            <tr>
+                <td>{{ player.rank }}</td>
+                <td>{{ player.name|safe }}</td>
+                <td>{{ player.value }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}
