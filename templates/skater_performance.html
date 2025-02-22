@@ -1,14 +1,55 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-3">
+<style>
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .table th,
+    .table td {
+        white-space: normal;
+        padding: 1px;
+        /* Slightly reduced padding */
+        font-size: 0.8rem;
+        /* Slightly reduced font size */
+    }
+
+    .table {
+        table-layout: auto;
+        width: 100%;
+    }
+
+    .date-cell {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .loading-indicator {
+        display: none;
+        text-align: center;
+        font-weight: bold;
+        color: red;
+        animation: blink 1s linear infinite;
+    }
+
+    @keyframes blink {
+        50% {
+            opacity: 0;
+        }
+    }
+</style>
+
+<div class="table-responsive">
     <h4>Skater Performance for {{ human_name }}</h4>
     <p>Note: Each data point below includes the skater's rank among other skaters in the following format: "<span
             style="color: rgb(123, 0, 0);">skater_rank / total_in_rank, Kth <a
                 href="https://en.wikipedia.org/wiki/Percentile" target="_blank">Percentile</a></span>".<br>Dropdown
         options represent where {{ human_name }} skated. Click on data header to sort by it!</p>
     {% include "dropdowns.html" %}
-    <div id="skater-performance-results">
+    <div class="loading-indicator" id="loading-indicator">Loading data...</div>
+    <div class="table-responsive" id="skater-performance-results">
         <table class="table table-striped text-center" id="skater-performance-table">
             <thead class="text-center">
                 <tr>
@@ -81,6 +122,9 @@
 <script>
     function fetchContent(orgId, levelId, seasonId, teamId, topN) {
         var humanId = document.getElementById('human_id').value;
+        var loadingIndicator = document.getElementById('loading-indicator');
+        loadingIndicator.style.display = 'block'; // Show loading indicator
+
         fetch('/skater_performance/filter_skater_performance', {
             method: 'POST',
             headers: {
@@ -162,6 +206,12 @@
                 } else {
                     document.getElementById('all-skaters-section').style.display = 'none';
                 }
+
+                loadingIndicator.style.display = 'none'; // Hide loading indicator
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
+                loadingIndicator.style.display = 'none'; // Hide loading indicator in case of error
             });
     }
 

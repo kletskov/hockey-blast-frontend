@@ -3,32 +3,54 @@
 {% block title %}{{ player_name }} Stats{% endblock %}
 
 {% block content %}
+<style>
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .table th,
+    .table td {
+        white-space: normal;
+        padding: 2px;
+        /* Slightly reduced padding */
+        font-size: 0.9rem;
+        /* Slightly reduced font size */
+    }
+
+    .table {
+        table-layout: auto;
+        width: 100%;
+    }
+</style>
+
 <h1 class="mb-4">{{ display_name|safe }}</h1>
 
 {% if roles_data %}
-<h4>Roles</h4>
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Role</th>
-            <th>Games</th>
-            <th>Rank</th>
-            <th>First Game</th>
-            <th>Last Game</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for role in roles_data %}
-        <tr>
-            <td>{{ role.role|safe }}</td>
-            <td>{{ role.games_count|safe }}</td>
-            <td>{{ role.rank|safe }}</td>
-            <td>{{ role.first_date|safe }}</td>
-            <td>{{ role.last_date|safe }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="table-responsive">
+    <h4>Roles</h4>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Role</th>
+                <th>Games</th>
+                <th>Rank</th>
+                <th>First Game</th>
+                <th>Last Game</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for role in roles_data %}
+            <tr>
+                <td>{{ role.role|safe }}</td>
+                <td>{{ role.games_count|safe }}</td>
+                <td>{{ role.rank|safe }}</td>
+                <td>{{ role.first_date|safe }}</td>
+                <td>{{ role.last_date|safe }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endif %}
 
 <h4>Recent Games Played</h4>

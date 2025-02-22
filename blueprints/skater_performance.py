@@ -15,6 +15,13 @@ def format_rank_percentile(rank, total):
     percentile = (total - rank) / total * 100
     return f"{rank}/{total}<br>{percentile:.0f}th"
 
+def format_date_link(date, game_id):
+    if date:
+        date_parts = date.strftime('%m/%d/%y').split('/')
+        formatted_date = f"{date_parts[0]}<br>{date_parts[1]}<br>{date_parts[2]}"
+        return f"<a href='{url_for('game_card.game_card', game_id=game_id)}'>{formatted_date}</a>"
+    return None
+
 def append_skater_performance_result(skater_performance_results, stats, context):
     if isinstance(stats, dict):
         human_id = stats.get('human_id')
@@ -66,8 +73,8 @@ def append_skater_performance_result(skater_performance_results, stats, context)
         'penalties_per_game_rank': format_rank_percentile(penalties_per_game_rank, stats['total_in_rank'] if isinstance(stats, dict) else stats.total_in_rank),
         'gm_penalties_per_game': f"{gm_penalties_per_game:.2f}",
         'gm_penalties_per_game_rank': format_rank_percentile(gm_penalties_per_game_rank, stats['total_in_rank'] if isinstance(stats, dict) else stats.total_in_rank),
-        'first_game': f"<a href='{url_for('game_card.game_card', game_id=first_game_id)}'>{first_game.date.strftime('%m/%d/%y')}</a>" if first_game else None,
-        'last_game': f"<a href='{url_for('game_card.game_card', game_id=last_game_id)}'>{last_game.date.strftime('%m/%d/%y')}</a>" if last_game else None
+        'first_game': format_date_link(first_game.date, first_game_id) if first_game else None,
+        'last_game': format_date_link(last_game.date, last_game_id) if last_game else None
     })
 
 def extract_date_from_link(link):

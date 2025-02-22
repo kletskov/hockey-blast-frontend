@@ -1,18 +1,53 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-3">
+<style>
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .table th,
+    .table td {
+        white-space: normal;
+        padding: 1px;
+        /* Slightly reduced padding */
+        font-size: 0.8rem;
+        /* Slightly reduced font size */
+    }
+
+    .table {
+        table-layout: auto;
+        width: 100%;
+    }
+
+    .loading-indicator {
+        display: none;
+        text-align: center;
+        font-weight: bold;
+        color: red;
+        animation: blink 1s linear infinite;
+    }
+
+    @keyframes blink {
+        50% {
+            opacity: 0;
+        }
+    }
+</style>
+
+<div class="table-responsive">
     <h4>Goalie Performance for {{ human_name }}</h4>
     <p>Note: Each data point below includes goalie's rank among other goalies in the following format: "<span
             style="color: rgb(123, 0, 0);">goalie_rank / total_in_rank, Kth <a
                 href="https://en.wikipedia.org/wiki/Percentile" target="_blank">Percentile</a></span>"<br>Dropdown
         options represent where {{ human_name }} played in net. Click on data header to sort by it!</p>
     {% include "dropdowns.html" %}
-    <div id="goalie-performance-results">
+    <div class="loading-indicator" id="loading-indicator">Loading data...</div>
+    <div class="table-responsive" id="goalie-performance-results">
         <table class="table table-striped text-center" id="goalie-performance-table">
             <thead class="text-center">
                 <tr>
-                    <th style="color: black;">Context</th>
+                    <th style="color: black;"></th>
                     <th style="color: black;">From</th>
                     <th style="color: black;">To</th>
                     <th style="color: black;" onclick="sortTable(3)">GP</th>
@@ -73,11 +108,28 @@
     .highlight-row {
         background-color: white !important;
     }
+
+    .table th,
+    .table td {
+        white-space: normal;
+        padding: 1px;
+        /* Further reduced padding */
+        font-size: 0.8rem;
+        /* Further reduced font size */
+    }
+
+    .table {
+        table-layout: auto;
+        width: 100%;
+    }
 </style>
 
 <script>
     function fetchContent(orgId, levelId, seasonId, teamId, topN) {
         var humanId = document.getElementById('human_id').value;
+        var loadingIndicator = document.getElementById('loading-indicator');
+        loadingIndicator.style.display = 'block'; // Show loading indicator
+
         fetch('/goalie_performance/filter_goalie_performance', {
             method: 'POST',
             headers: {
@@ -153,6 +205,12 @@
                 } else {
                     document.getElementById('all-goalies-section').style.display = 'none';
                 }
+
+                loadingIndicator.style.display = 'none'; // Hide loading indicator
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
+                loadingIndicator.style.display = 'none'; // Hide loading indicator in case of error
             });
     }
 
