@@ -173,6 +173,8 @@ def human_stats():
     scorekeeper_first_game_link = f"<a href='{url_for('game_card.game_card', game_id=scorekeeper_first_game_id)}'>{scorekeeper_first_game_date.strftime('%m/%d/%y')}</a>" if scorekeeper_first_game_date else None
     scorekeeper_last_game_link = f"<a href='{url_for('game_card.game_card', game_id=scorekeeper_last_game_id)}'>{scorekeeper_last_game_date.strftime('%m/%d/%y')}</a>" if scorekeeper_last_game_date else None
     
+    overall_first_game_date = None
+    overall_last_game_date = None
 
     overall_first_game_id = org_stats.first_game_id if org_stats else None
     overall_last_game_id = org_stats.last_game_id if org_stats else None
@@ -205,8 +207,8 @@ def human_stats():
             'games_played': row['games_played']
         })
     
-    # Convert level_id to integer
-    rosters_df['level_id'] = rosters_df['level_id'].astype(int)
+    # Handle None values in level_id before converting to integer
+    rosters_df['level_id'] = rosters_df['level_id'].fillna(0).astype(int)
 
     # Count how many games were played for each level
     level_game_counts = rosters_df.groupby('level_id').size().reset_index(name='games_played').sort_values(by='games_played', ascending=False)

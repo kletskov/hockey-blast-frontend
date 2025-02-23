@@ -5,6 +5,7 @@
 
 set -e
 # Start the app container
+docker-compose build
 docker-compose up -d app
 
 # Wait for the app container to be ready

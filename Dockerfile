@@ -1,5 +1,11 @@
 # Use the official Python image from the Docker Hub
-FROM python:3.9
+FROM python:3.9-slim
+
+# Install PostgreSQL development packages
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory in the container
 WORKDIR /app
@@ -8,7 +14,9 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Install the required Python packages
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt && \
+    pip show hockey_blast_common_lib
 
 # Copy the rest of the application code into the container
 COPY . .
