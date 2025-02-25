@@ -108,143 +108,161 @@
             </tr>
         </tbody>
     </table>
-    <h4>Goals</h4>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Period</th>
-                <th>Time</th>
-                <th>Team</th>
-                <th>Goal</th>
-                <th>Assist 1</th>
-                <th>Assist 2</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for goal in goals %}
-            <tr>
-                <td>{{ goal.period }}</td>
-                <td>{{ goal.time }}</td>
-                <td><a href="{{ url_for('team_stats.team_stats', team_id=goal.scoring_team_id) }}">{{ visitor_team.name
-                        if goal.scoring_team_id == game.visitor_team_id else home_team.name }}</a></td>
-                <td><a href="{{ url_for('human_stats.human_stats', human_id=goal.goal_scorer_id) }}">{{
-                        goal.scorer_name.first_name }} {{ goal.scorer_name.middle_name }} {{ goal.scorer_name.last_name
-                        }}</a></td>
-                <td><a href="{{ url_for('human_stats.human_stats', human_id=goal.assist_1_id) }}">{{
-                        goal.assist_1_name.first_name }} {{ goal.assist_1_name.middle_name }} {{
-                        goal.assist_1_name.last_name }}</a></td>
-                <td><a href="{{ url_for('human_stats.human_stats', human_id=goal.assist_2_id) }}">{{
-                        goal.assist_2_name.first_name }} {{ goal.assist_2_name.middle_name }} {{
-                        goal.assist_2_name.last_name }}</a></td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <!-- Goals Section -->
+    <div class="table-responsive">
+        <h4>Goals</h4>
+        <table class="table table-striped" style="padding: 2px;">
+            <thead>
+                <tr>
+                    <th>P</th>
+                    <th>Time</th>
+                    <th>Team</th>
+                    <th>Goal</th>
+                    <th>Assist 1</th>
+                    <th>Assist 2</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for goal in goals %}
+                <tr>
+                    <td>{{ goal.period }}</td>
+                    <td>{{ goal.time }}</td>
+                    <td><a href="{{ url_for('team_stats.team_stats', team_id=goal.scoring_team_id) }}">{{
+                            visitor_team.name
+                            if goal.scoring_team_id == game.visitor_team_id else home_team.name }}</a></td>
+                    <td><a href="{{ url_for('human_stats.human_stats', human_id=goal.goal_scorer_id) }}">{{
+                            goal.scorer_name.first_name }} {{ goal.scorer_name.middle_name }} {{
+                            goal.scorer_name.last_name
+                            }}</a></td>
+                    <td><a href="{{ url_for('human_stats.human_stats', human_id=goal.assist_1_id) }}">{{
+                            goal.assist_1_name.first_name }} {{ goal.assist_1_name.middle_name }} {{
+                            goal.assist_1_name.last_name }}</a></td>
+                    <td><a href="{{ url_for('human_stats.human_stats', human_id=goal.assist_2_id) }}">{{
+                            goal.assist_2_name.first_name }} {{ goal.assist_2_name.middle_name }} {{
+                            goal.assist_2_name.last_name }}</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
     <!-- Penalties Section -->
-    <h4>Penalties</h4>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Period</th>
-                <th>Time</th>
-                <th>Team</th>
-                <th>Player</th>
-                <th>Infraction</th>
-                <th>Minutes</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for penalty in penalties %}
-            <tr>
-                <td>{{ penalty.period }}</td>
-                <td>{{ penalty.time }}</td>
-                <td><a href="{{ penalty.team_link }}">{{ penalty.team_name }}</a></td>
-                <td>
-                    {% if penalty.player_name == "Unknown" %}
-                    Unknown
-                    {% else %}
-                    <a href="{{ url_for('human_stats.human_stats', human_id=penalty.penalized_player_id) }}">{{
-                        penalty.player_name }}</a>
-                    {% endif %}
-                </td>
-                <td>{{ penalty.infraction }}</td>
-                <td>{{ penalty.penalty_minutes }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <h4>Penalties</h4>
+        <table class="table table-striped" style="padding: 2px;">
+            <thead>
+                <tr>
+                    <th>P</th>
+                    <th>Time</th>
+                    <th>Team</th>
+                    <th>Player</th>
+                    <th>Infraction</th>
+                    <th>Min</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for penalty in penalties %}
+                <tr>
+                    <td>{{ penalty.period }}</td>
+                    <td>{{ penalty.time }}</td>
+                    <td><a href="{{ penalty.team_link }}">{{ penalty.team_name }}</a></td>
+                    <td>
+                        {% if penalty.player_name == "Unknown" %}
+                        Unknown
+                        {% else %}
+                        <a href="{{ url_for('human_stats.human_stats', human_id=penalty.penalized_player_id) }}">{{
+                            penalty.player_name }}</a>
+                        {% endif %}
+                    </td>
+                    <td>{{ penalty.infraction }}</td>
+                    <td>{{ penalty.penalty_minutes }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
     <!-- Shootouts Section -->
     {% if shootouts %}
-    <h4>Shootout</h4>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Sequence</th>
-                <th>Team</th>
-                <th>Shooter</th>
-                <th>Goalie</th>
-                <th>Result</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for shootout in shootouts %}
-            <tr>
-                <td>{{ shootout.sequence_number }}</td>
-                <td><a href="{{ shootout.team_link }}">{{ shootout.team_name }}</a></td>
-                <td><a href="{{ url_for('human_stats.human_stats', human_id=shootout.shooter_id) }}">{{
-                        shootout.shooter_name }}</a></td>
-                <td><a href="{{ url_for('human_stats.human_stats', human_id=shootout.goalie_id) }}">{{
-                        shootout.goalie_name }}</a></td>
-                <td>{{ "Scored" if shootout.has_scored else "Missed" }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <h4>Shootout</h4>
+        <table class="table table-striped" style="padding: 2px;">
+            <thead>
+                <tr>
+                    <th>Team</th>
+                    <th>Shooter</th>
+                    <th>Goalie</th>
+                    <th>Result</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for shootout in shootouts %}
+                <tr>
+                    <td><a href="{{ shootout.team_link }}">{{ shootout.team_name }}</a></td>
+                    <td><a href="{{ url_for('human_stats.human_stats', human_id=shootout.shooter_id) }}">{{
+                            shootout.shooter_name }}</a></td>
+                    <td><a href="{{ url_for('human_stats.human_stats', human_id=shootout.goalie_id) }}">{{
+                            shootout.goalie_name }}</a></td>
+                    <td>{{ "Scored" if shootout.has_scored else "Missed" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
     {% endif %}
     <!-- Rosters Table -->
-    <h4><a href="{{ url_for('team_stats.team_stats', team_id=visitor_team.id) }}">{{ visitor_team.name }}</a> players
-    </h4>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th></th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for roster, human in visitor_roster %}
-            <tr>
-                <td>{{ roster.jersey_number }} {{ roster.role }}</td>
-                <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                        human.middle_name }} {{ human.last_name }}</a></td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <h4><a href="{{ url_for('team_stats.team_stats', team_id=home_team.id) }}">{{ home_team.name }}</a> players</h4>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th></th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for roster, human in home_roster %}
-            <tr>
-                <td>{{ roster.jersey_number }}</td>
-                <td>
-                    <a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">
-                        {{ human.first_name }} {{ human.middle_name }} {{ human.last_name }}
-                        {% if roster.role %}
-                        ({{ roster.role }})
-                        {% endif %}
-                    </a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <h4><a href="{{ url_for('team_stats.team_stats', team_id=visitor_team.id) }}">{{ visitor_team.name }}</a>
+            players
+        </h4>
+        <table class="table table-striped" style="padding: 2px;">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for roster, human in visitor_roster %}
+                <tr>
+                    <td>{{ roster.jersey_number }}</td>
+                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                            human.middle_name }} {{ human.last_name }}
+                            {% if roster.role %}
+                            ({{ roster.role }})
+                            {% endif %}
+
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="table-responsive">
+        <h4><a href="{{ url_for('team_stats.team_stats', team_id=home_team.id) }}">{{ home_team.name }}</a> players</h4>
+        <table class="table table-striped" style="padding: 2px;">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for roster, human in home_roster %}
+                <tr>
+                    <td>{{ roster.jersey_number }}</td>
+                    <td>
+                        <a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">
+                            {{ human.first_name }} {{ human.middle_name }} {{ human.last_name }}
+                            {% if roster.role %}
+                            ({{ roster.role }})
+                            {% endif %}
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 <p style="color: transparent; user-select: text;">Game Number: {{ game_number }}</p>
 {% endblock %}
