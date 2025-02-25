@@ -36,9 +36,12 @@
         <thead>
             <tr>
                 <th></th>
-                {% for period in unique_periods %}
-                <th>{{ period }}</th>
-                {% endfor %}
+                <th>1</th>
+                <th>2</th>
+                <th>3</th>
+                {% if visitor_shootout_goals > 0 or home_shootout_goals > 0 %}
+                <th>SO</th>
+                {% endif %}
                 <th><strong>Final</strong></th>
             </tr>
         </thead>
@@ -46,16 +49,22 @@
             <tr>
                 <td><a href="{{ url_for('team_stats.team_stats', team_id=visitor_team.id) }}">{{ visitor_team.name
                         }}</a></td>
-                {% for period in unique_periods %}
-                <td>{{ visitor_goals_per_period[period] }}</td>
-                {% endfor %}
+                <td>{{ game.visitor_period_1_score or 0 }}</td>
+                <td>{{ game.visitor_period_2_score or 0 }}</td>
+                <td>{{ game.visitor_period_3_score or 0 }}</td>
+                {% if visitor_shootout_goals > 0 or home_shootout_goals > 0 %}
+                <td>{{ visitor_shootout_goals }}</td>
+                {% endif %}
                 <td><strong>{{ game.visitor_final_score }}</strong></td>
             </tr>
             <tr>
                 <td><a href="{{ url_for('team_stats.team_stats', team_id=home_team.id) }}">{{ home_team.name }}</a></td>
-                {% for period in unique_periods %}
-                <td>{{ home_goals_per_period[period] }}</td>
-                {% endfor %}
+                <td>{{ game.home_period_1_score or 0 }}</td>
+                <td>{{ game.home_period_2_score or 0 }}</td>
+                <td>{{ game.home_period_3_score or 0 }}</td>
+                {% if visitor_shootout_goals > 0 or home_shootout_goals > 0 %}
+                <td>{{ home_shootout_goals }}</td>
+                {% endif %}
                 <td><strong>{{ game.home_final_score }}</strong></td>
             </tr>
         </tbody>

@@ -110,6 +110,8 @@ def hall_of_fame():
   
     # Fetch top skaters in different categories
     top_games_played_data = get_top_skaters_data(db.session, org_id, 'games_played', top_n_stats)
+    top_goals_data = get_top_skaters_data(db.session, org_id, 'goals', top_n_stats)
+    top_points_data = get_top_skaters_data(db.session, org_id, 'points', top_n_stats)
     top_points_per_game_data = get_top_skaters_data(db.session, org_id, 'points_per_game', top_n_stats)
     top_penalties_per_game_data = get_top_skaters_data(db.session, org_id, 'penalties_per_game', top_n_stats)
     
@@ -125,4 +127,4 @@ def hall_of_fame():
     
     humans_data = get_top_humans_data(db.session, org_id, top_n_stats)
     
-    return render_template('hall_of_fame.html', top_humans=humans_data, top_games_played=top_games_played_data, top_points_per_game=top_points_per_game_data, top_penalties_per_game=top_penalties_per_game_data, top_goalies=top_goalies_data, top_goalies_save_percentage=top_goalies_save_percentage_data, top_referees=top_referees_data, top_scorekeepers=top_scorekeepers_data)
+    return render_template('hall_of_fame.html', top_humans=humans_data, top_games_played=top_games_played_data, top_goals=top_goals_data, top_points=top_points_data, top_points_per_game=top_points_per_game_data, top_penalties_per_game=top_penalties_per_game_data, top_goalies=top_goalies_data, top_goalies_save_percentage=top_goalies_save_percentage_data, top_referees=top_referees_data, top_scorekeepers=top_scorekeepers_data)

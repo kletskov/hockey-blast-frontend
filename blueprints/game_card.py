@@ -88,6 +88,10 @@ def game_card():
     visitor_shootouts = [s for s in shootouts if s.shooting_team_id == game.visitor_team_id]
     home_shootouts = [s for s in shootouts if s.shooting_team_id == game.home_team_id]
 
+    # Count shootout goals
+    visitor_shootout_goals = sum(1 for s in visitor_shootouts if s.has_scored)
+    home_shootout_goals = sum(1 for s in home_shootouts if s.has_scored)
+
     # Interleave shootouts
     interleaved_shootouts = []
     for i in range(max(len(visitor_shootouts), len(home_shootouts))):
@@ -120,4 +124,4 @@ def game_card():
         (game.home_ot_shots or 0)
     )
 
-    return render_template('game_card.html', game=game, division=division, league=league, scorekeeper=scorekeeper, referee_1=referee_1, referee_2=referee_2, home_roster=home_roster, visitor_roster=visitor_roster, goals=goals, visitor_goals_per_period=visitor_goals_per_period, home_goals_per_period=home_goals_per_period, penalties=penalties, shootouts=interleaved_shootouts, visitor_team=visitor_team, home_team=home_team, visitor_total_shots=visitor_total_shots, home_total_shots=home_total_shots, unique_periods=unique_periods, game_number=game.game_number)
+    return render_template('game_card.html', game=game, division=division, league=league, scorekeeper=scorekeeper, referee_1=referee_1, referee_2=referee_2, home_roster=home_roster, visitor_roster=visitor_roster, goals=goals, visitor_goals_per_period=visitor_goals_per_period, home_goals_per_period=home_goals_per_period, penalties=penalties, shootouts=interleaved_shootouts, visitor_team=visitor_team, home_team=home_team, visitor_total_shots=visitor_total_shots, home_total_shots=home_total_shots, unique_periods=unique_periods, game_number=game.game_number, visitor_shootout_goals=visitor_shootout_goals, home_shootout_goals=home_shootout_goals)

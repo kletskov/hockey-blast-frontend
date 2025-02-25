@@ -76,6 +76,50 @@
 </div>
 
 <div class="table-responsive">
+    <h5>Skaters - Goals</h5>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Goals</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for player in top_goals %}
+            <tr>
+                <td>{{ player.rank }}</td>
+                <td>{{ player.name|safe }}</td>
+                <td>{{ player.value }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="table-responsive">
+    <h5>Skaters - Points</h5>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Points</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for player in top_points %}
+            <tr>
+                <td>{{ player.rank }}</td>
+                <td>{{ player.name|safe }}</td>
+                <td>{{ player.value }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="table-responsive">
     <h5>Skaters - Points Per Game</h5>
     <table class="table table-striped">
         <thead>
