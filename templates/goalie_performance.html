@@ -63,45 +63,54 @@
                 </tbody>
             </table>
         </div>
-        <div id="team-performance-section" style="display: none;">
-            <h4>Goalies performance for the team:</h4>
-            <table class="table table-striped text-center" id="team-performance-table">
-                <thead class="text-center">
-                    <tr>
-                        <th style="color: black;">Player</th>
-                        <th style="color: black;">From</th>
-                        <th style="color: black;">To</th>
-                        <th style="color: black;" onclick="sortTable(3, 'team-performance-table')">GP</th>
-                        <th style="color: black;" onclick="sortTable(4, 'team-performance-table')">GA</th>
-                        <th style="color: black;" onclick="sortTable(5, 'team-performance-table')">GAA</th>
-                        <th style="color: black;" onclick="sortTable(6, 'team-performance-table')">SF</th>
-                        <th style="color: black;" onclick="sortTable(7, 'team-performance-table')">SV%</th>
-                    </tr>
-                </thead>
-                <tbody id="team-performance-table-body" class="text-center">
-                    <!-- Data will be populated here -->
-                </tbody>
-            </table>
-        </div>
-        <div id="all-goalies-section" style="display: none;">
-            <h4>Goalies for <span id="level-name"></span> in <span id="season-name"></span> season:</h4>
-            <table class="table table-striped text-center" id="all-goalies-table">
-                <thead class="text-center">
-                    <tr>
-                        <th style="color: black;">Player</th>
-                        <th style="color: black;">From</th>
-                        <th style="color: black;">To</th>
-                        <th style="color: black;" onclick="sortTable(3, 'all-goalies-table')">GP</th>
-                        <th style="color: black;" onclick="sortTable(4, 'all-goalies-table')">GA</th>
-                        <th style="color: black;" onclick="sortTable(5, 'all-goalies-table')">GAA</th>
-                        <th style="color: black;" onclick="sortTable(6, 'all-goalies-table')">SF</th>
-                        <th style="color: black;" onclick="sortTable(7, 'all-goalies-table')">SV%</th>
-                    </tr>
-                </thead>
-                <tbody id="all-goalies-table-body" class="text-center">
-                    <!-- Data will be populated here -->
-                </tbody>
-            </table>
+        <div id="goalies-comparison-section" style="display: none;">
+            <label for="min_games">Min games played:</label>
+            <select id="min_games" name="min_games">
+                <option value="1" selected>1</option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+            </select>
+            <div id="team-performance-section" style="display: none;">
+                <h4>Goalies performance for the team:</h4>
+                <table class="table table-striped text-center" id="team-performance-table">
+                    <thead class="text-center">
+                        <tr>
+                            <th style="color: black;">Player</th>
+                            <th style="color: black;">From</th>
+                            <th style="color: black;">To</th>
+                            <th style="color: black;" onclick="sortTable(3, 'team-performance-table')">GP</th>
+                            <th style="color: black;" onclick="sortTable(4, 'team-performance-table')">GA</th>
+                            <th style="color: black;" onclick="sortTable(5, 'team-performance-table')">GAA</th>
+                            <th style="color: black;" onclick="sortTable(6, 'team-performance-table')">SF</th>
+                            <th style="color: black;" onclick="sortTable(7, 'team-performance-table')">SV%</th>
+                        </tr>
+                    </thead>
+                    <tbody id="team-performance-table-body" class="text-center">
+                        <!-- Data will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="all-goalies-section" style="display: none;">
+                <h4>Goalies for <span id="level-name"></span> in <span id="season-name"></span> season:</h4>
+                <table class="table table-striped text-center" id="all-goalies-table">
+                    <thead class="text-center">
+                        <tr>
+                            <th style="color: black;">Player</th>
+                            <th style="color: black;">From</th>
+                            <th style="color: black;">To</th>
+                            <th style="color: black;" onclick="sortTable(3, 'all-goalies-table')">GP</th>
+                            <th style="color: black;" onclick="sortTable(4, 'all-goalies-table')">GA</th>
+                            <th style="color: black;" onclick="sortTable(5, 'all-goalies-table')">GAA</th>
+                            <th style="color: black;" onclick="sortTable(6, 'all-goalies-table')">SF</th>
+                            <th style="color: black;" onclick="sortTable(7, 'all-goalies-table')">SV%</th>
+                        </tr>
+                    </thead>
+                    <tbody id="all-goalies-table-body" class="text-center">
+                        <!-- Data will be populated here -->
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
@@ -129,6 +138,7 @@
 <script>
     function fetchContent(orgId, levelId, seasonId, teamId, topN) {
         var humanId = document.getElementById('human_id').value;
+        var minGames = document.getElementById('min_games').value;
         var loadingIndicator = document.getElementById('loading-indicator');
         loadingIndicator.style.display = 'block'; // Show loading indicator
 
@@ -137,7 +147,7 @@
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ org_id: orgId, level_id: levelId, season_id: seasonId, team_id: teamId, top_n: topN, human_id: humanId })
+            body: JSON.stringify({ org_id: orgId, level_id: levelId, season_id: seasonId, team_id: teamId, top_n: topN, human_id: humanId, min_games: minGames })
         })
             .then(response => response.json())
             .then(data => {
@@ -171,17 +181,19 @@
                     document.getElementById('level-name').innerText = data.level_name;
                     document.getElementById('season-name').innerText = data.season_name;
                     data.team_performance.forEach(item => {
-                        const rowClass = String(item.human_id) === String(humanId) ? 'font-weight-bold highlight-row' : 'font-weight-bold';
-                        teamPerformanceTableBody.innerHTML += `<tr class="${rowClass}">
-                            <td style="color: black;">${item.context}</td>
-                            <td>${item.first_game}</td>
-                            <td>${item.last_game}</td>
-                            <td><strong style="color: black;">${item.games_played}</strong><br><span style="color: rgb(123, 0, 0);">${item.games_played_rank}</span></td>
-                            <td><strong style="color: black;">${item.goals_allowed}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_allowed_rank}</span></td>
-                            <td><strong style="color: black;">${item.goals_allowed_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_allowed_per_game_rank}</span></td>
-                            <td><strong style="color: black;">${item.shots_faced}</strong><br><span style="color: rgb(123, 0, 0);">${item.shots_faced_rank}</span></td>
-                            <td><strong style="color: black;">${item.save_percentage}</strong><br><span style="color: rgb(123, 0, 0);">${item.save_percentage_rank}</span></td>
-                        </tr>`;
+                        if (item.games_played >= minGames) {
+                            const rowClass = String(item.human_id) === String(humanId) ? 'font-weight-bold highlight-row' : 'font-weight-bold';
+                            teamPerformanceTableBody.innerHTML += `<tr class="${rowClass}">
+                                <td style="color: black;">${item.context}</td>
+                                <td>${item.first_game}</td>
+                                <td>${item.last_game}</td>
+                                <td><strong style="color: black;">${item.games_played}</strong><br><span style="color: rgb(123, 0, 0);">${item.games_played_rank}</span></td>
+                                <td><strong style="color: black;">${item.goals_allowed}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_allowed_rank}</span></td>
+                                <td><strong style="color: black;">${item.goals_allowed_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_allowed_per_game_rank}</span></td>
+                                <td><strong style="color: black;">${item.shots_faced}</strong><br><span style="color: rgb(123, 0, 0);">${item.shots_faced_rank}</span></td>
+                                <td><strong style="color: black;">${item.save_percentage}</strong><br><span style="color: rgb(123, 0, 0);">${item.save_percentage_rank}</span></td>
+                            </tr>`;
+                        }
                     });
 
                     document.getElementById('team-performance-section').style.display = 'block';
@@ -196,22 +208,31 @@
                     document.getElementById('level-name').innerText = data.level_name;
                     document.getElementById('season-name').innerText = data.season_name;
                     data.all_goalies.forEach(item => {
-                        const rowClass = String(item.human_id) === String(humanId) ? 'font-weight-bold highlight-row' : 'font-weight-bold';
-                        allGoaliesTableBody.innerHTML += `<tr class="${rowClass}">
-                            <td style="color: black;">${item.context}</td>
-                            <td>${item.first_game}</td>
-                            <td>${item.last_game}</td>
-                            <td><strong style="color: black;">${item.games_played}</strong><br><span style="color: rgb(123, 0, 0);">${item.games_played_rank}</span></td>
-                            <td><strong style="color: black;">${item.goals_allowed}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_allowed_rank}</span></td>
-                            <td><strong style="color: black;">${item.goals_allowed_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_allowed_per_game_rank}</span></td>
-                            <td><strong style="color: black;">${item.shots_faced}</strong><br><span style="color: rgb(123, 0, 0);">${item.shots_faced_rank}</span></td>
-                            <td><strong style="color: black;">${item.save_percentage}</strong><br><span style="color: rgb(123, 0, 0);">${item.save_percentage_rank}</span></td>
-                        </tr>`;
+                        if (item.games_played >= minGames) {
+                            const rowClass = String(item.human_id) === String(humanId) ? 'font-weight-bold highlight-row' : 'font-weight-bold';
+                            allGoaliesTableBody.innerHTML += `<tr class="${rowClass}">
+                                <td style="color: black;">${item.context}</td>
+                                <td>${item.first_game}</td>
+                                <td>${item.last_game}</td>
+                                <td><strong style="color: black;">${item.games_played}</strong><br><span style="color: rgb(123, 0, 0);">${item.games_played_rank}</span></td>
+                                <td><strong style="color: black;">${item.goals_allowed}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_allowed_rank}</span></td>
+                                <td><strong style="color: black;">${item.goals_allowed_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_allowed_per_game_rank}</span></td>
+                                <td><strong style="color: black;">${item.shots_faced}</strong><br><span style="color: rgb(123, 0, 0);">${item.shots_faced_rank}</span></td>
+                                <td><strong style="color: black;">${item.save_percentage}</strong><br><span style="color: rgb(123, 0, 0);">${item.save_percentage_rank}</span></td>
+                            </tr>`;
+                        }
                     });
 
                     document.getElementById('all-goalies-section').style.display = 'block';
                 } else {
                     document.getElementById('all-goalies-section').style.display = 'none';
+                }
+
+                // Show or hide the goalies-comparison-section based on the visibility of inner sections
+                if (document.getElementById('team-performance-section').style.display === 'block' || document.getElementById('all-goalies-section').style.display === 'block') {
+                    document.getElementById('goalies-comparison-section').style.display = 'block';
+                } else {
+                    document.getElementById('goalies-comparison-section').style.display = 'none';
                 }
 
                 loadingIndicator.style.display = 'none'; // Hide loading indicator
@@ -263,8 +284,69 @@
         const humanId = urlParams.get('human_id');
         document.getElementById('human_id').value = humanId;
         document.getElementById('top_n').value = 200;
+        const minGames = urlParams.get('min_games') || 1;
+        document.getElementById('min_games').value = minGames;
     }
 
+    document.getElementById('min_games').addEventListener('change', function () {
+        var orgId = document.getElementById('organization').value;
+        var levelId = document.getElementById('level').value;
+        var seasonId = document.getElementById('season').value;
+        var teamId = document.getElementById('team').value;
+        var topN = document.getElementById('top_n').value;
+        var minGames = this.value;
+
+        const url = new URL(window.location);
+        url.searchParams.set('min_games', minGames);
+        window.history.pushState({}, '', url);
+
+        fetchContent(orgId, levelId, seasonId, teamId, topN);
+    });
+
+    window.addEventListener('load', function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const orgId = urlParams.get('org_id') || '-1';
+        const levelId = urlParams.get('level_id');
+        const seasonId = urlParams.get('season_id');
+        const teamId = urlParams.get('team_id');
+        const topN = urlParams.get('top_n') || 50;
+        const minGames = urlParams.get('min_games') || 1;
+        document.getElementById('top_n').value = topN;
+        document.getElementById('min_games').value = minGames;
+        onWindowLoad();
+
+        if (orgId) {
+            document.getElementById('organization').value = orgId;
+        }
+
+        if (orgId && orgId != -1) {
+            fetchLevels(orgId, document.getElementById('human_id') ? document.getElementById('human_id').value : null).then(() => {
+                if (levelId) {
+                    document.getElementById('level').value = levelId;
+                    fetchSeasons(orgId, levelId, document.getElementById('human_id') ? document.getElementById('human_id').value : null).then(() => {
+                        if (seasonId) {
+                            document.getElementById('season').value = seasonId;
+                            fetchTeams(orgId, levelId, seasonId, document.getElementById('human_id') ? document.getElementById('human_id').value : null).then(() => {
+                                if (teamId) {
+                                    document.getElementById('team').value = teamId;
+                                    document.getElementById('top_n').value = 200;
+                                }
+                                fetchContent(orgId, levelId, seasonId, teamId, topN);
+                            });
+                        } else {
+                            document.getElementById('season').disabled = false;
+                            fetchContent(orgId, levelId, null, null, topN);
+                        }
+                    });
+                } else {
+                    document.getElementById('level').disabled = false;
+                    fetchContent(orgId, null, null, null, topN);
+                }
+            });
+        } else {
+            fetchContent(orgId, null, null, null, topN);
+        }
+    });
 </script>
 <input type="hidden" id="human_id" value="{{ human_id }}">
 {% endblock %}
