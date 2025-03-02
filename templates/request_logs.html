@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Request Logs{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">Request Logs</h1>
+    <form method="get" class="mb-4">
+        <label for="interval">Select Interval:</label>
+        <select id="interval" name="interval" onchange="this.form.submit()">
+            <option value="minutely" {% if interval=='minutely' %}selected{% endif %}>Minutely</option>
+            <option value="hourly" {% if interval=='hourly' %}selected{% endif %}>Hourly</option>
+            <option value="daily" {% if interval=='daily' %}selected{% endif %}>Daily</option>
+            <option value="weekly" {% if interval=='weekly' %}selected{% endif %}>Weekly</option>
+            <option value="monthly" {% if interval=='monthly' %}selected{% endif %}>Monthly</option>
+        </select>
+    </form>
+    <div id="plot-div">{{ plot_div|safe }}</div>
+    <div id="endpoint-plot-div">{{ endpoint_plot_div|safe }}</div>
+    <div id="total-requests-div">{{ total_requests_div|safe }}</div>
+</div>
+{% endblock %}
