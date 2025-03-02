@@ -50,24 +50,26 @@
     {% include "dropdowns.html" %}
     <div class="loading-indicator" id="loading-indicator">Loading data...</div>
     <div class="table-responsive" id="skater-performance-results">
-        <table class="table table-striped text-center" id="skater-performance-table">
-            <thead class="text-center">
-                <tr>
-                    <th style="color: black;">Context</th>
-                    <th style="color: black;">From</th>
-                    <th style="color: black;">To</th>
-                    <th style="color: black;" onclick="sortTable(3)">GP</th>
-                    <th style="color: black;" onclick="sortTable(4)">Pts/G</th>
-                    <th style="color: black;" onclick="sortTable(5)">GFA</th>
-                    <th style="color: black;" onclick="sortTable(6)">A/GP</th>
-                    <th style="color: black;" onclick="sortTable(7)">Pen/GP</th>
-                    <th style="color: black;" onclick="sortTable(8)">GM/GP</th>
-                </tr>
-            </thead>
-            <tbody id="skater-performance-table-body" class="text-center">
-                <!-- Data will be populated here -->
-            </tbody>
-        </table>
+        <div id="skater-performance-section" style="display: none;">
+            <table class="table table-striped text-center" id="skater-performance-table">
+                <thead class="text-center">
+                    <tr>
+                        <th style="color: black;">Context</th>
+                        <th style="color: black;">From</th>
+                        <th style="color: black;">To</th>
+                        <th style="color: black;" onclick="sortTable(3)">GP</th>
+                        <th style="color: black;" onclick="sortTable(4)">Pts/G</th>
+                        <th style="color: black;" onclick="sortTable(5)">GFA</th>
+                        <th style="color: black;" onclick="sortTable(6)">A/GP</th>
+                        <th style="color: black;" onclick="sortTable(7)">Pen/GP</th>
+                        <th style="color: black;" onclick="sortTable(8)">GM/GP</th>
+                    </tr>
+                </thead>
+                <tbody id="skater-performance-table-body" class="text-center">
+                    <!-- Data will be populated here -->
+                </tbody>
+            </table>
+        </div>
         <div id="team-performance-section" style="display: none;">
             <h4>Skaters performance for the team:</h4>
             <table class="table table-striped text-center" id="team-performance-table">
@@ -137,19 +139,25 @@
                 var skaterPerformanceTableBody = document.getElementById('skater-performance-table-body');
                 skaterPerformanceTableBody.innerHTML = '';
 
-                data.skater_performance.forEach(item => {
-                    skaterPerformanceTableBody.innerHTML += `<tr>
-                        <td style="color: black;">${item.context}</td>
-                        <td>${item.first_game}</td>
-                        <td>${item.last_game}</td>
-                        <td><strong style="color: black;">${item.games_played}</strong><br><span style="color: rgb(123, 0, 0);">${item.games_played_rank}</span></td>
-                        <td><strong style="color: black;">${item.points_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.points_per_game_rank}</span></td>
-                        <td><strong style="color: black;">${item.goals_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_per_game_rank}</span></td>
-                        <td><strong style="color: black;">${item.assists_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.assists_per_game_rank}</span></td>
-                        <td><strong style="color: black;">${item.penalties_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.penalties_per_game_rank}</span></td>
-                        <td><strong style="color: black;">${item.gm_penalties_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.gm_penalties_per_game_rank}</span></td>
-                    </tr>`;
-                });
+                if (data.skater_performance && data.skater_performance.length > 0) {
+                    data.skater_performance.forEach(item => {
+                        skaterPerformanceTableBody.innerHTML += `<tr>
+                            <td style="color: black;">${item.context}</td>
+                            <td>${item.first_game}</td>
+                            <td>${item.last_game}</td>
+                            <td><strong style="color: black;">${item.games_played}</strong><br><span style="color: rgb(123, 0, 0);">${item.games_played_rank}</span></td>
+                            <td><strong style="color: black;">${item.points_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.points_per_game_rank}</span></td>
+                            <td><strong style="color: black;">${item.goals_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_per_game_rank}</span></td>
+                            <td><strong style="color: black;">${item.assists_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.assists_per_game_rank}</span></td>
+                            <td><strong style="color: black;">${item.penalties_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.penalties_per_game_rank}</span></td>
+                            <td><strong style="color: black;">${item.gm_penalties_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.gm_penalties_per_game_rank}</span></td>
+                        </tr>`;
+                    });
+
+                    document.getElementById('skater-performance-section').style.display = 'block';
+                } else {
+                    document.getElementById('skater-performance-section').style.display = 'none';
+                }
 
                 var teamPerformanceTableBody = document.getElementById('team-performance-table-body');
                 teamPerformanceTableBody.innerHTML = '';

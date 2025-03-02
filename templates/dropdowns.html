@@ -1,5 +1,5 @@
 <div>
-    <label for="organization">Organization:</label>
+    <label for="organization">Org:</label>
     <select id="organization" name="organization">
         {% for org in organizations %}
         <option value="{{ org.id }}" {% if org.id==ALL_ORGS_ID %}selected{% endif %}>{{ org.organization_name }}
@@ -226,6 +226,13 @@
             });
         } else {
             fetchContent(null, null, null, null, topN);
+        }
+
+        // Automatically select the only available organization if there is only one option
+        const orgSelect = document.getElementById('organization');
+        if (orgSelect.options.length === 1) {
+            orgSelect.selectedIndex = 0;
+            orgSelect.dispatchEvent(new Event('change'));
         }
     });
 </script>

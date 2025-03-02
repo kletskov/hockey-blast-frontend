@@ -10,6 +10,7 @@ team_division_skater_stats_bp = Blueprint('team_division_skater_stats', __name__
 def compute_skater_stats(games, team_id):
     # Initialize stats dictionary
     stats_dict = defaultdict(lambda: {
+        'human_id': None,
         'games_played': 0,
         'goals': 0,
         'assists': 0,
@@ -89,6 +90,7 @@ def compute_skater_stats(games, team_id):
     # Combine the results
     for stat in games_played_stats:
         key = stat.human_id
+        stats_dict[key]['human_id'] = key
         stats_dict[key]['games_played'] += stat.games_played
         stats_dict[key]['game_ids'].extend(stat.game_ids)
 

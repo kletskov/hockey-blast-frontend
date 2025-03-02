@@ -8,6 +8,7 @@ team_division_goalie_stats_bp = Blueprint('team_division_goalie_stats', __name__
 def compute_goalie_stats(games, team_id):
     # Initialize stats dictionary
     stats_dict = defaultdict(lambda: {
+        'human_id': None,
         'games_played': 0,
         'goals_allowed': 0,
         'shots_faced': 0,
@@ -35,6 +36,7 @@ def compute_goalie_stats(games, team_id):
     # Combine the results
     for stat in goalie_stats:
         key = stat.human_id
+        stats_dict[key]['human_id'] = key
         stats_dict[key]['games_played'] += stat.games_played
         stats_dict[key]['goals_allowed'] += stat.goals_allowed if stat.goals_allowed is not None else 0
         stats_dict[key]['shots_faced'] += stat.shots_faced if stat.shots_faced is not None else 0

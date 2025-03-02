@@ -44,23 +44,25 @@
     {% include "dropdowns.html" %}
     <div class="loading-indicator" id="loading-indicator">Loading data...</div>
     <div class="table-responsive" id="goalie-performance-results">
-        <table class="table table-striped text-center" id="goalie-performance-table">
-            <thead class="text-center">
-                <tr>
-                    <th style="color: black;"></th>
-                    <th style="color: black;">From</th>
-                    <th style="color: black;">To</th>
-                    <th style="color: black;" onclick="sortTable(3)">GP</th>
-                    <th style="color: black;" onclick="sortTable(4)">GA</th>
-                    <th style="color: black;" onclick="sortTable(5)">GAA</th>
-                    <th style="color: black;" onclick="sortTable(6)">SF</th>
-                    <th style="color: black;" onclick="sortTable(7)">SV%</th>
-                </tr>
-            </thead>
-            <tbody id="goalie-performance-table-body" class="text-center">
-                <!-- Data will be populated here -->
-            </tbody>
-        </table>
+        <div id="goalie-performance-section" style="display: none;">
+            <table class="table table-striped text-center" id="goalie-performance-table">
+                <thead class="text-center">
+                    <tr>
+                        <th style="color: black;"></th>
+                        <th style="color: black;">From</th>
+                        <th style="color: black;">To</th>
+                        <th style="color: black;" onclick="sortTable(3)">GP</th>
+                        <th style="color: black;" onclick="sortTable(4)">GA</th>
+                        <th style="color: black;" onclick="sortTable(5)">GAA</th>
+                        <th style="color: black;" onclick="sortTable(6)">SF</th>
+                        <th style="color: black;" onclick="sortTable(7)">SV%</th>
+                    </tr>
+                </thead>
+                <tbody id="goalie-performance-table-body" class="text-center">
+                    <!-- Data will be populated here -->
+                </tbody>
+            </table>
+        </div>
         <div id="team-performance-section" style="display: none;">
             <h4>Goalies performance for the team:</h4>
             <table class="table table-striped text-center" id="team-performance-table">
@@ -142,19 +144,25 @@
                 var goaliePerformanceTableBody = document.getElementById('goalie-performance-table-body');
                 goaliePerformanceTableBody.innerHTML = '';
 
-                data.goalie_performance.forEach(item => {
-                    const rowClass = 'font-weight-bold';
-                    goaliePerformanceTableBody.innerHTML += `<tr class="${rowClass}">
-                        <td style="color: black;">${item.context}</td>
-                        <td>${item.first_game}</td>
-                        <td>${item.last_game}</td>
-                        <td><strong style="color: black;">${item.games_played}</strong><br><span style="color: rgb(123, 0, 0);">${item.games_played_rank}</span></td>
-                        <td><strong style="color: black;">${item.goals_allowed}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_allowed_rank}</span></td>
-                        <td><strong style="color: black;">${item.goals_allowed_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_allowed_per_game_rank}</span></td>
-                        <td><strong style="color: black;">${item.shots_faced}</strong><br><span style="color: rgb(123, 0, 0);">${item.shots_faced_rank}</span></td>
-                        <td><strong style="color: black;">${item.save_percentage}</strong><br><span style="color: rgb(123, 0, 0);">${item.save_percentage_rank}</span></td>
-                    </tr>`;
-                });
+                if (data.goalie_performance && data.goalie_performance.length > 0) {
+                    data.goalie_performance.forEach(item => {
+                        const rowClass = 'font-weight-bold';
+                        goaliePerformanceTableBody.innerHTML += `<tr class="${rowClass}">
+                            <td style="color: black;">${item.context}</td>
+                            <td>${item.first_game}</td>
+                            <td>${item.last_game}</td>
+                            <td><strong style="color: black;">${item.games_played}</strong><br><span style="color: rgb(123, 0, 0);">${item.games_played_rank}</span></td>
+                            <td><strong style="color: black;">${item.goals_allowed}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_allowed_rank}</span></td>
+                            <td><strong style="color: black;">${item.goals_allowed_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_allowed_per_game_rank}</span></td>
+                            <td><strong style="color: black;">${item.shots_faced}</strong><br><span style="color: rgb(123, 0, 0);">${item.shots_faced_rank}</span></td>
+                            <td><strong style="color: black;">${item.save_percentage}</strong><br><span style="color: rgb(123, 0, 0);">${item.save_percentage_rank}</span></td>
+                        </tr>`;
+                    });
+
+                    document.getElementById('goalie-performance-section').style.display = 'block';
+                } else {
+                    document.getElementById('goalie-performance-section').style.display = 'none';
+                }
 
                 var teamPerformanceTableBody = document.getElementById('team-performance-table-body');
                 teamPerformanceTableBody.innerHTML = '';

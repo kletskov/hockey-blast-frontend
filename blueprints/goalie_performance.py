@@ -22,7 +22,7 @@ def format_date_link(date, game_id):
         return f"<a href='{url_for('game_card.game_card', game_id=game_id)}'>{formatted_date}</a>"
     return None
 
-def append_goalie_performance_result(goalie_performance_results, stats, context):
+def append_goalie_performance_result(goalie_performance_results, stats, context, context_value = 0):
     if isinstance(stats, dict):
         human_id = stats.get('human_id')
         first_game_id = stats.get('first_game_id')
@@ -57,6 +57,7 @@ def append_goalie_performance_result(goalie_performance_results, stats, context)
     goalie_performance_results.append({
         'human_id': human_id,
         'context': context,
+        'context_value': context_value,
         'games_played': games_played,
         'games_played_rank': format_rank_percentile(games_played_rank, stats['total_in_rank'] if isinstance(stats, dict) else stats.total_in_rank),
         'goals_allowed': goals_allowed,
@@ -88,6 +89,10 @@ def goalie_performance():
         organizations = db.session.query(Organization).join(OrgStatsGoalie, Organization.id == OrgStatsGoalie.org_id).filter(OrgStatsGoalie.human_id == human_id).all()
     else:
         organizations = db.session.query(Organization).all()
+
+    # Cleanup dropdown if it has only one org and all orgs
+    if len(organizations) == 2 and any(org.id == ALL_ORGS_ID for org in organizations):
+        organizations = [org for org in organizations if org.id != ALL_ORGS_ID]
     
     top_n = request.args.get('top_n', default=50, type=int)
     org_id = request.args.get('org_id', type=int)
@@ -149,6 +154,7 @@ def filter_goalie_performance():
             organization = db.session.query(Organization).filter(Organization.id == stats.org_id).first()
             context = organization.organization_name
             append_goalie_performance_result(goalie_performance_results, stats, context)
+        goalie_performance_results.sort(key=lambda x: (x['games_played']), reverse=True)
     else:
         if level_id is None:
             levels = get_levels_for_goalie_in_org(org_id, human_id)
@@ -161,6 +167,7 @@ def filter_goalie_performance():
                 for stats in level_stats:
                     context = level.level_name
                     append_goalie_performance_result(goalie_performance_results, stats, context)
+            goalie_performance_results.sort(key=lambda x: (x['games_played']), reverse=True)
         else:
             if season_id is None:
                 divisions, seasons = get_divisions_and_seasons(org_id, level_id, human_id)
@@ -173,7 +180,8 @@ def filter_goalie_performance():
                     for stats in division_stats:
                         season = next((s for s in seasons if s.id == division.season_id), None)
                         context = season.season_name if season else "Unknown Season"
-                        append_goalie_performance_result(goalie_performance_results, stats, context)
+                        append_goalie_performance_result(goalie_performance_results, stats, context, context_value = season.season_number)
+                goalie_performance_results.sort(key=lambda x: (x['context_value']), reverse=True)
             else:
                 # Fetch the unique division_id using org_id, season_id, and level_id
                 division = db.session.query(Division.id).filter(
@@ -227,7 +235,6 @@ def filter_goalie_performance():
                             append_goalie_performance_result(team_performance_results, stats, link)
 
     # Sort the results by last game date (descending) and first game date (ascending)
-    goalie_performance_results.sort(key=lambda x: (x['games_played']), reverse=True)
     team_performance_results.sort(key=lambda x: (x['games_played']), reverse=True)
     all_goalies_results.sort(key=lambda x: (x['games_played']), reverse=True)
 
