@@ -279,24 +279,21 @@
     function onWindowLoad() {
         const urlParams = new URLSearchParams(window.location.search);
         const humanId = urlParams.get('human_id');
+        const minGames = urlParams.get('min_games') || 1;
+
         document.getElementById('human_id').value = humanId;
-        document.getElementById('top_n').value = 200;
+        document.getElementById('min_games').value = minGames;
     }
 
 
     document.getElementById('min_games').addEventListener('change', function () {
-        var orgId = document.getElementById('organization').value;
-        var levelId = document.getElementById('level').value;
-        var seasonId = document.getElementById('season').value;
-        var teamId = document.getElementById('team').value;
-        var topN = document.getElementById('top_n').value;
         var minGames = this.value;
-
         const url = new URL(window.location);
         url.searchParams.set('min_games', minGames);
         window.history.pushState({}, '', url);
 
-        fetchContent(orgId, levelId, seasonId, teamId, topN);
+        var event = new CustomEvent('dropdownChange', { detail: {} });
+        document.dispatchEvent(event);
     });
 
 </script>

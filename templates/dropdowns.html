@@ -48,6 +48,7 @@
         var url = new URL(window.location);
         url.searchParams.delete('location');
         window.history.pushState({}, '', url);
+        console.log('dropdownChange - from org change');
         var event = new CustomEvent('dropdownChange', { detail: { orgId: orgId } });
         document.dispatchEvent(event);
     });
@@ -64,6 +65,7 @@
             document.getElementById('team').innerHTML = '<option value="">All Teams</option>';
             document.getElementById('team').disabled = true;
         }
+        console.log('dropdownChange - from lvl change');
         var event = new CustomEvent('dropdownChange', { detail: { levelId: levelId } });
         document.dispatchEvent(event);
     });
@@ -79,6 +81,7 @@
             document.getElementById('team').innerHTML = '<option value="">All Teams</option>';
             document.getElementById('team').disabled = true;
         }
+        console.log('dropdownChange - from season change');
         var event = new CustomEvent('dropdownChange', { detail: { seasonId: seasonId } });
         document.dispatchEvent(event);
     });
@@ -88,12 +91,14 @@
         if (teamId) {
             document.getElementById('top_n').value = 200;
         }
+        console.log('dropdownChange - from team change');
         var event = new CustomEvent('dropdownChange', { detail: { teamId: teamId } });
         document.dispatchEvent(event);
     });
 
     document.getElementById('top_n').addEventListener('change', function () {
         var topN = this.value;
+        console.log('dropdownChange - from top_n change');
         var event = new CustomEvent('dropdownChange', { detail: { topN: topN } });
         document.dispatchEvent(event);
     });
@@ -165,6 +170,14 @@
     }
 
     function updateDropdownsCGI(orgId, levelId, seasonId, teamId, topN) {
+        console.log('updateDropdownsCGI:', {
+            orgId: orgId,
+            levelId: levelId,
+            seasonId: seasonId,
+            teamId: teamId,
+            topN: topN
+        });
+
         const url = new URL(window.location);
         url.searchParams.set('org_id', orgId);
         url.searchParams.set('level_id', levelId);
@@ -176,11 +189,22 @@
     }
 
     document.addEventListener('dropdownChange', function (event) {
-        var orgId = document.getElementById('organization').value;
-        var levelId = document.getElementById('level').value;
-        var seasonId = document.getElementById('season').value;
-        var teamId = document.getElementById('team').value;
-        var topN = document.getElementById('top_n').value;
+        console.log('dropdownChange - event', {
+            event: event.detail,
+        });
+        console.log('dropdownChange - doc elements :', {
+            orgId: document.getElementById('organization').value,
+            levelId: document.getElementById('level').value,
+            seasonId: document.getElementById('season').value,
+            teamId: document.getElementById('team').value,
+            topN: document.getElementById('top_n').value
+        });
+
+        var orgId = event.detail.orgId || document.getElementById('organization').value;
+        var levelId = event.detail.levelId || document.getElementById('level').value;
+        var seasonId = event.detail.seasonId || document.getElementById('season').value;
+        var teamId = event.detail.teamId || document.getElementById('team').value;
+        var topN = event.detail.topN || document.getElementById('top_n').value;
 
         updateDropdownsCGI(orgId, levelId, seasonId, teamId, topN);
         fetchContent(orgId, levelId, seasonId, teamId, topN);
@@ -188,15 +212,33 @@
 
     window.addEventListener('load', function () {
         const urlParams = new URLSearchParams(window.location.search);
-        const orgId = urlParams.get('org_id') || '-1';
+        const orgId = urlParams.get('org_id');
         const levelId = urlParams.get('level_id');
         const seasonId = urlParams.get('season_id');
         const teamId = urlParams.get('team_id');
         const topN = urlParams.get('top_n') || 50;
         document.getElementById('top_n').value = topN;
+        document.getElementById('level').value = levelId;
         onWindowLoad();
 
-        if (orgId) {
+        console.log('URL Params:', {
+            orgId: orgId,
+            levelId: levelId,
+            seasonId: seasonId,
+            teamId: teamId,
+            topN: topN
+        });
+
+        console.log('dropdownChange - from load');
+
+        if (orgId == null) {
+            // Automatically select the only available organization if there is only one option
+            const orgSelect = document.getElementById('organization');
+            if (orgSelect.options.length === 1) {
+                orgSelect.selectedIndex = 0;
+                orgSelect.dispatchEvent(new Event('change'));
+            }
+        } else {
             document.getElementById('organization').value = orgId;
         }
 
@@ -212,27 +254,25 @@
                                     document.getElementById('team').value = teamId;
                                     document.getElementById('top_n').value = 200;
                                 }
-                                fetchContent(orgId, levelId, seasonId, teamId, topN);
+
+                                //fetchContent(orgId, levelId, seasonId, teamId, topN);
                             });
                         } else {
                             document.getElementById('season').disabled = false;
-                            fetchContent(orgId, levelId, null, null, topN);
+                            //fetchContent(orgId, levelId, null, null, topN);
                         }
                     });
                 } else {
                     document.getElementById('level').disabled = false;
-                    fetchContent(orgId, null, null, null, topN);
+                    //fetchContent(orgId, null, null, null, topN);
                 }
             });
         } else {
-            fetchContent(null, null, null, null, topN);
+            //fetchContent(null, null, null, null, topN);
         }
 
-        // Automatically select the only available organization if there is only one option
-        const orgSelect = document.getElementById('organization');
-        if (orgSelect.options.length === 1) {
-            orgSelect.selectedIndex = 0;
-            orgSelect.dispatchEvent(new Event('change'));
-        }
+        var event = new CustomEvent('dropdownChange', { detail: { orgId: orgId, levelId: levelId, seasonId: seasonId, teamId: teamId, topN: topN } });
+        document.dispatchEvent(event);
+
     });
 </script>

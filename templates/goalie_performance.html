@@ -142,6 +142,14 @@
         var loadingIndicator = document.getElementById('loading-indicator');
         loadingIndicator.style.display = 'block'; // Show loading indicator
 
+        console.log('Fetching content:', {
+            orgId: orgId,
+            levelId: levelId,
+            seasonId: seasonId,
+            teamId: teamId,
+            topN: topN
+        });
+
         fetch('/goalie_performance/filter_goalie_performance', {
             method: 'POST',
             headers: {
@@ -282,9 +290,11 @@
     function onWindowLoad() {
         const urlParams = new URLSearchParams(window.location.search);
         const humanId = urlParams.get('human_id');
-        document.getElementById('human_id').value = humanId;
-        document.getElementById('top_n').value = 200;
+        const topN = urlParams.get('top_n') || 50;
         const minGames = urlParams.get('min_games') || 1;
+
+        document.getElementById('human_id').value = humanId;
+        document.getElementById('top_n').value = topN;
         document.getElementById('min_games').value = minGames;
     }
 
@@ -299,54 +309,13 @@
         const url = new URL(window.location);
         url.searchParams.set('min_games', minGames);
         window.history.pushState({}, '', url);
+        console.log('fetchContent - from min_games change');
 
-        fetchContent(orgId, levelId, seasonId, teamId, topN);
+        var event = new CustomEvent('dropdownChange', { detail: {} });
+        document.dispatchEvent(event);
+
     });
 
-    window.addEventListener('load', function () {
-        const urlParams = new URLSearchParams(window.location.search);
-        const orgId = urlParams.get('org_id') || '-1';
-        const levelId = urlParams.get('level_id');
-        const seasonId = urlParams.get('season_id');
-        const teamId = urlParams.get('team_id');
-        const topN = urlParams.get('top_n') || 50;
-        const minGames = urlParams.get('min_games') || 1;
-        document.getElementById('top_n').value = topN;
-        document.getElementById('min_games').value = minGames;
-        onWindowLoad();
-
-        if (orgId) {
-            document.getElementById('organization').value = orgId;
-        }
-
-        if (orgId && orgId != -1) {
-            fetchLevels(orgId, document.getElementById('human_id') ? document.getElementById('human_id').value : null).then(() => {
-                if (levelId) {
-                    document.getElementById('level').value = levelId;
-                    fetchSeasons(orgId, levelId, document.getElementById('human_id') ? document.getElementById('human_id').value : null).then(() => {
-                        if (seasonId) {
-                            document.getElementById('season').value = seasonId;
-                            fetchTeams(orgId, levelId, seasonId, document.getElementById('human_id') ? document.getElementById('human_id').value : null).then(() => {
-                                if (teamId) {
-                                    document.getElementById('team').value = teamId;
-                                    document.getElementById('top_n').value = 200;
-                                }
-                                fetchContent(orgId, levelId, seasonId, teamId, topN);
-                            });
-                        } else {
-                            document.getElementById('season').disabled = false;
-                            fetchContent(orgId, levelId, null, null, topN);
-                        }
-                    });
-                } else {
-                    document.getElementById('level').disabled = false;
-                    fetchContent(orgId, null, null, null, topN);
-                }
-            });
-        } else {
-            fetchContent(orgId, null, null, null, topN);
-        }
-    });
 </script>
 <input type="hidden" id="human_id" value="{{ human_id }}">
 {% endblock %}
