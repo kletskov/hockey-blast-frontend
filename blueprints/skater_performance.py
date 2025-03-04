@@ -100,9 +100,12 @@ def skater_performance():
     if len(organizations) == 2 and any(org.id == ALL_ORGS_ID for org in organizations):
         organizations = [org for org in organizations if org.id != ALL_ORGS_ID]
 
-
     top_n = request.args.get('top_n', default=50, type=int)
     org_id = request.args.get('org_id', type=int)
+
+    if org_id is None and organizations:
+        org_id = min(org.id for org in organizations)
+        
     level_id = request.args.get('level_id')
     season_id = request.args.get('season_id')
     return render_template('skater_performance.html', organizations=organizations, top_n=top_n, org_id=org_id, level_id=level_id, season_id=season_id, human_id=human_id, human_name=human_name)

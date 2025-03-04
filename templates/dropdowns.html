@@ -239,10 +239,6 @@
 
             if (event.detail.orgId != null) {
                 orgId = event.detail.orgId;
-            } else {
-                if (!valueSet) {
-                    orgId = null;
-                }
             }
 
             if (event.detail.topN != null) {
@@ -250,6 +246,7 @@
             }
         }
         if (orgId == null) {
+            console.log('MINUS ONE ');
             orgId = -1;
         }
         // var orgId = event.detail.orgId || document.getElementById('organization').value;
