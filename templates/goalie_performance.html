@@ -36,7 +36,7 @@
 </style>
 
 <div class="table-responsive">
-    <h4>Goalie Performance for {{ human_name }}</h4>
+    <h4>Stats for {{ human_name }}</h4>
     <p>Note: Each data point below includes goalie's rank among other goalies in the following format: "<span
             style="color: rgb(123, 0, 0);">goalie_rank / total_in_rank, Kth <a
                 href="https://en.wikipedia.org/wiki/Percentile" target="_blank">Percentile</a></span>"<br>Dropdown
@@ -311,7 +311,7 @@
         window.history.pushState({}, '', url);
         console.log('fetchContent - from min_games change');
 
-        var event = new CustomEvent('dropdownChange', { detail: {} });
+        var event = new CustomEvent('dropdownChange', { detail: null });
         document.dispatchEvent(event);
 
     });

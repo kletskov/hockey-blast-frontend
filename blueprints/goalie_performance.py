@@ -81,11 +81,11 @@ def extract_date_from_link(link):
 @goalie_performance_bp.route('/', methods=['GET'])
 def goalie_performance():
     human_id = request.args.get('human_id')
-    human_name = "Unknown"
+    human_name = "All Goalies (for selected Season in Level)"
     if human_id:
         human = db.session.query(Human).filter(Human.id == human_id).first()
         if human:
-            human_name = f"{human.first_name} {human.middle_name} {human.last_name}".strip()
+            human_name = f"goalie {human.first_name} {human.middle_name} {human.last_name}".strip()
         organizations = db.session.query(Organization).join(OrgStatsGoalie, Organization.id == OrgStatsGoalie.org_id).filter(OrgStatsGoalie.human_id == human_id).all()
     else:
         organizations = db.session.query(Organization).all()
@@ -137,7 +137,7 @@ def filter_goalie_performance():
     try:
         human_id = int(human_id)
     except (ValueError, TypeError):
-        return jsonify({'error': 'Invalid human_id'}), 400
+        human_id = None
 
     goalie_performance_results = []
     team_performance_results = []
@@ -146,42 +146,51 @@ def filter_goalie_performance():
     season_name = ""
 
     if org_id == ALL_ORGS_ID:
-        org_stats = db.session.query(OrgStatsGoalie).filter(
-            OrgStatsGoalie.human_id == human_id
-        ).order_by(OrgStatsGoalie.org_id).limit(top_n).all()
+        if human_id:
+            query = db.session.query(OrgStatsGoalie).filter(
+                OrgStatsGoalie.human_id == human_id
+            )
 
-        for stats in org_stats:
-            organization = db.session.query(Organization).filter(Organization.id == stats.org_id).first()
-            context = organization.organization_name
-            append_goalie_performance_result(goalie_performance_results, stats, context)
-        goalie_performance_results.sort(key=lambda x: (x['games_played']), reverse=True)
+            org_stats = query.order_by(OrgStatsGoalie.org_id).limit(top_n).all()
+
+            for stats in org_stats:
+                organization = db.session.query(Organization).filter(Organization.id == stats.org_id).first()
+                context = organization.organization_name
+                append_goalie_performance_result(goalie_performance_results, stats, context)
+            goalie_performance_results.sort(key=lambda x: (x['games_played']), reverse=True)
     else:
         if level_id is None:
-            levels = get_levels_for_goalie_in_org(org_id, human_id)
-            for level in levels:
-                level_stats = db.session.query(LevelStatsGoalie).filter(
-                    LevelStatsGoalie.level_id == level.id,
-                    LevelStatsGoalie.human_id == human_id
-                ).order_by(LevelStatsGoalie.goals_allowed_per_game_rank).limit(top_n).all()
+            if human_id:
+                levels = get_levels_for_goalie_in_org(org_id, human_id)
+                for level in levels:
+                    query = db.session.query(LevelStatsGoalie).filter(
+                        LevelStatsGoalie.level_id == level.id,
+                        LevelStatsGoalie.human_id == human_id
+                    )
 
-                for stats in level_stats:
-                    context = level.level_name
-                    append_goalie_performance_result(goalie_performance_results, stats, context)
-            goalie_performance_results.sort(key=lambda x: (x['games_played']), reverse=True)
+                    level_stats = query.order_by(LevelStatsGoalie.goals_allowed_per_game_rank).limit(top_n).all()
+
+                    for stats in level_stats:
+                        context = level.level_name
+                        append_goalie_performance_result(goalie_performance_results, stats, context)
+                goalie_performance_results.sort(key=lambda x: (x['games_played']), reverse=True)
         else:
             if season_id is None:
-                divisions, seasons = get_divisions_and_seasons(org_id, level_id, human_id)
-                for division in divisions:
-                    division_stats = db.session.query(DivisionStatsGoalie).filter(
-                        DivisionStatsGoalie.division_id == division.id,
-                        DivisionStatsGoalie.human_id == human_id
-                    ).order_by(DivisionStatsGoalie.goals_allowed_per_game_rank).limit(top_n).all()
+                if human_id:
+                    divisions, seasons = get_divisions_and_seasons(org_id, level_id, human_id)
+                    for division in divisions:
+                        query = db.session.query(DivisionStatsGoalie).filter(
+                            DivisionStatsGoalie.division_id == division.id,
+                            DivisionStatsGoalie.human_id == human_id
+                        )
 
-                    for stats in division_stats:
-                        season = next((s for s in seasons if s.id == division.season_id), None)
-                        context = season.season_name if season else "Unknown Season"
-                        append_goalie_performance_result(goalie_performance_results, stats, context, context_value = season.season_number)
-                goalie_performance_results.sort(key=lambda x: (x['context_value']), reverse=True)
+                        division_stats = query.order_by(DivisionStatsGoalie.goals_allowed_per_game_rank).limit(top_n).all()
+
+                        for stats in division_stats:
+                            season = next((s for s in seasons if s.id == division.season_id), None)
+                            context = season.season_name if season else "Unknown Season"
+                            append_goalie_performance_result(goalie_performance_results, stats, context, context_value = season.season_number)
+                    goalie_performance_results.sort(key=lambda x: (x['context_value']), reverse=True)
             else:
                 # Fetch the unique division_id using org_id, season_id, and level_id
                 division = db.session.query(Division.id).filter(

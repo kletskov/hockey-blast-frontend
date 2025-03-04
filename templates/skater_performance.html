@@ -279,24 +279,32 @@
     function onWindowLoad() {
         const urlParams = new URLSearchParams(window.location.search);
         const humanId = urlParams.get('human_id');
+        const topN = urlParams.get('top_n') || 50;
         const minGames = urlParams.get('min_games') || 1;
 
         document.getElementById('human_id').value = humanId;
         document.getElementById('min_games').value = minGames;
+        document.getElementById('top_n').value = topN;
     }
 
 
     document.getElementById('min_games').addEventListener('change', function () {
+        var orgId = document.getElementById('organization').value;
+        var levelId = document.getElementById('level').value;
+        var seasonId = document.getElementById('season').value;
+        var teamId = document.getElementById('team').value;
+        var topN = document.getElementById('top_n').value;
         var minGames = this.value;
+
         const url = new URL(window.location);
         url.searchParams.set('min_games', minGames);
         window.history.pushState({}, '', url);
+        console.log('fetchContent - from min_games change');
 
-        var event = new CustomEvent('dropdownChange', { detail: {} });
+        var event = new CustomEvent('dropdownChange', { detail: null });
         document.dispatchEvent(event);
     });
 
 </script>
 <input type="hidden" id="human_id" value="{{ human_id }}">
-<input type="hidden" id="min_games" value="{{ min_games }}">
 {% endblock %}

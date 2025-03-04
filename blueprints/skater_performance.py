@@ -87,11 +87,11 @@ def extract_date_from_link(link):
 @skater_performance_bp.route('/', methods=['GET'])
 def skater_performance():
     human_id = request.args.get('human_id')
-    human_name = "Unknown"
+    human_name = "All skaters (for selected Season in Level)"
     if human_id:
         human = db.session.query(Human).filter(Human.id == human_id).first()
         if human:
-            human_name = f"{human.first_name} {human.middle_name} {human.last_name}".strip()
+            human_name = f"skater {human.first_name} {human.middle_name} {human.last_name}".strip()
         organizations = db.session.query(Organization).join(OrgStatsSkater, Organization.id == OrgStatsSkater.org_id).filter(OrgStatsSkater.human_id == human_id).all()
     else:
         organizations = db.session.query(Organization).all()
@@ -144,7 +144,7 @@ def filter_skater_performance():
     try:
         human_id = int(human_id)
     except (ValueError, TypeError):
-        return jsonify({'error': 'Invalid human_id'}), 400
+        human_id = None
 
     skater_performance_results = []
     team_performance_results = []
@@ -153,42 +153,45 @@ def filter_skater_performance():
     season_name = ""
 
     if org_id == ALL_ORGS_ID:
-        org_stats = db.session.query(OrgStatsSkater).filter(
-            OrgStatsSkater.human_id == human_id
-        ).order_by(OrgStatsSkater.org_id).limit(top_n).all()
+       if human_id:
+           org_stats = db.session.query(OrgStatsSkater).filter(
+                OrgStatsSkater.human_id == human_id
+            ).order_by(OrgStatsSkater.org_id).limit(top_n).all()
 
-        for stats in org_stats:
-            organization = db.session.query(Organization).filter(Organization.id == stats.org_id).first()
-            context = organization.organization_name
-            append_skater_performance_result(skater_performance_results, stats, context)
-        skater_performance_results.sort(key=lambda x: (x['games_played']), reverse=True)
+           for stats in org_stats:
+                organization = db.session.query(Organization).filter(Organization.id == stats.org_id).first()
+                context = organization.organization_name
+                append_skater_performance_result(skater_performance_results, stats, context)
+           skater_performance_results.sort(key=lambda x: (x['games_played']), reverse=True)
     else:
         if level_id is None:
-            levels = get_levels_for_skater_in_org(org_id, human_id)
-            for level in levels:
-                level_stats = db.session.query(LevelStatsSkater).filter(
-                    LevelStatsSkater.level_id == level.id,
-                    LevelStatsSkater.human_id == human_id
-                ).order_by(LevelStatsSkater.points_per_game_rank).limit(top_n).all()
+            if human_id:
+                levels = get_levels_for_skater_in_org(org_id, human_id)
+                for level in levels:
+                    level_stats = db.session.query(LevelStatsSkater).filter(
+                        LevelStatsSkater.level_id == level.id,
+                        LevelStatsSkater.human_id == human_id
+                    ).order_by(LevelStatsSkater.points_per_game_rank).limit(top_n).all()
 
-                for stats in level_stats:
-                    context = level.level_name
-                    append_skater_performance_result(skater_performance_results, stats, context)
-            skater_performance_results.sort(key=lambda x: (x['games_played']), reverse=True)
+                    for stats in level_stats:
+                        context = level.level_name
+                        append_skater_performance_result(skater_performance_results, stats, context)
+                skater_performance_results.sort(key=lambda x: (x['games_played']), reverse=True)
         else:
             if season_id is None:
-                divisions, seasons = get_divisions_and_seasons(org_id, level_id, human_id)
-                for division in divisions:
-                    division_stats = db.session.query(DivisionStatsSkater).filter(
-                        DivisionStatsSkater.division_id == division.id,
-                        DivisionStatsSkater.human_id == human_id
-                    ).order_by(DivisionStatsSkater.points_per_game_rank).limit(top_n).all()
+                if human_id:
+                    divisions, seasons = get_divisions_and_seasons(org_id, level_id, human_id)
+                    for division in divisions:
+                        division_stats = db.session.query(DivisionStatsSkater).filter(
+                            DivisionStatsSkater.division_id == division.id,
+                            DivisionStatsSkater.human_id == human_id
+                        ).order_by(DivisionStatsSkater.points_per_game_rank).limit(top_n).all()
 
-                    for stats in division_stats:
-                        season = next((s for s in seasons if s.id == division.season_id), None)
-                        context = season.season_name if season else "Unknown Season"
-                        append_skater_performance_result(skater_performance_results, stats, context, context_value = season.season_number)
-                skater_performance_results.sort(key=lambda x: (x['context_value']), reverse=True)
+                        for stats in division_stats:
+                            season = next((s for s in seasons if s.id == division.season_id), None)
+                            context = season.season_name if season else "Unknown Season"
+                            append_skater_performance_result(skater_performance_results, stats, context, context_value = season.season_number)
+                    skater_performance_results.sort(key=lambda x: (x['context_value']), reverse=True)
             else:
                 # Fetch the unique division_id using org_id, season_id, and level_id
                 division = db.session.query(Division.id).filter(
