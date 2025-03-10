@@ -7,25 +7,6 @@
     <h1 class="mb-4">Team "{{ team.name }}" (<a href="{{ url_for('game_card.game_card', game_id=first_game_id) }}">{{
             first_game_date }}</a> - <a href="{{ url_for('game_card.game_card', game_id=last_game_id) }}">{{
             last_game_date }}</a>)</h1>
-    <h4>Recent and Upcoming Games for {{ team.name }} in {{ last_division_name }}</h4>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Date Time</th>
-                <th>Team Names</th>
-                <th>Final Score</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for game in recent_and_upcoming_games_data %}
-            <tr>
-                <td>{{ game.date_time|safe }}</td>
-                <td>{{ game.team_names|safe }}</td>
-                <td>{{ game.final_score|safe }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
     <table class="table table-striped">
         <thead>
             <tr>
@@ -60,6 +41,26 @@
                 <td>{{ championship_wins }} ({{ championship_win_percentage|round(2) }}%)</td>
                 <td>{{ championship_losses }} ({{ championship_loss_percentage|round(2) }}%)</td>
             </tr>
+        </tbody>
+    </table>
+
+    <h4>Recent and Upcoming Games for {{ team.name }} in {{ last_division_name }}</h4>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Date Time</th>
+                <th>Team Names</th>
+                <th>Final Score</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for game in recent_and_upcoming_games_data %}
+            <tr>
+                <td>{{ game.date_time|safe }}</td>
+                <td>{{ game.team_names|safe }}</td>
+                <td>{{ game.final_score|safe }}</td>
+            </tr>
+            {% endfor %}
         </tbody>
     </table>
 

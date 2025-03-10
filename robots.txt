@@ -1,5 +1,5 @@
 User-agent: *
 Disallow: /
-Allow: /
+Allow: /$
 Allow: /hall_of_fame/hall_of_fame
 Allow: /about
