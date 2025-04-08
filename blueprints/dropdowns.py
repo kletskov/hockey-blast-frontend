@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from hockey_blast_common_lib.models import db, Level, Division, Season, Organization, Game, Team
+from hockey_blast_common_lib.stats_models import LevelStatsHuman
 from hockey_blast_common_lib.utils import get_fake_level
 from hockey_blast_common_lib.stats_utils import ALL_ORGS_ID
 
@@ -17,7 +18,16 @@ def filter_levels():
         return jsonify([])  # Return an empty list if org_id is ALL_ORGS_ID
 
     fake_level = get_fake_level(db.session)
-    levels = db.session.query(Level).filter(Level.org_id == org_id, Level.id != fake_level.id).distinct(Level.id).all()
+    levels = db.session.query(Level).join(LevelStatsHuman, Level.id == LevelStatsHuman.level_id).filter(
+        Level.org_id == org_id,
+        Level.id != fake_level.id,
+        # Exclude levels where all stats fields are zero or null
+        LevelStatsHuman.games_total > 0,
+        # Exclude levels with empty level_name
+        Level.level_name.isnot(None),
+        Level.level_name != ''
+    ).distinct(Level.id).all()
+
     levels_data = [{'id': level.id, 'level_name': level.level_name} for level in levels]
     return jsonify(levels_data)
 

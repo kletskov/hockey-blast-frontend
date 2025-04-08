@@ -154,6 +154,22 @@ def team_stats():
     championship_win_percentage = (championship_wins / championship_games_played * 100) if championship_games_played > 0 else 0
     championship_loss_percentage = (championship_losses / championship_games_played * 100) if championship_games_played > 0 else 0
     
+    # Extract championship years and corresponding game links for championships won
+    championship_wins_data = []
+    for game in championship_games:
+        if (game.home_team_id == team_id and game.home_final_score > game.visitor_final_score) or \
+           (game.visitor_team_id == team_id and game.visitor_final_score > game.home_final_score):
+            division = db.session.query(Division).filter(Division.id == game.division_id).first()
+            level = division.level if division else "Unknown Level"
+            championship_wins_data.append({
+                'year': game.date.year,
+                'level': level,
+                'game_id': game.id
+            })
+
+    # Sort championship wins data by year in increasing order
+    championship_wins_data.sort(key=lambda x: x['year'])
+
     playoff_and_championship_goals_scored = db.session.query(Goal).join(Game).filter(
         Goal.scoring_team_id == team_id,
         Game.game_type.in_(['Playoff', 'Championship']),
@@ -285,5 +301,6 @@ def team_stats():
         worst_performance=worst_performance,
         long_timers=long_timers,
         last_division_name=last_division_name,
-        recent_and_upcoming_games_data=recent_and_upcoming_games_data  # Pass recent and upcoming games data to the template
+        recent_and_upcoming_games_data=recent_and_upcoming_games_data,  # Pass recent and upcoming games data to the template
+        championship_wins_data=championship_wins_data  # Pass championship wins data to the template
     )

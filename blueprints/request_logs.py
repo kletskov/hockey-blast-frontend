@@ -15,6 +15,21 @@ INTERNAL_ENDPOINTS = [
     r'/get_.*',
 ]
 
+# List of known crawler user agents
+CRAWLER_USER_AGENTS = [
+    'Googlebot',
+    'Bingbot',
+    'Slurp',
+    'DuckDuckBot',
+    'Baiduspider',
+    'YandexBot',
+    'Sogou',
+    'Exabot',
+    'facebot',
+    'ia_archiver',
+    'GPTBot'
+]
+
 def get_request_logs_data(interval):
     now = datetime.now()
     if interval == 'minutely':
@@ -33,13 +48,13 @@ def get_request_logs_data(interval):
         start_time = now - timedelta(days=365)
         freq = 'M'
     else:
-        return None, None, None
+        return None, None, None, None
 
     logs = db.session.query(RequestLog).filter(RequestLog.timestamp >= start_time).all()
     if not logs:
-        return pd.Series([], dtype='int64'), pd.Series([], dtype='int64'), pd.DataFrame()
+        return pd.Series([], dtype='int64'), pd.Series([], dtype='int64'), pd.DataFrame(), pd.DataFrame()
 
-    df = pd.DataFrame([(log.timestamp, log.path, log.client_ip) for log in logs], columns=['timestamp', 'path', 'client_ip'])
+    df = pd.DataFrame([(log.timestamp, log.path, log.client_ip, log.user_agent) for log in logs], columns=['timestamp', 'path', 'client_ip', 'user_agent'])
     df['timestamp'] = pd.to_datetime(df['timestamp'])
     df.set_index('timestamp', inplace=True)
 
@@ -51,12 +66,21 @@ def get_request_logs_data(interval):
     for pattern in INTERNAL_ENDPOINTS:
         df = df[~df['path'].str.match(pattern)]
 
+    # Filter out known crawlers by inspecting the user_agent field
+    for crawler in CRAWLER_USER_AGENTS:
+        df = df[~df['user_agent'].str.contains(crawler, case=False, na=False)]
+
     request_counts = df.resample(freq).size()
     unique_ip_counts = df.resample(freq)['client_ip'].nunique()
 
     endpoint_counts = df.groupby('path').resample(freq).size().unstack(level=0, fill_value=0)
 
-    return request_counts, unique_ip_counts, endpoint_counts
+    # Calculate average number of hits per session
+    session_counts = df.groupby('client_ip').resample(freq).size()
+    session_counts = session_counts[session_counts > 0]  # Filter out zeroes
+    session_stats = session_counts.groupby(level=1).agg(['mean', 'min', 'max'])
+
+    return request_counts, unique_ip_counts, endpoint_counts, session_stats
 
 def simplify_endpoint(endpoint):
     parts = endpoint.strip('/').split('/')
@@ -67,7 +91,7 @@ def simplify_endpoint(endpoint):
 @request_logs_bp.route('/request_logs', methods=['GET'])
 def request_logs():
     interval = request.args.get('interval', 'daily')
-    request_counts, unique_ip_counts, endpoint_counts = get_request_logs_data(interval)
+    request_counts, unique_ip_counts, endpoint_counts, session_stats = get_request_logs_data(interval)
 
     endpoint_hits = []
     for endpoint in endpoint_counts.columns:
@@ -98,12 +122,31 @@ def request_logs():
     plot_fig = go.Figure(data=plot_data, layout=plot_layout)
     plot_div = pio.to_html(plot_fig, full_html=False)
 
-    return render_template('request_logs.html', plot_div=plot_div, interval=interval)
+    # Plot for average hits per session
+    avg_hits_plot_data = [
+        go.Scatter(x=session_stats.index, y=session_stats['mean'], mode='lines', name='Avg Hits per Session'),
+        go.Scatter(x=session_stats.index, y=session_stats['min'], mode='lines', name='Min Hits per Session'),
+        go.Scatter(x=session_stats.index, y=session_stats['max'], mode='lines', name='Max Hits per Session')
+    ]
+
+    avg_hits_plot_layout = go.Layout(
+        title=f'Hits per Session ({interval.capitalize()})',
+        xaxis=dict(title='Time'),
+        yaxis=dict(title='Hits'),
+        plot_bgcolor='#f9f9f9',
+        paper_bgcolor='#ffffff',
+        font=dict(color='#333')
+    )
+
+    avg_hits_plot_fig = go.Figure(data=avg_hits_plot_data, layout=avg_hits_plot_layout)
+    avg_hits_plot_div = pio.to_html(avg_hits_plot_fig, full_html=False)
+
+    return render_template('request_logs.html', plot_div=plot_div, avg_hits_plot_div=avg_hits_plot_div, interval=interval)
 
 @request_logs_bp.route('/request_logs/data', methods=['GET'])
 def request_logs_data():
     interval = request.args.get('interval', 'daily')
-    request_counts, unique_ip_counts, endpoint_counts = get_request_logs_data(interval)
+    request_counts, unique_ip_counts, endpoint_counts, session_stats = get_request_logs_data(interval)
 
     endpoint_hits = []
     for endpoint in endpoint_counts.columns:
@@ -118,7 +161,10 @@ def request_logs_data():
         'timestamps': request_counts.index.strftime('%Y-%m-%d %H:%M:%S').tolist(),
         'request_counts': request_counts.values.tolist(),
         'unique_ip_counts': unique_ip_counts.values.tolist(),
-        'endpoint_counts': {f"{simplified_endpoint} {total_hits}": endpoint_counts[next(ep for ep in endpoint_counts.columns if simplify_endpoint(ep) == simplified_endpoint)].tolist() for simplified_endpoint, total_hits in endpoint_hits}
+        'endpoint_counts': {f"{simplified_endpoint} {total_hits}": endpoint_counts[next(ep for ep in endpoint_counts.columns if simplify_endpoint(ep) == simplified_endpoint)].tolist() for simplified_endpoint, total_hits in endpoint_hits},
+        'avg_hits_per_session': session_stats['mean'].values.tolist(),
+        'min_hits_per_session': session_stats['min'].values.tolist(),
+        'max_hits_per_session': session_stats['max'].values.tolist()
     }
 
     return jsonify(data)

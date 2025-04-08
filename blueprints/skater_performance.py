@@ -87,18 +87,18 @@ def extract_date_from_link(link):
 @skater_performance_bp.route('/', methods=['GET'])
 def skater_performance():
     human_id = request.args.get('human_id')
-    human_name = "All skaters (for selected Season in Level)"
+    human_name = "selected Season in Level"
     if human_id:
         human = db.session.query(Human).filter(Human.id == human_id).first()
         if human:
-            human_name = f"skater {human.first_name} {human.middle_name} {human.last_name}".strip()
+            human_name = f" {human.first_name} {human.middle_name} {human.last_name}".strip()
         organizations = db.session.query(Organization).join(OrgStatsSkater, Organization.id == OrgStatsSkater.org_id).filter(OrgStatsSkater.human_id == human_id).all()
     else:
         organizations = db.session.query(Organization).all()
 
-    # Cleanup dropdown if it has only one org and all orgs
-    if len(organizations) == 2 and any(org.id == ALL_ORGS_ID for org in organizations):
-        organizations = [org for org in organizations if org.id != ALL_ORGS_ID]
+    # # Cleanup dropdown if it has only one org and all orgs
+    # if len(organizations) == 2 and any(org.id == ALL_ORGS_ID for org in organizations):
+    #     organizations = [org for org in organizations if org.id != ALL_ORGS_ID]
 
     top_n = request.args.get('top_n', default=50, type=int)
     org_id = request.args.get('org_id', type=int)

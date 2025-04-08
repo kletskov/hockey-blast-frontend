@@ -111,6 +111,9 @@
         })
             .then(response => response.json())
             .then(data => {
+                // Sort levels alphabetically by level_name
+                data.sort((a, b) => a.level_name.localeCompare(b.level_name));
+
                 var levelSelect = document.getElementById('level');
                 levelSelect.innerHTML = '<option value="">All Levels</option>';
                 data.forEach(level => {

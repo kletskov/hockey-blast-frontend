@@ -44,6 +44,22 @@
         </tbody>
     </table>
 
+    {% if championship_wins_data %}
+    <table class="table table-striped">
+        <tbody>
+            <tr>
+                <td>Championships won:
+                    {% for win in championship_wins_data %}
+                    <a href="{{ url_for('game_card.game_card', game_id=win.game_id) }}">{{ win.year }} ({{ win.level
+                        }})</a>{% if not
+                    loop.last %}, {% endif %}
+                    {% endfor %}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    {% endif %}
+
     <h4>Recent and Upcoming Games for {{ team.name }} in {{ last_division_name }}</h4>
     <table class="table table-striped">
         <thead>
