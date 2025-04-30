@@ -15,8 +15,8 @@ INTERNAL_ENDPOINTS = [
     r'/get_.*',
 ]
 
-# List of known crawler user agents
 CRAWLER_USER_AGENTS = [
+    # Major Search Engines
     'Googlebot',
     'Bingbot',
     'Slurp',
@@ -25,12 +25,60 @@ CRAWLER_USER_AGENTS = [
     'YandexBot',
     'Sogou',
     'Exabot',
-    'facebot',
-    'ia_archiver',
-    'GPTBot'
+    'facebot',  # Facebook
+    'facebookexternalhit',
+    'ia_archiver',  # Alexa
+
+    # AI and Data Crawlers
+    'GPTBot',
+    'Bytespider',
+    'ClaudeBot',
+    'openai',
+    'InternetMeasurement',
+    'Amazonbot',
+    'CriteoBot',
+
+    # Pen-testing and Research
+    'zgrab',
+    'zmap',
+    'masscan',
+    'nmap',
+    'censys',
+    'shodan',
+    'httpx',
+
+    # Dev tools / CLI / Libraries
+    'curl',
+    'wget',
+    'python-requests',
+    'httpie',
+    'libwww-perl',
+    'Go-http-client',
+    'Apache-HttpClient',
+    'java',
+    'okhttp',
+    'axios',
+    'node-fetch',
+    'scrapy',
+    'aiohttp',
+    'RestSharp',
+
+    # Headless browsers
+    'HeadlessChrome',
+    'puppeteer',
+    'phantomjs',
+    'selenium',
+    'Playwright',
+
+    # Generic indicators
+    'bot',
+    'spider',
+    'crawler',
+    'scanner',
+    'probe'
 ]
 
-def get_request_logs_data(interval):
+def get_request_logs_data(interval, top_n=20):
     now = datetime.now()
     if interval == 'minutely':
         start_time = now - timedelta(hours=1)
@@ -48,11 +96,11 @@ def get_request_logs_data(interval):
         start_time = now - timedelta(days=365)
         freq = 'M'
     else:
-        return None, None, None, None
+        return None, None, None, None, None
 
     logs = db.session.query(RequestLog).filter(RequestLog.timestamp >= start_time).all()
     if not logs:
-        return pd.Series([], dtype='int64'), pd.Series([], dtype='int64'), pd.DataFrame(), pd.DataFrame()
+        return pd.Series([], dtype='int64'), pd.Series([], dtype='int64'), pd.DataFrame(), pd.DataFrame(), []
 
     df = pd.DataFrame([(log.timestamp, log.path, log.client_ip, log.user_agent) for log in logs], columns=['timestamp', 'path', 'client_ip', 'user_agent'])
     df['timestamp'] = pd.to_datetime(df['timestamp'])
@@ -80,7 +128,19 @@ def get_request_logs_data(interval):
     session_counts = session_counts[session_counts > 0]  # Filter out zeroes
     session_stats = session_counts.groupby(level=1).agg(['mean', 'min', 'max'])
 
-    return request_counts, unique_ip_counts, endpoint_counts, session_stats
+    # Sample logs grouped by client_ip
+    sample_logs = (
+        df.reset_index()  # Ensure `timestamp` is preserved
+        .groupby('client_ip')
+        .apply(lambda group: group.iloc[0])  # Take the first log per client_ip
+        .sort_values(by='timestamp', ascending=False)
+        .head(top_n)
+        .reset_index(drop=True)
+    )
+
+    sample_logs_data = sample_logs[['timestamp', 'client_ip', 'path', 'user_agent']].to_dict(orient='records')
+
+    return request_counts, unique_ip_counts, endpoint_counts, session_stats, sample_logs_data
 
 def simplify_endpoint(endpoint):
     parts = endpoint.strip('/').split('/')
@@ -91,7 +151,8 @@ def simplify_endpoint(endpoint):
 @request_logs_bp.route('/request_logs', methods=['GET'])
 def request_logs():
     interval = request.args.get('interval', 'daily')
-    request_counts, unique_ip_counts, endpoint_counts, session_stats = get_request_logs_data(interval)
+    top_n = int(request.args.get('top_n', 20))
+    request_counts, unique_ip_counts, endpoint_counts, session_stats, sample_logs_data = get_request_logs_data(interval, top_n)
 
     endpoint_hits = []
     for endpoint in endpoint_counts.columns:
@@ -141,12 +202,18 @@ def request_logs():
     avg_hits_plot_fig = go.Figure(data=avg_hits_plot_data, layout=avg_hits_plot_layout)
     avg_hits_plot_div = pio.to_html(avg_hits_plot_fig, full_html=False)
 
-    return render_template('request_logs.html', plot_div=plot_div, avg_hits_plot_div=avg_hits_plot_div, interval=interval)
+    return render_template(
+        'request_logs.html',
+        plot_div=plot_div,
+        avg_hits_plot_div=avg_hits_plot_div,
+        interval=interval,
+        sample_logs_data=sample_logs_data
+    )
 
 @request_logs_bp.route('/request_logs/data', methods=['GET'])
 def request_logs_data():
     interval = request.args.get('interval', 'daily')
-    request_counts, unique_ip_counts, endpoint_counts, session_stats = get_request_logs_data(interval)
+    request_counts, unique_ip_counts, endpoint_counts, session_stats, sample_logs_data = get_request_logs_data(interval)
 
     endpoint_hits = []
     for endpoint in endpoint_counts.columns:

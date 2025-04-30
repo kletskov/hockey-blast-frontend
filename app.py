@@ -1,5 +1,5 @@
 import logging
-from flask import Flask, render_template, request, g, jsonify, send_from_directory, url_for
+from flask import Flask, render_template, request, g, jsonify, send_from_directory, url_for, redirect
 from flask_sqlalchemy import SQLAlchemy
 from threading import Thread
 from hockey_blast_common_lib.models import db, Organization, Game, Human, RequestLog, Team, HumanAlias
@@ -125,7 +125,11 @@ def create_app(db_name):
     @app.route('/', methods=['GET', 'POST'])
     def index():
         try:
-            top_n = request.args.get('top_n', default=5, type=int)
+            top_n = request.args.get('top_n', default=10, type=int)
+            
+            # Redirect to include top_n in the URL if not present
+            if 'top_n' not in request.args:
+                return redirect(url_for('index', top_n=top_n))
             
             # Fetch the latest date and time
             last_scheduled = db.session.query(Game).order_by(Game.date.desc(), Game.time.desc()).first()

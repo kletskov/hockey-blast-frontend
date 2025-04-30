@@ -277,7 +277,21 @@ def human_stats():
         goalie_games_per_month = goalie_games_per_month.reindex(all_months, fill_value=0)
         scorekeeper_games_per_month = scorekeeper_games_per_month.reindex(all_months, fill_value=0)
         referee_games_per_month = referee_games_per_month.reindex(all_months, fill_value=0)
-        
+
+    # Dynamically adjust tick frequency based on the number of months
+    num_months = len(all_months)
+    if num_months > 200:  # Threshold for too many months
+        tick_interval = 4  # Show every 3rd month
+    elif num_months > 150:
+        tick_interval = 3  # Show every 3rd month
+    elif num_months > 50:
+        tick_interval = 2
+    else:
+        tick_interval = 1  # Show every month
+
+    tickvals = all_months[::tick_interval]  # Select ticks at the specified interval
+    ticktext = tickvals.strftime('%b %Y')  # Format tick labels as "Month Year"
+
     plot_data = []
     if player_games_per_month.sum() > 0:
         plot_data.append(go.Scatter(x=player_games_per_month.index.astype(str), y=player_games_per_month.values, mode='lines', name='Skater', line=dict(color='#FF6347')))  # Tomato
@@ -289,9 +303,17 @@ def human_stats():
         plot_data.append(go.Scatter(x=referee_games_per_month.index.astype(str), y=referee_games_per_month.values, mode='lines', name='Referee', line=dict(color='#1E90FF')))  # Dodger Blue
     
     plot_layout = go.Layout(
-        title='PulseLine',
-        xaxis=dict(title='Month'),
-        yaxis=dict(title='Number of Games'),
+        title=dict(
+            text='PulseLine',
+            x=0.5  # Center the title
+        ),
+        xaxis=dict(
+            title='Month',
+            tickmode='array',  # Use array mode for ticks
+            tickvals=tickvals.astype(str),  # Set tick values to the selected months
+            ticktext=ticktext,  # Set tick labels
+        ),
+        yaxis=dict(title='Games per Month'),
         plot_bgcolor='#20B2AA',  # Light teal
         paper_bgcolor='#008080',  # Dark teal
         font=dict(color='white')

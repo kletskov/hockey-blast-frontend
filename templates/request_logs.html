@@ -19,5 +19,26 @@
     <div id="endpoint-plot-div">{{ endpoint_plot_div|safe }}</div>
     <div id="total-requests-div">{{ total_requests_div|safe }}</div>
     <div id="avg-hits-plot-div">{{ avg_hits_plot_div|safe }}</div>
+    <h2 class="mt-5">Sample Logs</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Client IP</th>
+                <th>Path</th>
+                <th>User Agent</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in sample_logs_data %}
+            <tr>
+                <td>{{ log.timestamp }}</td>
+                <td>{{ log.client_ip }}</td>
+                <td>{{ log.path }}</td>
+                <td>{{ log.user_agent }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 {% endblock %}
