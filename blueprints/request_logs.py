@@ -16,6 +16,9 @@ INTERNAL_ENDPOINTS = [
 ]
 
 CRAWLER_USER_AGENTS = [
+    # Manual additions per eyeballing
+    'Google-Read-Aloud',
+
     # Major Search Engines
     'Googlebot',
     'Bingbot',
@@ -115,8 +118,14 @@ def get_request_logs_data(interval, top_n=20):
         df = df[~df['path'].str.match(pattern)]
 
     # Filter out known crawlers by inspecting the user_agent field
-    for crawler in CRAWLER_USER_AGENTS:
-        df = df[~df['user_agent'].str.contains(crawler, case=False, na=False)]
+
+    import re
+
+    pattern = re.compile('|'.join(CRAWLER_USER_AGENTS), flags=re.IGNORECASE)
+    df = df[~df['user_agent'].str.contains(pattern, na=False)]
+
+    # for crawler in CRAWLER_USER_AGENTS:
+    #     df = df[~df['user_agent'].str.contains(crawler, case=False, na=False)]
 
     request_counts = df.resample(freq).size()
     unique_ip_counts = df.resample(freq)['client_ip'].nunique()
