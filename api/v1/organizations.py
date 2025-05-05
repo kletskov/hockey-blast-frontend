@@ -14,7 +14,7 @@ organization_list_model = organizations_ns.model('OrganizationList', {
   'organizations': fields.List(fields.Nested(organization_model)),
 })
 
-@organizations_ns.route('/')
+@organizations_ns.route('/organizations')
 class ListOrganizations(Resource):
   @organizations_ns.doc('list_organizations')
   @organizations_ns.marshal_with(organization_list_model)
@@ -23,7 +23,7 @@ class ListOrganizations(Resource):
     organizations = db.session.query(Organization).all()
     return {'organizations': organizations}
 
-@organizations_ns.route('/<int:id>')
+@organizations_ns.route('/organizations/<int:id>')
 @organizations_ns.response(404, 'Organization not found')
 @organizations_ns.param('id', 'The organization identifier')
 class GetOrganization(Resource):
