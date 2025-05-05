@@ -52,6 +52,7 @@ from blueprints.request_logs import request_logs_bp
 
 from api.v1.organizations import organizations_ns
 from api.v1.divisions import divisions_ns
+from api.v1.seasons import seasons_ns
 
 # BLOCKED_USER_AGENT = "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.6834.83 Mobile Safari/537.36 (compatible; GoogleOther)"
 # BLOCKED_IPS = ["66.249.72.103", "66.249.72.204"]
@@ -238,6 +239,7 @@ def create_app(db_name):
 
     api.add_namespace(organizations_ns, path='/api/v1')
     api.add_namespace(divisions_ns, path='/api/v1')
+    api.add_namespace(seasons_ns, path='/api/v1')
 
     return app
 
