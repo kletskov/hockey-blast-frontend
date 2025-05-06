@@ -1,5 +1,6 @@
 import logging
 from flask import Flask, render_template, request, g, jsonify, send_from_directory, url_for, redirect
+from flask_restx import Api
 from flask_sqlalchemy import SQLAlchemy
 from threading import Thread
 from hockey_blast_common_lib.models import db, Organization, Game, Human, RequestLog, Team, HumanAlias
@@ -49,6 +50,10 @@ from blueprints.skater_performance import skater_performance_bp
 from blueprints.goalie_performance import goalie_performance_bp
 from blueprints.request_logs import request_logs_bp
 
+from api.v1.organizations import organizations_ns
+from api.v1.divisions import divisions_ns
+from api.v1.seasons import seasons_ns
+
 # BLOCKED_USER_AGENT = "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.6834.83 Mobile Safari/537.36 (compatible; GoogleOther)"
 # BLOCKED_IPS = ["66.249.72.103", "66.249.72.204"]
 
@@ -92,7 +97,7 @@ def create_app(db_name):
     app.register_blueprint(skater_performance_bp, url_prefix='/skater_performance')
     app.register_blueprint(goalie_performance_bp, url_prefix='/goalie_performance')
     app.register_blueprint(request_logs_bp, url_prefix='/request_logs')
-    
+
     @app.before_request
     def before_request():
         if request.path in ['/favicon.ico', '/dropdowns', '/dropdowns/filter_levels', '/dropdowns/filter_seasons', '/games/filter_games']:
@@ -121,20 +126,20 @@ def create_app(db_name):
             db.session.rollback()
             logger.error(f"Failed to log request: {e}")
 
-    
+
     @app.route('/', methods=['GET', 'POST'])
     def index():
         try:
             top_n = request.args.get('top_n', default=10, type=int)
-            
+
             # Redirect to include top_n in the URL if not present
             if 'top_n' not in request.args:
                 return redirect(url_for('index', top_n=top_n))
-            
+
             # Fetch the latest date and time
             last_scheduled = db.session.query(Game).order_by(Game.date.desc(), Game.time.desc()).first()
             last_played = db.session.query(Game).filter(Game.status.startswith("Final")).order_by(Game.date.desc(), Game.time.desc()).first()
-            
+
             # Format the time as HH:MM AM/PM
             last_scheduled_time = last_scheduled.time.strftime('%I:%M %p') if last_scheduled else None
             last_played_time = last_played.time.strftime('%I:%M %p') if last_played else None
@@ -157,16 +162,16 @@ def create_app(db_name):
             if request.method == 'POST':
                 team_name = request.form.get('team_name')
                 query = db.session.query(Team)
-                
+
                 if team_name:
                     query = query.filter(Team.name.ilike(f'%{team_name}%'))
-                
+
                     # Apply limit directly in the query
                     results = query.limit(MAX_TEAM_SEARCH_RESULTS).all()
-                    
+
                     if not results:
                         return render_template('search_teams.html', no_results=True, max_results=MAX_TEAM_SEARCH_RESULTS)
-                    
+
                     links = []
                     for team in results:
                         link_text = team.name
@@ -177,15 +182,15 @@ def create_app(db_name):
                         first_name = request.form.get('first_name')
                         last_name = request.form.get('last_name')
                         query = db.session.query(Human)
-                        
+
                         if first_name:
                             query = query.filter(Human.first_name.ilike(f'%{first_name}%'))
                         if last_name:
                             query = query.filter(Human.last_name.ilike(f'%{last_name}%'))
-                        
+
                         # Apply limit directly in the query
                         results = query.limit(MAX_HUMAN_SEARCH_RESULTS).all()
-                        
+
                         links = []
                         for player in results:
                             aliases = db.session.query(HumanAlias).filter(HumanAlias.human_id == player.id).all()
@@ -196,12 +201,12 @@ def create_app(db_name):
                             links.append(link)
 
                 return render_template('index.html',
-                                       search_results=links, 
+                                       search_results=links,
                                 last_scheduled=last_scheduled, last_scheduled_time=last_scheduled_time, last_played=last_played, last_played_time=last_played_time,
                                 daily_skater_points=daily_skater_points, daily_goalie_games_played=daily_goalie_games_played, daily_referee_games_reffed=daily_referee_games_reffed, daily_scorekeeper_games=daily_scorekeeper_games,
                                 weekly_skater_points=weekly_skater_points, weekly_goalie_games_played=weekly_goalie_games_played, weekly_referee_games_reffed=weekly_referee_games_reffed, weekly_scorekeeper_games=weekly_scorekeeper_games)
             return render_template('index.html',
-                                search_results=None, 
+                                search_results=None,
                                 last_scheduled=last_scheduled, last_scheduled_time=last_scheduled_time, last_played=last_played, last_played_time=last_played_time,
                                 daily_skater_points=daily_skater_points, daily_goalie_games_played=daily_goalie_games_played, daily_referee_games_reffed=daily_referee_games_reffed, daily_scorekeeper_games=daily_scorekeeper_games,
                                 weekly_skater_points=weekly_skater_points, weekly_goalie_games_played=weekly_goalie_games_played, weekly_referee_games_reffed=weekly_referee_games_reffed, weekly_scorekeeper_games=weekly_scorekeeper_games)
@@ -224,10 +229,22 @@ def create_app(db_name):
     def about():
         return render_template('about.html')
 
+    api = Api(
+        app,
+        version='1.0',
+        title='Hockey BLAST API',
+        description='RESTful API',
+        doc='/swagger'
+    )
+
+    api.add_namespace(organizations_ns, path='/api/v1')
+    api.add_namespace(divisions_ns, path='/api/v1')
+    api.add_namespace(seasons_ns, path='/api/v1')
+
     return app
 
 def run_app(app, port):
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=port, debug=True)
 
 if __name__ == "__main__":
     app1 = create_app("frontend")
