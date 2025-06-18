@@ -70,6 +70,8 @@ def create_app(db_name):
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['BACKGROUND_IMAGE'] = 'default_background.jpg'
     app.config['ORG_NAME'] = 'Hockey Blast'
+    # API key configuration (environment variable takes precedence)
+    app.config['API_KEY'] = os.environ.get('API_KEY', 'CHANGE_ME')
     db.init_app(app)
 
     # Register blueprints
