@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}Days of Week{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h4>SIAHL Schedule Games Distribution</h4>
+
+    {% include "days_of_week_dropdowns.html" %}
+
+    <div id="weekdays-weekends-chart" style="width: 100%; height: 400px; margin-bottom: 20px;"></div>
+    <div id="days-of-week-chart" style="width: 100%; height: 400px; margin-bottom: 20px;"></div>
+
+    <div class="loading-indicator" id="loading-indicator" style="display: none; text-align: center; margin-top: 20px;">
+        <p>Loading data...</p>
+    </div>
+
+    <div id="dow-table-container" style="width: 100%; margin: auto; margin-top: 20px;"></div>
+</div>
+
+<style>
+    #dow-table-container {
+        overflow-x: auto;
+        max-width: 100%;
+        margin: auto;
+    }
+
+    table {
+        width: 100%;
+        table-layout: fixed;
+    }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+    function fetchDaysData(orgId, levelId, seasonId) {
+        var loadingIndicator = document.getElementById('loading-indicator');
+        loadingIndicator.style.display = 'block';
+        document.getElementById('dow-table-container').innerHTML = '';
+        fetch('/days_of_week/filter_days', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ org_id: orgId, level_id: levelId, season_id: seasonId })
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                renderTable(data);
+                renderWeekdaysWeekendsChart(data);
+                renderDaysOfWeekChart(data);
+                loadingIndicator.style.display = 'none';
+            })
+            .catch(error => {
+                document.getElementById('dow-table-container').innerHTML = '<p>Error loading data.</p>';
+                loadingIndicator.style.display = 'none';
+            });
+    }
+
+    function renderTable(data) {
+        const container = document.getElementById('dow-table-container');
+        if (!data || !data.header || !data.rows) {
+            container.innerHTML = '<p>No data available.</p>';
+            return;
+        }
+
+        // Add WeekDays and WeekEnds table first
+        let html = '<h4>Games by WeekDays and WeekEnds</h4>';
+        html += '<table class="table table-bordered table-striped text-center">';
+        html += '<thead><tr><th></th><th>WeekDays</th><th>WeekEnds</th></tr></thead><tbody>';
+        for (const row of data.rows) {
+            const weekDaysSum = row.data.slice(0, 5).reduce((a, b) => a + b, 0); // Mon-Fri
+            const weekEndsSum = row.data.slice(5).reduce((a, b) => a + b, 0); // Sat-Sun
+            html += `<tr><td>${row.label}</td><td>${weekDaysSum}</td><td>${weekEndsSum}</td></tr>`;
+        }
+        html += '</tbody></table>';
+
+        // Add Days Of Week table second
+        html += '<h4>Games by Days Of Week</h4>';
+        html += '<table class="table table-bordered table-striped text-center">';
+        html += '<thead><tr><th></th>';
+        for (const day of data.header) {
+            html += `<th>${day}</th>`;
+        }
+        html += '</tr></thead><tbody>';
+        for (const row of data.rows) {
+            html += `<tr><td>${row.label}</td>`;
+            for (const val of row.data) {
+                html += `<td>${val}</td>`;
+            }
+            html += '</tr>';
+        }
+        html += '</tbody></table>';
+
+        container.innerHTML = html;
+    }
+
+    function renderWeekdaysWeekendsChart(data) {
+        console.log('renderWeekdaysWeekendsChart called with data:', data);
+
+        const chartContainer = document.getElementById('weekdays-weekends-chart');
+        if (!chartContainer) {
+            console.error('Chart container not found');
+            return;
+        }
+
+        const chartData = [];
+
+        for (const row of data.rows) {
+            if (row.label === "Total for Level") {
+                console.log('Skipping Total for Level row in chart');
+                continue;
+            }
+            const weekDaysSum = row.data.slice(0, 5).reduce((a, b) => a + b, 0); // Mon-Fri
+            const weekEndsSum = row.data.slice(5).reduce((a, b) => a + b, 0); // Sat-Sun
+            chartData.push({ label: row.label, weekdaysPercentage: (weekDaysSum / (weekDaysSum + weekEndsSum)) * 100 });
+        }
+
+        const labels = chartData.map(item => item.label).reverse(); // Reverse order for seasons
+        const percentages = chartData.map(item => item.weekdaysPercentage).reverse();
+
+        const traces = [{
+            x: labels,
+            y: percentages,
+            type: 'bar',
+            name: '% WeekDays',
+            marker: {
+                color: 'rgba(75, 192, 192, 0.6)'
+            }
+        }, {
+            x: labels,
+            y: Array(labels.length).fill(50), // Constant line at 50%
+            type: 'scatter',
+            mode: 'lines',
+            name: '50% Threshold',
+            line: {
+                color: 'orange',
+                dash: 'dot'
+            }
+        }];
+
+        const layout = {
+            title: 'Percentage of WeekDays out of Total Games',
+            xaxis: {
+                title: 'Seasons',
+                tickangle: -45
+            },
+            yaxis: {
+                title: 'Percentage',
+                range: [0, 100]
+            }
+        };
+
+        Plotly.newPlot(chartContainer, traces, layout);
+        console.log('Plotly chart rendered successfully');
+    }
+
+    function renderDaysOfWeekChart(data) {
+        console.log('renderDaysOfWeekChart called with data:', data);
+
+        const chartContainer = document.getElementById('days-of-week-chart');
+        if (!chartContainer) {
+            console.error('Chart container not found');
+            return;
+        }
+
+        const labels = data.rows.filter(row => row.label !== "Total Games").map(row => row.label).reverse(); // Reverse order for seasons
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        const colors = ['#FF5733', '#33FF57', '#3357FF', '#FF33A1', '#A133FF', '#33FFF5', '#F5FF33']; // Distinct colors for each day
+
+        const traces = days.map((day, index) => {
+            return {
+                x: labels,
+                y: data.rows.filter(row => row.label !== "Total Games").map(row => row.data[index]).reverse(),
+                name: day,
+                type: 'bar',
+                marker: {
+                    color: colors[index]
+                }
+            };
+        });
+
+        const layout = {
+            title: 'Number of Games by Day of Week',
+            barmode: 'stack',
+            xaxis: {
+                title: 'Seasons',
+                tickangle: -45
+            },
+            yaxis: {
+                title: 'Number of Games'
+            }
+        };
+
+        Plotly.newPlot(chartContainer, traces, layout);
+        console.log('Plotly stacked bar chart rendered successfully');
+    }
+
+    document.getElementById('level').addEventListener('change', function () {
+        const orgId = 1; // Fixed org_id
+        const levelId = document.getElementById('level').value;
+        const seasonDropdown = document.getElementById('season');
+        seasonDropdown.value = ''; // Force 'All Seasons'
+        const seasonId = seasonDropdown.value;
+        fetchDaysData(orgId, levelId, seasonId);
+    });
+
+    document.getElementById('season').addEventListener('change', function () {
+        const orgId = 1; // Fixed org_id
+        const seasonId = document.getElementById('season').value;
+        const levelDropdown = document.getElementById('level');
+        levelDropdown.value = ''; // Force 'All Levels'
+        const levelId = levelDropdown.value;
+        fetchDaysData(orgId, levelId, seasonId);
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const orgId = 1; // Fixed org_id
+        const levelId = document.getElementById('level').value;
+        const seasonId = document.getElementById('season').value;
+        fetchDaysData(orgId, levelId, seasonId);
+    });
+</script>
+{% endblock %}

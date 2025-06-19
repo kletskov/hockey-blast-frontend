@@ -20,6 +20,7 @@ CRAWLER_USER_AGENTS = [
     'Google-Read-Aloud',
 
     # Major Search Engines
+    'Google',
     'Googlebot',
     'Bingbot',
     'Slurp',

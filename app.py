@@ -49,6 +49,9 @@ from blueprints.penalties import penalties_bp
 from blueprints.skater_performance import skater_performance_bp
 from blueprints.goalie_performance import goalie_performance_bp
 from blueprints.request_logs import request_logs_bp
+from blueprints.days_of_week import days_of_week_bp
+from blueprints.days_of_week_dropdowns import days_of_week_dropdowns_bp
+from blueprints.rest_api import rest_api_bp
 
 from api.v1.organizations import organizations_ns
 from api.v1.divisions import divisions_ns
@@ -97,6 +100,10 @@ def create_app(db_name):
     app.register_blueprint(skater_performance_bp, url_prefix='/skater_performance')
     app.register_blueprint(goalie_performance_bp, url_prefix='/goalie_performance')
     app.register_blueprint(request_logs_bp, url_prefix='/request_logs')
+    app.register_blueprint(days_of_week_bp, url_prefix='/days_of_week')
+    app.register_blueprint(days_of_week_dropdowns_bp, url_prefix='/days_of_week')
+    # REST API blueprint (provides /swagger and /api/v1/* routes)
+    app.register_blueprint(rest_api_bp)
 
     @app.before_request
     def before_request():
@@ -244,7 +251,7 @@ def create_app(db_name):
     return app
 
 def run_app(app, port):
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(host='0.0.0.0', port=port)
 
 if __name__ == "__main__":
     app1 = create_app("frontend")

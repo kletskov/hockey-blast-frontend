@@ -9,6 +9,7 @@ dropdowns_bp = Blueprint('dropdowns', __name__)
 @dropdowns_bp.route('/filter_levels', methods=['POST'])
 def filter_levels():
     org_id = request.json.get('org_id')
+    level_starts_with = request.json.get('level_starts_with')
     try:
         org_id = int(org_id)
     except (ValueError, TypeError):
@@ -18,7 +19,7 @@ def filter_levels():
         return jsonify([])  # Return an empty list if org_id is ALL_ORGS_ID
 
     fake_level = get_fake_level(db.session)
-    levels = db.session.query(Level).join(LevelStatsHuman, Level.id == LevelStatsHuman.level_id).filter(
+    query = db.session.query(Level).join(LevelStatsHuman, Level.id == LevelStatsHuman.level_id).filter(
         Level.org_id == org_id,
         Level.id != fake_level.id,
         # Exclude levels where all stats fields are zero or null
@@ -26,7 +27,12 @@ def filter_levels():
         # Exclude levels with empty level_name
         Level.level_name.isnot(None),
         Level.level_name != ''
-    ).distinct(Level.id).all()
+    )
+
+    if level_starts_with:
+        query = query.filter(Level.level_name.ilike(f"{level_starts_with}%"))
+
+    levels = query.distinct(Level.id).all()
 
     levels_data = [{'id': level.id, 'level_name': level.level_name} for level in levels]
     return jsonify(levels_data)

@@ -2,8 +2,7 @@
     <label for="organization">Org:</label>
     <select id="organization" name="organization">
         {% for org in organizations %}
-        <option value="{{ org.id }}" {% if org.id==ALL_ORGS_ID %}selected{% endif %}>{{ org.organization_name }}
-        </option>
+        <option value="{{ org.id }}" {% if org.id==org_id %}selected{% endif %}>{{ org.organization_name }}</option>
         {% endfor %}
     </select>
 
@@ -101,7 +100,8 @@
     function fetchLevels(orgId, humanId) {
         var endpoint = window.location.pathname.includes('/skater_performance') ? '/skater_performance/filter_levels' :
             window.location.pathname.includes('/goalie_performance') ? '/goalie_performance/filter_levels' :
-                '/dropdowns/filter_levels';
+                window.location.pathname.includes('/days_of_week') ? '/days_of_week/filter_levels' :
+                    '/dropdowns/filter_levels';
         return fetch(endpoint, {
             method: 'POST',
             headers: {
@@ -271,7 +271,12 @@
 
     window.addEventListener('load', function () {
         const urlParams = new URLSearchParams(window.location.search);
-        const orgId = urlParams.get('org_id');
+        const orgId = urlParams.get('org_id') || document.getElementById('organization').value;
+
+        console.log('LOAD : ', {
+            orgId: orgId,
+        });
+
         const levelId = urlParams.get('level_id');
         const seasonId = urlParams.get('season_id');
         const teamId = urlParams.get('team_id');

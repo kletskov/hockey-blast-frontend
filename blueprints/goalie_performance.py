@@ -91,8 +91,8 @@ def goalie_performance():
         organizations = db.session.query(Organization).all()
 
     # Cleanup dropdown if it has only one org and all orgs
-    if len(organizations) == 2 and any(org.id == ALL_ORGS_ID for org in organizations):
-        organizations = [org for org in organizations if org.id != ALL_ORGS_ID]
+    # if len(organizations) == 2 and any(org.id == ALL_ORGS_ID for org in organizations):
+    #     organizations = [org for org in organizations if org.id != ALL_ORGS_ID]
     
     top_n = request.args.get('top_n', default=50, type=int)
     org_id = request.args.get('org_id', type=int)

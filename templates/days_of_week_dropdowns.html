@@ -1,0 +1,61 @@
+<div>
+    <label for="organization">Organization:</label>
+    <select id="organization" name="organization" disabled>
+        <option value="1">Organization 1</option>
+    </select>
+
+    <label for="level">Level:</label>
+    <select id="level" name="level">
+        <option value="">All Levels</option>
+    </select>
+
+    <label for="season">Season:</label>
+    <select id="season" name="season">
+        <option value="">All Seasons</option>
+    </select>
+</div>
+
+<script>
+    function fetchLevels() {
+        fetch('/days_of_week/filter_levels', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ org_id: 1 })
+        })
+            .then(response => response.json())
+            .then(data => {
+                // Sort levels alphabetically by level_name
+                data.sort((a, b) => a.level_name.localeCompare(b.level_name));
+
+                const levelSelect = document.getElementById('level');
+                levelSelect.innerHTML = '<option value="">All Levels</option>';
+                data.forEach(level => {
+                    levelSelect.innerHTML += `<option value="${level.id}">${level.level_name}</option>`;
+                });
+            });
+    }
+
+    function fetchSeasons() {
+        fetch('/days_of_week/filter_seasons', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                const seasonSelect = document.getElementById('season');
+                seasonSelect.innerHTML = '<option value="">All Seasons</option>';
+                data.forEach(season => {
+                    seasonSelect.innerHTML += `<option value="${season.id}">${season.season_name}</option>`;
+                });
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        fetchLevels();
+        fetchSeasons();
+    });
+</script>
