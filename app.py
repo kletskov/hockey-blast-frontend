@@ -1,5 +1,6 @@
 import logging
 from flask import Flask, render_template, request, g, jsonify, send_from_directory, url_for, redirect
+from flask_restx import Api
 from flask_sqlalchemy import SQLAlchemy
 from threading import Thread
 from hockey_blast_common_lib.models import db, Organization, Game, Human, RequestLog, Team, HumanAlias
@@ -48,7 +49,10 @@ from blueprints.penalties import penalties_bp
 from blueprints.skater_performance import skater_performance_bp
 from blueprints.goalie_performance import goalie_performance_bp
 from blueprints.request_logs import request_logs_bp
-from blueprints.rest_api import rest_api_bp
+
+from api.v1.organizations import organizations_ns
+from api.v1.divisions import divisions_ns
+from api.v1.seasons import seasons_ns
 
 # BLOCKED_USER_AGENT = "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.6834.83 Mobile Safari/537.36 (compatible; GoogleOther)"
 # BLOCKED_IPS = ["66.249.72.103", "66.249.72.204"]
@@ -70,8 +74,6 @@ def create_app(db_name):
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['BACKGROUND_IMAGE'] = 'default_background.jpg'
     app.config['ORG_NAME'] = 'Hockey Blast'
-    # API key configuration (environment variable takes precedence)
-    app.config['API_KEY'] = os.environ.get('API_KEY', 'CHANGE_ME')
     db.init_app(app)
 
     # Register blueprints
@@ -95,8 +97,6 @@ def create_app(db_name):
     app.register_blueprint(skater_performance_bp, url_prefix='/skater_performance')
     app.register_blueprint(goalie_performance_bp, url_prefix='/goalie_performance')
     app.register_blueprint(request_logs_bp, url_prefix='/request_logs')
-    # REST API blueprint (provides /swagger and /api/v1/* routes)
-    app.register_blueprint(rest_api_bp)
 
     @app.before_request
     def before_request():
@@ -228,6 +228,18 @@ def create_app(db_name):
     @app.route('/about')
     def about():
         return render_template('about.html')
+
+    api = Api(
+        app,
+        version='1.0',
+        title='Hockey BLAST API',
+        description='RESTful API',
+        doc='/swagger'
+    )
+
+    api.add_namespace(organizations_ns, path='/api/v1')
+    api.add_namespace(divisions_ns, path='/api/v1')
+    api.add_namespace(seasons_ns, path='/api/v1')
 
     return app
 
