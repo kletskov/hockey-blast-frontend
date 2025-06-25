@@ -255,7 +255,7 @@ def run_app(app, port):
 
 if __name__ == "__main__":
     app1 = create_app("frontend")
-    thread1 = Thread(target=run_app, args=(app1, 5000))
+    thread1 = Thread(target=run_app, args=(app1, 5001))
     thread1.start()
     thread1.join()
 
