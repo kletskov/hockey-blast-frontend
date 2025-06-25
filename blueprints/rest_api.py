@@ -3,7 +3,7 @@ from flask_restx import Api
 
 rest_api_bp = Blueprint('rest_api', __name__)
 
-@rest_api_bp.route('/')
+@rest_api_bp.route('/bad')
 def index():
   return 'rest api root'
 

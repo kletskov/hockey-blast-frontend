@@ -1,0 +1,395 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .table th,
+    .table td {
+        white-space: normal;
+        padding: 1px;
+        font-size: 0.8rem;
+    }
+
+    .table {
+        table-layout: auto;
+        width: 100%;
+    }
+
+    .loading-indicator {
+        display: none;
+        text-align: center;
+        font-weight: bold;
+        color: red;
+        animation: blink 1s linear infinite;
+    }
+
+    @keyframes blink {
+        50% {
+            opacity: 0;
+        }
+    }
+</style>
+
+<div class="table-responsive">
+    <h4>Stats for {{ human_name }}</h4>
+    <p>Note: Each data point below includes referee's rank among other referees in the following format: "<span
+            style="color: rgb(123, 0, 0);">referee_rank / total_in_rank, Kth <a
+                href="https://en.wikipedia.org/wiki/Percentile" target="_blank">Percentile</a></span>"<br>Dropdown
+        options represent where {{ human_name }} officiated. Click on data header to sort by it!</p>
+    {% include "dropdowns.html" %}
+    <label for="min_games">Min games played:</label>
+    <select id="min_games" name="min_games">
+        <option value="1" selected>1</option>
+        <option value="10">10</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+        <option value="500">500</option>
+        <option value="1000">1000</option>
+    </select>
+    <div class="loading-indicator" id="loading-indicator">Loading data...</div>
+    <div class="table-responsive" id="referee-performance-results">
+        <div id="referee-performance-section" style="display: none;">
+            <table class="table table-striped text-center" id="referee-performance-table">
+                <thead class="text-center">
+                    <tr>
+                        <th style="color: black;">Context</th>
+                        <th style="color: black;">From</th>
+                        <th style="color: black;">To</th>
+                        <th style="color: black; cursor: pointer;" onclick="sortTable(3)">GP</th>
+                        <th style="color: black; cursor: pointer;" onclick="sortTable(4)">Penalties</th>
+                        <th style="color: black; cursor: pointer;" onclick="sortTable(5)">Pen/GP</th>
+                        <th style="color: black; cursor: pointer;" onclick="sortTable(6)">GM</th>
+                        <th style="color: black; cursor: pointer;" onclick="sortTable(7)">GM/GP</th>
+                    </tr>
+                </thead>
+                <tbody id="referee-performance-table-body" class="text-center">
+                    <!-- Data will be populated here -->
+                </tbody>
+            </table>
+        </div>
+
+        <div id="all-referees-section" style="display: none;">
+            <table class="table table-striped text-center" id="all-referees-table">
+                <thead class="text-center">
+                    <tr>
+                        <th style="color: black;">Referee</th>
+                        <th style="color: black;">From</th>
+                        <th style="color: black;">To</th>
+                        <th style="color: black; cursor: pointer;" onclick="sortTable(3, 'all-referees-table')">GP</th>
+                        <th style="color: black; cursor: pointer;" onclick="sortTable(4, 'all-referees-table')">
+                            Penalties</th>
+                        <th style="color: black; cursor: pointer;" onclick="sortTable(5, 'all-referees-table')">Pen/GP
+                        </th>
+                        <th style="color: black; cursor: pointer;" onclick="sortTable(6, 'all-referees-table')">GM</th>
+                        <th style="color: black; cursor: pointer;" onclick="sortTable(7, 'all-referees-table')">GM/GP
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="all-referees-table-body">
+                    <!-- Data will be populated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    function fetchContent(orgId, levelId, seasonId, teamId, topN) {
+        var humanId = document.getElementById('human_id') ? document.getElementById('human_id').value : null;
+        var minGames = document.getElementById('min_games').value;
+        var loadingIndicator = document.getElementById('loading-indicator');
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'block';
+        }
+
+        fetch('/referee_performance/filter_referee_performance', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                org_id: orgId,
+                level_id: levelId,
+                season_id: seasonId,
+                team_id: teamId,
+                top_n: topN,
+                human_id: humanId,
+                min_games: minGames  // Send min_games parameter
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                var refereePerformanceTableBody = document.getElementById('referee-performance-table-body');
+                if (refereePerformanceTableBody) {
+                    refereePerformanceTableBody.innerHTML = '';
+
+                    if (data.referee_performance && data.referee_performance.length > 0) {
+                        data.referee_performance.forEach(item => {
+                            refereePerformanceTableBody.innerHTML += `<tr>
+                                <td style="color: black;">${item.context}</td>
+                                <td>${item.first_game}</td>
+                                <td>${item.last_game}</td>
+                                <td><strong style="color: black;">${item.games_reffed}</strong><br><span style="color: rgb(123, 0, 0);">${item.games_reffed_rank}</span></td>
+                                <td><strong style="color: black;">${item.penalties_given}</strong><br><span style="color: rgb(123, 0, 0);">${item.penalties_given_rank}</span></td>
+                                <td><strong style="color: black;">${item.penalties_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.penalties_per_game_rank}</span></td>
+                                <td><strong style="color: black;">${item.gm_given}</strong><br><span style="color: rgb(123, 0, 0);">${item.gm_given_rank}</span></td>
+                                <td><strong style="color: black;">${item.gm_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.gm_per_game_rank}</span></td>
+                            </tr>`;
+                        });
+
+                        if (document.getElementById('referee-performance-section')) {
+                            document.getElementById('referee-performance-section').style.display = 'block';
+                        }
+                    } else {
+                        if (document.getElementById('referee-performance-section')) {
+                            document.getElementById('referee-performance-section').style.display = 'none';
+                        }
+                    }
+                }
+
+                var allRefereesTableBody = document.getElementById('all-referees-table-body');
+                if (allRefereesTableBody) {
+                    allRefereesTableBody.innerHTML = '';
+
+                    if (data.all_referees && data.all_referees.length > 0) {
+                        // Update title with proper filter information
+                        var orgNameElement = document.getElementById('org-name');
+                        var levelNameElement = document.getElementById('level-name');
+                        var seasonNameElement = document.getElementById('season-name');
+                        var levelContainer = document.getElementById('level-container');
+                        var seasonContainer = document.getElementById('season-container');
+
+                        if (orgNameElement) orgNameElement.innerText = data.org_name || '';
+
+                        if (levelNameElement && data.level_name && levelContainer) {
+                            levelNameElement.innerText = data.level_name;
+                            levelContainer.style.display = 'inline';
+                        } else if (levelContainer) {
+                            levelContainer.style.display = 'none';
+                        }
+
+                        if (seasonNameElement && data.season_name && seasonContainer) {
+                            seasonNameElement.innerText = data.season_name;
+                            seasonContainer.style.display = 'inline';
+                        } else if (seasonContainer) {
+                            seasonContainer.style.display = 'none';
+                        }
+
+                        // No need to apply minGames filter here as it's now handled in the backend
+                        data.all_referees.forEach(item => {
+                            allRefereesTableBody.innerHTML += `<tr>
+                                <td style="color: black;">${item.context}</td>
+                                <td>${item.first_game}</td>
+                                <td>${item.last_game}</td>
+                                <td><strong style="color: black;">${item.games_reffed}</strong><br><span style="color: rgb(123, 0, 0);">${item.games_reffed_rank}</span></td>
+                                <td><strong style="color: black;">${item.penalties_given}</strong><br><span style="color: rgb(123, 0, 0);">${item.penalties_given_rank}</span></td>
+                                <td><strong style="color: black;">${item.penalties_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.penalties_per_game_rank}</span></td>
+                                <td><strong style="color: black;">${item.gm_given}</strong><br><span style="color: rgb(123, 0, 0);">${item.gm_given_rank}</span></td>
+                                <td><strong style="color: black;">${item.gm_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.gm_per_game_rank}</span></td>
+                            </tr>`;
+                        });
+
+                        if (document.getElementById('all-referees-section')) {
+                            document.getElementById('all-referees-section').style.display = 'block';
+                        }
+                    } else {
+                        if (document.getElementById('all-referees-section')) {
+                            document.getElementById('all-referees-section').style.display = 'none';
+                        }
+                    }
+                }
+
+                if (loadingIndicator) {
+                    loadingIndicator.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
+                if (loadingIndicator) {
+                    loadingIndicator.style.display = 'none';
+                }
+            });
+    }
+
+    function sortTable(columnIndex, tableId = 'referee-performance-table') {
+        var table = document.getElementById(tableId);
+        if (!table) {
+            return;
+        }
+
+        // Find correct table body to sort
+        var tbody = table.querySelector('tbody');
+        if (!tbody || tbody.children.length === 0) {
+            // If the first table is empty, try the all-referees-table
+            if (tableId === 'referee-performance-table') {
+                var allRefereesTable = document.getElementById('all-referees-table');
+                if (allRefereesTable) {
+                    tbody = allRefereesTable.querySelector('tbody');
+                    table = allRefereesTable;
+                    tableId = 'all-referees-table';
+                }
+            }
+        }
+
+        if (!tbody || tbody.children.length === 0) {
+            return;
+        }
+
+        var rows = Array.from(tbody.children);
+
+        // Reset all headers to remove sort indicators
+        var headers = table.querySelectorAll('th');
+        headers.forEach(header => {
+            // Remove any existing sort indicators (↑, ↓)
+            header.textContent = header.textContent.replace(/[↑↓]\s*$/, '');
+        });
+
+        // Sort direction tracking
+        if (!table.dataset.sortCol || table.dataset.sortCol != columnIndex) {
+            // New column, default to ascending
+            table.dataset.sortDir = 'asc';
+            table.dataset.sortCol = columnIndex;
+        } else {
+            // Same column, toggle direction
+            table.dataset.sortDir = table.dataset.sortDir === 'asc' ? 'desc' : 'asc';
+        }
+
+        const sortDir = table.dataset.sortDir;
+
+        // Add direction indicator to the header
+        if (columnIndex < headers.length) {
+            // Add appropriate arrow based on sort direction
+            headers[columnIndex].textContent += (sortDir === 'asc' ? ' ↑' : ' ↓');
+        }
+
+        rows.sort((a, b) => {
+            if (!a.cells[columnIndex] || !b.cells[columnIndex]) {
+                return 0;
+            }
+
+            var aText = a.cells[columnIndex].innerText.trim();
+            var bText = b.cells[columnIndex].innerText.trim();
+
+            // Try to extract numeric values first (for numeric columns)
+            var aValue = extractValue(aText);
+            var bValue = extractValue(bText);
+
+            // If we can't extract numeric values, fall back to rank-based sorting
+            if (isNaN(aValue) || isNaN(bValue)) {
+                var aRank = extractRank(aText);
+                var bRank = extractRank(bText);
+
+                // Apply sort direction
+                return sortDir === 'asc' ? aRank - bRank : bRank - aRank;
+            }
+
+            // Apply sort direction
+            return sortDir === 'asc' ? aValue - bValue : bValue - aValue;
+        });
+
+        // Clear the table body and append sorted rows
+        while (tbody.firstChild) {
+            tbody.removeChild(tbody.firstChild);
+        }
+
+        rows.forEach(row => tbody.appendChild(row));
+    }
+
+    function extractValue(text) {
+        // Extract the first numeric value from the text
+        var match = text.match(/(\d+\.?\d*)/);
+        return match ? parseFloat(match[1]) : NaN;
+    }
+
+    function extractRank(text) {
+        var match = text.match(/(\d+)\/\d+/);
+        if (match) {
+            return parseInt(match[1]);
+        }
+        return 999999; // High default value for items without rank
+    }
+
+    // Make column headers more visibly clickable
+    document.addEventListener('DOMContentLoaded', function () {
+        const sortableHeaders = document.querySelectorAll('th[onclick]');
+        sortableHeaders.forEach(header => {
+            header.style.cursor = 'pointer';
+            header.title = 'Click to sort';
+            // Don't add the arrow icon here, it will be added when sorting
+        });
+    });
+
+    function updatePageSpecificCGI(url) {
+        // Empty implementation to prevent runtime errors
+    }
+
+    function onWindowLoad() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const humanId = urlParams.get('human_id');
+        const topN = urlParams.get('top_n') || 50;
+
+        document.getElementById('human_id').value = humanId;
+        document.getElementById('top_n').value = topN;
+    }
+
+    // Add event listener for min_games dropdown
+    document.getElementById('min_games').addEventListener('change', function () {
+        var orgId = document.getElementById('organization').value;
+        var levelId = document.getElementById('level').value;
+        var seasonId = document.getElementById('season').value;
+        var teamId = document.getElementById('team').value;
+        var topN = document.getElementById('top_n').value;
+        var minGames = this.value;
+
+        const url = new URL(window.location);
+        url.searchParams.set('min_games', minGames);
+        window.history.pushState({}, '', url);
+
+        fetchContent(orgId, levelId, seasonId, teamId, topN);
+    });
+
+    // Add direct click handlers to table headers when the DOM is fully loaded
+    document.addEventListener('DOMContentLoaded', function () {
+        // Make headers directly clickable
+        const headerElements = document.querySelectorAll('th[onclick]');
+        headerElements.forEach(header => {
+            header.style.cursor = 'pointer';
+            const originalOnclick = header.getAttribute('onclick');
+
+            // Replace the onclick attribute with a direct event listener
+            if (originalOnclick) {
+                header.removeAttribute('onclick');
+
+                header.addEventListener('click', function () {
+                    // Extract column index from the original onclick attribute
+                    const match = originalOnclick.match(/sortTable\((\d+)/);
+                    if (match && match[1]) {
+                        const columnIndex = parseInt(match[1]);
+                        sortTable(columnIndex);
+                    }
+                });
+            }
+        });
+    });
+
+    // Also make sure all-referees-table headers are clickable
+    document.addEventListener('DOMContentLoaded', function () {
+        const allRefereesHeaders = document.querySelectorAll('#all-referees-table th');
+        allRefereesHeaders.forEach((header, index) => {
+            if (index >= 3) { // Only make numeric columns sortable (skip first 3 columns)
+                header.style.cursor = 'pointer';
+                header.title = 'Click to sort';
+                header.innerHTML += ' ↕️';
+
+                header.addEventListener('click', function () {
+                    sortTable(index, 'all-referees-table');
+                });
+            }
+        });
+    });
+</script>
+<input type="hidden" id="human_id" value="{{ human_id }}">
+{% endblock %}

@@ -142,14 +142,6 @@
         var loadingIndicator = document.getElementById('loading-indicator');
         loadingIndicator.style.display = 'block'; // Show loading indicator
 
-        console.log('Fetching content:', {
-            orgId: orgId,
-            levelId: levelId,
-            seasonId: seasonId,
-            teamId: teamId,
-            topN: topN
-        });
-
         fetch('/goalie_performance/filter_goalie_performance', {
             method: 'POST',
             headers: {
@@ -309,13 +301,10 @@
         const url = new URL(window.location);
         url.searchParams.set('min_games', minGames);
         window.history.pushState({}, '', url);
-        console.log('fetchContent - from min_games change');
 
         var event = new CustomEvent('dropdownChange', { detail: null });
         document.dispatchEvent(event);
-
     });
-
 </script>
 <input type="hidden" id="human_id" value="{{ human_id }}">
 {% endblock %}

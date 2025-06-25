@@ -23,10 +23,10 @@
 
     <label for="top_n">Show Top:</label>
     <select id="top_n" name="top_n">
-        <option value="20">20</option>
         <option value="50" selected>50</option>
         <option value="100">100</option>
-        <option value="200">200</option>
+        <option value="500">500</option>
+        <option value="1000">1000</option>
     </select>
 </div>
 
@@ -100,8 +100,9 @@
     function fetchLevels(orgId, humanId) {
         var endpoint = window.location.pathname.includes('/skater_performance') ? '/skater_performance/filter_levels' :
             window.location.pathname.includes('/goalie_performance') ? '/goalie_performance/filter_levels' :
-                window.location.pathname.includes('/days_of_week') ? '/days_of_week/filter_levels' :
-                    '/dropdowns/filter_levels';
+                window.location.pathname.includes('/referee_performance') ? '/referee_performance/filter_levels' :
+                    window.location.pathname.includes('/days_of_week') ? '/days_of_week/filter_levels' :
+                        '/dropdowns/filter_levels';
         return fetch(endpoint, {
             method: 'POST',
             headers: {
@@ -126,7 +127,8 @@
     function fetchSeasons(orgId, levelId, humanId) {
         var endpoint = window.location.pathname.includes('/skater_performance') ? '/skater_performance/filter_seasons' :
             window.location.pathname.includes('/goalie_performance') ? '/goalie_performance/filter_seasons' :
-                '/dropdowns/filter_seasons';
+                window.location.pathname.includes('/referee_performance') ? '/referee_performance/filter_seasons' :
+                    '/dropdowns/filter_seasons';
         return fetch(endpoint, {
             method: 'POST',
             headers: {
@@ -148,7 +150,15 @@
     function fetchTeams(orgId, levelId, seasonId, humanId) {
         var endpoint = window.location.pathname.includes('/skater_performance') ? '/skater_performance/filter_teams' :
             window.location.pathname.includes('/goalie_performance') ? '/goalie_performance/filter_teams' :
-                '/dropdowns/filter_teams';
+                window.location.pathname.includes('/referee_performance') ? null : '/dropdowns/filter_teams';
+
+        if (endpoint === null) {
+            // Disable the team dropdown for referee performance page
+            document.getElementById('team').innerHTML = '<option value="">Not Applicable</option>';
+            document.getElementById('team').disabled = true;
+            return Promise.resolve(); // Return a resolved Promise to avoid runtime errors
+        }
+
         return fetch(endpoint, {
             method: 'POST',
             headers: {
@@ -170,6 +180,12 @@
     function updateDropdownsStateAndCGI(orgId, levelId, seasonId, teamId, topN) {
         const url = new URL(window.location);
         url.searchParams.set('org_id', orgId);
+
+        // Convert string "null" to actual null
+        if (levelId === 'null') levelId = null;
+        if (seasonId === 'null') seasonId = null;
+        if (teamId === 'null') teamId = null;
+
         url.searchParams.set('level_id', levelId);
         url.searchParams.set('season_id', seasonId);
         url.searchParams.set('team_id', teamId);
@@ -204,7 +220,6 @@
     }
 
     document.addEventListener('dropdownChange', function (event) {
-
         var orgId = document.getElementById('organization').value;
         var levelId = document.getElementById('level').value;
         var seasonId = document.getElementById('season').value;
@@ -249,21 +264,8 @@
             }
         }
         if (orgId == null) {
-            console.log('MINUS ONE ');
             orgId = -1;
         }
-        // var orgId = event.detail.orgId || document.getElementById('organization').value;
-        // var levelId = event.detail.levelId || document.getElementById('level').value;
-        // var seasonId = event.detail.seasonId || document.getElementById('season').value;
-        // var teamId = event.detail.teamId || document.getElementById('team').value;
-
-        console.log('dropdownChange: ', {
-            orgId: orgId,
-            levelId: levelId,
-            seasonId: seasonId,
-            teamId: teamId,
-            topN: topN
-        });
 
         updateDropdownsStateAndCGI(orgId, levelId, seasonId, teamId, topN);
         fetchContent(orgId, levelId, seasonId, teamId, topN);
@@ -272,11 +274,6 @@
     window.addEventListener('load', function () {
         const urlParams = new URLSearchParams(window.location.search);
         const orgId = urlParams.get('org_id') || document.getElementById('organization').value;
-
-        console.log('LOAD : ', {
-            orgId: orgId,
-        });
-
         const levelId = urlParams.get('level_id');
         const seasonId = urlParams.get('season_id');
         const teamId = urlParams.get('team_id');
