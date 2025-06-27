@@ -193,6 +193,24 @@ def request_logs():
     plot_fig = go.Figure(data=plot_data, layout=plot_layout)
     plot_div = pio.to_html(plot_fig, full_html=False)
 
+    # Create a new plot for unique IP counts
+    unique_ip_plot_data = [
+        go.Scatter(x=unique_ip_counts.index, y=unique_ip_counts.values, mode='lines', 
+                 name='Unique IPs', line=dict(color='#17a2b8'))
+    ]
+
+    unique_ip_plot_layout = go.Layout(
+        title=f'Unique IP Addresses ({interval.capitalize()})',
+        xaxis=dict(title='Time'),
+        yaxis=dict(title='Count'),
+        plot_bgcolor='#f9f9f9',
+        paper_bgcolor='#ffffff',
+        font=dict(color='#333')
+    )
+
+    unique_ip_plot_fig = go.Figure(data=unique_ip_plot_data, layout=unique_ip_plot_layout)
+    unique_ip_plot_div = pio.to_html(unique_ip_plot_fig, full_html=False)
+
     # Plot for average hits per session
     avg_hits_plot_data = [
         go.Scatter(x=session_stats.index, y=session_stats['mean'], mode='lines', name='Avg Hits per Session'),
@@ -216,6 +234,7 @@ def request_logs():
         'request_logs.html',
         plot_div=plot_div,
         avg_hits_plot_div=avg_hits_plot_div,
+        unique_ip_plot_div=unique_ip_plot_div,  # Add the new plot div
         interval=interval,
         sample_logs_data=sample_logs_data
     )
