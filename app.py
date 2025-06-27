@@ -81,12 +81,27 @@ def create_sample_app():
 def _create_app(db_name):
     """Internal function to create the app with the specified database."""
     app = Flask(__name__)
+    
+    # Check for debug mode from environment variable
+    debug_mode = os.environ.get('DEBUG_MODE', '').lower() in ('true', '1', 'yes', 'on')
+    
+    # Configure app
     db_params = get_db_params(db_name)
     db_url = f"postgresql://{db_params['user']}:{db_params['password']}@{db_params['host']}:{db_params['port']}/{db_params['dbname']}"
     app.config['SQLALCHEMY_DATABASE_URI'] = db_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['BACKGROUND_IMAGE'] = 'default_background.jpg'
     app.config['ORG_NAME'] = 'Hockey Blast'
+    app.config['DEBUG'] = debug_mode
+    
+    # Set up more verbose logging in debug mode
+    if debug_mode:
+        logging.basicConfig(level=logging.DEBUG)
+        logger.setLevel(logging.DEBUG)
+        logger.debug("Debug mode enabled")
+        # Enable SQLAlchemy query logging in debug mode
+        logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+    
     db.init_app(app)
 
     # Register blueprints
@@ -258,6 +273,32 @@ def _create_app(db_name):
     api.add_namespace(organizations_ns, path='/api/v1')
     api.add_namespace(divisions_ns, path='/api/v1')
     api.add_namespace(seasons_ns, path='/api/v1')
+
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        logger.error(f"500 error: {str(e)}")
+        if debug_mode:
+            # In debug mode, return detailed error information
+            return jsonify(error=str(e), 
+                          traceback=str(e.__traceback__),
+                          db_params={**db_params, "password": "HIDDEN"},
+                          env_vars={k: v for k, v in os.environ.items() if not k.lower().contains('key') and not k.lower().contains('secret') and not k.lower().contains('password')}), 500
+        else:
+            # In production, return a simple error page
+            return render_template('error.html', error_info={"error": "Internal Server Error"}), 500
+    
+    @app.errorhandler(Exception)
+    def handle_exception(e):
+        app.logger.error(f"Unhandled exception: {str(e)}", exc_info=True)
+        if debug_mode:
+            # In debug mode, return detailed error information
+            import traceback
+            return jsonify(error=str(e),
+                          traceback=traceback.format_exc(),
+                          db_params={**db_params, "password": "HIDDEN"}), 500
+        else:
+            # In production, return a simple error page
+            return render_template('error.html', error_info={"error": "An unexpected error occurred"}), 500
 
     return app
 

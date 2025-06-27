@@ -186,3 +186,25 @@ Get the code and run the following steps:
     ```bash
     sudo launchctl load /Library/LaunchDaemons/com.certbot.renew.plist
     ```
+
+## Environment Variables
+
+The application can be configured with the following environment variables:
+
+- `DEBUG_MODE`: Set to `true`, `1`, `yes`, or `on` to enable debug mode. This will:
+  - Enable Flask's debug mode
+  - Set more verbose logging
+  - Return detailed error information instead of generic error pages
+  - Default: off
+
+Example usage with debug mode:
+
+```bash
+DEBUG_MODE=true gunicorn -c gunicorn_config.py "app:create_prod_app"
+```
+
+For local development:
+
+```bash
+DEBUG_MODE=true flask run
+```
