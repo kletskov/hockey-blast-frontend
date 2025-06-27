@@ -10,7 +10,7 @@
       <string>/Users/pavelkletskov/hockey-blast-prod/hockey-blast-frontend/.venv/bin/gunicorn</string>
       <string>-c</string>
       <string>/Users/pavelkletskov/hockey-blast-prod/hockey-blast-frontend/gunicorn_config.py</string>
-      <string>app:create_app('frontend')</string>
+      <string>app:create_prod_app()</string>
     </array>
 
     <key>KeepAlive</key>

@@ -58,7 +58,7 @@ Get the code and run the following steps:
 
 2. Start Gunicorn:
     ```bash
-    ./.venv/bin/gunicorn -c gunicorn_config.py "app:create_app('frontend')"
+    ./.venv/bin/gunicorn -c gunicorn_config.py "app:create_prod_app()"
     ```
 
 ### NGINX Setup

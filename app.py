@@ -70,7 +70,16 @@ def get_client_ip():
     return request.remote_addr
 
 
-def create_app(db_name):
+def create_prod_app():
+    """Create the application with production database."""
+    return _create_app("frontend")
+
+def create_sample_app():
+    """Create the application with sample database."""
+    return _create_app("frontend-sample-db")
+
+def _create_app(db_name):
+    """Internal function to create the app with the specified database."""
     app = Flask(__name__)
     db_params = get_db_params(db_name)
     db_url = f"postgresql://{db_params['user']}:{db_params['password']}@{db_params['host']}:{db_params['port']}/{db_params['dbname']}"
@@ -256,12 +265,12 @@ def run_app(app, port):
     app.run(host='0.0.0.0', port=port)
 
 if __name__ == "__main__":
-    app1 = create_app("frontend")
+    app1 = create_prod_app()
     thread1 = Thread(target=run_app, args=(app1, 5001))
     thread1.start()
     thread1.join()
 
-    # app2 = create_app("frontend-sample-db")
+    # app2 = create_sample_app()
     # thread2 = Thread(target=run_app, args=(app2, 5005))
     # thread2.start()
     # thread2.join()

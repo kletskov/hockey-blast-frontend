@@ -31,4 +31,4 @@ RUN chmod +x patch_flask_table.sh && ./patch_flask_table.sh
 EXPOSE 5001 8001
 
 # Set the default command to run the application
-CMD ["sh", "-c", "if [ ${FLASK_ENV} = 'development' ]; then FLASK_APP='app:create_app(\"frontend-sample-db\")' FLASK_RUN_PORT=5001 flask run --host=0.0.0.0; else gunicorn -c gunicorn_config_docker.py 'app:create_app(\"frontend\")'; fi"]
+CMD ["sh", "-c", "if [ ${FLASK_ENV} = 'development' ]; then FLASK_APP='app:create_sample_app()' FLASK_RUN_PORT=5001 flask run --host=0.0.0.0; else gunicorn -c gunicorn_config_docker.py 'app:create_prod_app()'; fi"]
