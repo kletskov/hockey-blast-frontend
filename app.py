@@ -99,6 +99,7 @@ def _create_app(db_name):
         logging.basicConfig(level=logging.DEBUG)
         logger.setLevel(logging.DEBUG)
         logger.debug("Debug mode enabled")
+        logger.debug(f"Database URL: {db_url.replace(db_params['password'], '***')}")
         # Enable SQLAlchemy query logging in debug mode
         logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
     
@@ -274,15 +275,73 @@ def _create_app(db_name):
     api.add_namespace(divisions_ns, path='/api/v1')
     api.add_namespace(seasons_ns, path='/api/v1')
 
+    @app.route('/debug')
+    def debug_info():
+        """Endpoint to display debug information."""
+        if not debug_mode:
+            return "Debug mode not enabled. Set DEBUG_MODE=true to see details.", 403
+            
+        # Get safe environment variables (exclude sensitive info)
+        safe_env_vars = {}
+        for k, v in os.environ.items():
+            if not any(s in k.lower() for s in ['key', 'secret', 'password', 'token']):
+                safe_env_vars[k] = v
+        
+        # Get a list of all registered routes
+        routes = []
+        for rule in app.url_map.iter_rules():
+            routes.append({
+                'endpoint': rule.endpoint,
+                'methods': sorted([m for m in rule.methods if m not in ('HEAD', 'OPTIONS')]),
+                'path': rule.rule
+            })
+        
+        # Get database connection status
+        try:
+            with db.engine.connect() as conn:
+                db_status = "Connected"
+        except Exception as e:
+            db_status = f"Error: {str(e)}"
+            
+        debug_data = {
+            'app_config': {k: v for k, v in app.config.items() if not any(s in k.lower() for s in ['key', 'secret', 'password', 'token'])},
+            'environment': safe_env_vars,
+            'routes': routes,
+            'db_status': db_status,
+            'registered_blueprints': list(app.blueprints.keys())
+        }
+            
+        return jsonify(debug_data)
+    
+    @app.route('/test-error')
+    def test_error():
+        """Endpoint to test error handling."""
+        if not debug_mode:
+            return "Debug mode not enabled. Set DEBUG_MODE=true to test errors.", 403
+            
+        # Raise a test exception
+        raise Exception("This is a test error to check error handling")
+
     @app.errorhandler(500)
     def internal_server_error(e):
         logger.error(f"500 error: {str(e)}")
         if debug_mode:
             # In debug mode, return detailed error information
-            return jsonify(error=str(e), 
-                          traceback=str(e.__traceback__),
-                          db_params={**db_params, "password": "HIDDEN"},
-                          env_vars={k: v for k, v in os.environ.items() if not k.lower().contains('key') and not k.lower().contains('secret') and not k.lower().contains('password')}), 500
+            import traceback
+            # Get traceback info
+            error_traceback = traceback.format_exc()
+            # Get safe database params (hide password)
+            safe_db_params = {k: (v if k != 'password' else '***') for k, v in db_params.items()}
+            
+            # Return JSON with error details
+            response = jsonify({
+                'error': str(e),
+                'traceback': error_traceback,
+                'db_params': safe_db_params,
+                'debug_mode': debug_mode
+            })
+            response.status_code = 500
+            return response
         else:
             # In production, return a simple error page
             return render_template('error.html', error_info={"error": "Internal Server Error"}), 500
@@ -293,9 +352,21 @@ def _create_app(db_name):
         if debug_mode:
             # In debug mode, return detailed error information
             import traceback
-            return jsonify(error=str(e),
-                          traceback=traceback.format_exc(),
-                          db_params={**db_params, "password": "HIDDEN"}), 500
+            # Get traceback info
+            error_traceback = traceback.format_exc()
+            # Get safe database params (hide password)
+            safe_db_params = {k: (v if k != 'password' else '***') for k, v in db_params.items()}
+            
+            # Return JSON with error details
+            response = jsonify({
+                'error': str(e),
+                'error_type': e.__class__.__name__,
+                'traceback': error_traceback,
+                'db_params': safe_db_params,
+                'debug_mode': debug_mode
+            })
+            response.status_code = 500
+            return response
         else:
             # In production, return a simple error page
             return render_template('error.html', error_info={"error": "An unexpected error occurred"}), 500

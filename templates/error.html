@@ -8,12 +8,38 @@
 </head>
 
 <body>
-    <h1>Internal Server Error</h1>
-    <p>An error occurred while trying to connect to the database.</p>
-    <h2>Error Details</h2>
-    <pre>{{ error_info.error }}</pre>
-    <h2>Database Parameters</h2>
-    <pre>{{ error_info.db_params }}</pre>
+    <div class="container mt-5">
+        <div class="alert alert-danger">
+            <h1 class="mb-4">Error</h1>
+
+            {% if error_info and error_info.error %}
+            <p><strong>{{ error_info.error }}</strong></p>
+            {% else %}
+            <p><strong>An unexpected error occurred</strong></p>
+            {% endif %}
+
+            {% if config.DEBUG %}
+            <hr>
+            <h3>Debug Information</h3>
+            {% if error_info and error_info.traceback %}
+            <pre>{{ error_info.traceback }}</pre>
+            {% endif %}
+
+            {% if error_info and error_info.db_params %}
+            <h4>Database Configuration</h4>
+            <pre>{{ error_info.db_params }}</pre>
+            {% endif %}
+
+            <p>
+                <a href="/debug" class="btn btn-info">View Debug Information</a>
+                <a href="/" class="btn btn-primary">Back to Home</a>
+            </p>
+            {% else %}
+            <p>If this error persists, please contact the administrator.</p>
+            <p><a href="/" class="btn btn-primary">Back to Home</a></p>
+            {% endif %}
+        </div>
+    </div>
 </body>
 
 </html>
