@@ -11,6 +11,7 @@ import flask_table.table
 import flask_table.columns
 from markupsafe import Markup
 import os
+import json
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from hockey_blast_common_lib.utils import get_fake_human_for_stats
@@ -275,6 +276,35 @@ def _create_app(db_name):
     api.add_namespace(divisions_ns, path='/api/v1')
     api.add_namespace(seasons_ns, path='/api/v1')
 
+    def json_safe_dict(d):
+        """Convert a dictionary to a JSON-safe format."""
+        result = {}
+        for k, v in d.items():
+            if isinstance(v, timedelta):
+                # Convert timedelta to string representation
+                days = v.days
+                hours, remainder = divmod(v.seconds, 3600)
+                minutes, seconds = divmod(remainder, 60)
+                result[k] = f"{days}d {hours}h {minutes}m {seconds}s"
+            elif isinstance(v, dict):
+                # Recursively process nested dictionaries
+                result[k] = json_safe_dict(v)
+            elif hasattr(v, '__dict__'):
+                # Handle objects by getting their __dict__
+                try:
+                    result[k] = str(v)
+                except:
+                    result[k] = "Not serializable"
+            else:
+                # Try to use the value as is, if it fails, convert to string
+                try:
+                    # Check if it's JSON serializable
+                    json.dumps(v)
+                    result[k] = v
+                except (TypeError, OverflowError):
+                    result[k] = str(v)
+        return result
+    
     @app.route('/debug')
     def debug_info():
         """Endpoint to display debug information."""
@@ -302,9 +332,13 @@ def _create_app(db_name):
                 db_status = "Connected"
         except Exception as e:
             db_status = f"Error: {str(e)}"
+        
+        # Make app config JSON-safe
+        safe_config = json_safe_dict({k: v for k, v in app.config.items() 
+                                    if not any(s in k.lower() for s in ['key', 'secret', 'password', 'token'])})
             
         debug_data = {
-            'app_config': {k: v for k, v in app.config.items() if not any(s in k.lower() for s in ['key', 'secret', 'password', 'token'])},
+            'app_config': safe_config,
             'environment': safe_env_vars,
             'routes': routes,
             'db_status': db_status,
