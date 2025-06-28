@@ -100,6 +100,9 @@ def filter_games():
     }
 
     for game in games:
+        if game.home_team_id is None or game.visitor_team_id is None:
+            continue
+
         visitor_team = db.session.query(Team).filter(Team.id == game.visitor_team_id).first()
         home_team = db.session.query(Team).filter(Team.id == game.home_team_id).first()
 
