@@ -7,6 +7,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from hockey_blast_common_lib.models import db, Organization, Team, GameRoster, Game, Division, Human, Goal, Penalty, Level
 from hockey_blast_common_lib.stats_models import OrgStatsHuman
+from hockey_blast_common_lib.h2h_models import SkaterToSkaterStats
 from hockey_blast_common_lib.stats_utils import ALL_ORGS_ID
 import pandas as pd
 import plotly.graph_objs as go
@@ -255,6 +256,45 @@ def human_stats():
             'games_played': row['games_played']
         })
     
+    # Get skater-to-skater stats if this person is a skater
+    games_against_skaters = []
+    has_skater_role = any(role['role'] for role in roles_data if 'Skater' in role['role'])
+    
+    if has_skater_role:
+        # Query SkaterToSkaterStats where this human is either skater1 or skater2
+        skater_stats = db.session.query(SkaterToSkaterStats).filter(
+            (SkaterToSkaterStats.skater1_id == human_id) | 
+            (SkaterToSkaterStats.skater2_id == human_id)
+        ).order_by(SkaterToSkaterStats.games_against.desc()).limit(top_n).all()
+        
+        for stat in skater_stats:
+            # Determine which is the opponent
+            if stat.skater1_id == human_id:
+                opponent_id = stat.skater2_id
+                wins = stat.skater1_wins_vs_skater2
+                losses = stat.skater2_wins_vs_skater1
+            else:
+                opponent_id = stat.skater1_id
+                wins = stat.skater2_wins_vs_skater1
+                losses = stat.skater1_wins_vs_skater2
+            
+            # Get opponent name
+            opponent = db.session.query(Human).filter(Human.id == opponent_id).first()
+            if opponent:
+                opponent_name = f"{opponent.first_name} {opponent.middle_name} {opponent.last_name}".strip()
+                
+                # Format wins and losses with colors
+                wins_formatted = f"<span style='color: #7CFC00;'>{wins}W</span>"
+                losses_formatted = f"<span style='color: #FF0000;'>{losses}L</span>"
+                
+                games_against_skaters.append({
+                    'opponent_id': opponent_id,
+                    'opponent_name': opponent_name,
+                    'games_against': stat.games_against,
+                    'wins_losses': f"{wins_formatted} {losses_formatted}",
+                    'skater_to_skater_link': f"/skater_to_skater/?human_id_1={human_id}&human_id_2={opponent_id}"
+                })
+    
         # Query for Referee role
     referee_games = db.session.query(Game).filter(
         (Game.referee_1_id == human_id) | (Game.referee_2_id == human_id)
@@ -396,6 +436,7 @@ def human_stats():
         roles_data=roles_data if len(roles_data) > 0 else [],
         most_games_played=most_games_played,
         teammates=teammates,
+        games_against_skaters=games_against_skaters,
         plot_div=plot_div,
         recent_games_data=recent_games_data  # Pass recent games data to the template
     )

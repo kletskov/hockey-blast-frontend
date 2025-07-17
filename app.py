@@ -54,13 +54,94 @@ from blueprints.days_of_week import days_of_week_bp
 from blueprints.days_of_week_dropdowns import days_of_week_dropdowns_bp
 #from blueprints.rest_api import rest_api_bp
 from blueprints.referee_performance import referee_performance_bp
+from blueprints.skater_to_skater import skater_to_skater_bp  # Add this import
+from blueprints.two_skaters_selection import two_skaters_selection_bp  # Add this import
 
 from api.v1.organizations import organizations_ns
 from api.v1.divisions import divisions_ns
 from api.v1.seasons import seasons_ns
 
-# BLOCKED_USER_AGENT = "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.6834.83 Mobile Safari/537.36 (compatible; GoogleOther)"
-# BLOCKED_IPS = ["66.249.72.103", "66.249.72.204"]
+import re
+
+import ipaddress
+
+suspicious_subnets = [
+    "185.6.233.0/24", "185.191.171.0/24", "185.220.101.0/24", "185.220.102.0/24", 
+    "185.220.103.0/24", "185.220.100.0/24", "91.219.212.0/24", "89.234.157.0/24",
+    "45.9.20.0/22", "176.111.173.0/24", "176.59.0.0/16", "77.40.0.0/16"
+]
+
+suspicious_networks = [ipaddress.ip_network(subnet) for subnet in suspicious_subnets]
+
+def is_suspicious_ip(ip: str) -> bool:
+    try:
+        ip_obj = ipaddress.ip_address(ip)
+        if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_reserved or ip_obj.is_link_local:
+            return True
+        for net in suspicious_networks:
+            if ip_obj in net:
+                return True
+    except ValueError:
+        return True
+    return False
+
+def is_obviously_junk_user_agent(user_agent: str) -> bool:
+    if not user_agent:
+        return True
+
+    ua = user_agent.lower()
+
+    # Red flags: ancient browsers, fake versions, scraping tools
+    red_flags = [
+        'windows 95', 'windows 98', 'windows nt 5.0', 'windows nt 5.01', 'windows nt 5.1',
+        'windows ce', 'windows nt 11.0',
+        'msie 5.0', 'msie 6.0', 'msie 7.0', 'msie 8.0',
+        'opera/9.', 'presto/2.', 'samsungbrowser/3.', 'ucbrowser', 'baidubrowser',
+        'phantomjs', 'crawler', 'spider', 'httpclient', 'wget', 'curl'
+    ]
+    if any(flag in ua for flag in red_flags):
+        return True
+
+    # Nonsensical Gecko date stamps
+    if re.search(r'gecko/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+', ua):
+        return True
+
+    # Suspicious Android devices (often associated with botnets)
+    suspicious_devices = [
+        'sm-j700f', 'sm-j701f', 'redmi', 'tecno', 'itel', 'lava', 'infinix', 'vivo', 'nokia', 'huawei', 'moto e5'
+    ]
+    if any(dev in ua for dev in suspicious_devices):
+        if 'android 6' in ua or 'android 7' in ua or 'android 5' in ua:
+            return True
+
+    # iPhone with very old iOS but modern Chrome/Safari versions
+    if 'iphone' in ua and 'os 10' in ua:
+        if 'chrome/114' in ua or 'safari/604' in ua:
+            return True
+
+    # Safari on Windows (not legitimate)
+    if 'safari' in ua and 'windows nt 10.0' in ua:
+        return True
+
+    # Repetitive spoofed versions
+    if 'chrome/114.0.5735.196' in ua:
+        return True
+
+    # Unknown or fake language codes
+    fake_locales = ['kok-in', 'brx-in', 'sd-in', 'ks-in', 'gu-in']
+    if any(loc in ua for loc in fake_locales):
+        return True
+
+    # Safari without AppleWebKit
+    if 'safari' in ua and 'applewebkit' not in ua:
+        return True
+
+    # Lack of common components
+    if 'mozilla/5.0' not in ua or not any(p in ua for p in ['applewebkit', 'gecko/', 'chrome/', 'safari/', 'edg/']):
+        return True
+
+    return False
+
 
 def get_user_agent():
     return request.headers.get('User-Agent')
@@ -130,6 +211,8 @@ def _create_app(db_name):
     app.register_blueprint(days_of_week_bp, url_prefix='/days_of_week')
     app.register_blueprint(days_of_week_dropdowns_bp, url_prefix='/days_of_week')
     app.register_blueprint(referee_performance_bp, url_prefix='/referee_performance')
+    app.register_blueprint(skater_to_skater_bp, url_prefix='/skater_to_skater')  # Add this line
+    app.register_blueprint(two_skaters_selection_bp, url_prefix='/two_skaters_selection')  # Add this line
     # REST API blueprint (provides /swagger and /api/v1/* routes)
     #app.register_blueprint(rest_api_bp)
 
@@ -139,6 +222,9 @@ def _create_app(db_name):
             return
         try:
             user_agent = request.headers.get('User-Agent')
+            if is_obviously_junk_user_agent(user_agent):
+                logger.warning(f"JUNK USER-AGENT: {user_agent} from {client_ip}")
+                return '', 204  # Silently drop or use 403 to block
             client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
             path = request.path
             cgi_params = request.query_string.decode('utf-8')  # Get CGI parameters
@@ -259,6 +345,10 @@ def _create_app(db_name):
     @app.route('/robots.txt')
     def robots_txt():
         return send_from_directory(app.root_path, 'robots.txt')
+
+    @app.route('/favicon.ico')
+    def favicon():
+        return send_from_directory(app.root_path, 'favicon.ico')
 
     @app.route('/about')
     def about():
@@ -382,6 +472,10 @@ def _create_app(db_name):
     
     @app.errorhandler(Exception)
     def handle_exception(e):
+        # Don't handle 404s and other HTTP exceptions in the global handler
+        if hasattr(e, 'code') and e.code == 404:
+            return e
+        
         app.logger.error(f"Unhandled exception: {str(e)}", exc_info=True)
         if debug_mode:
             # In debug mode, return detailed error information

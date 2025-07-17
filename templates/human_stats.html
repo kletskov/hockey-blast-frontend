@@ -75,23 +75,27 @@
     </tbody>
 </table>
 
-<h4>Games Per Team</h4>
+{% if games_against_skaters %}
+<h4>Games Against Skater</h4>
 <table class="table table-striped">
     <thead>
         <tr>
-            <th>Team Name</th>
-            <th>Games Played</th>
+            <th>Skater Name</th>
+            <th>Games Against</th>
+            <th>W-L</th>
         </tr>
     </thead>
     <tbody>
-        {% for team in most_games_played %}
+        {% for opponent in games_against_skaters %}
         <tr>
-            <td><a href="{{ url_for('team_stats.team_stats', team_id=team.team_id) }}">{{ team.team_name }}</a></td>
-            <td>{{ team.games_played|int }}</td>
+            <td><a href="{{ opponent.skater_to_skater_link }}">{{ opponent.opponent_name }}</a></td>
+            <td><a href="{{ opponent.skater_to_skater_link }}">{{ opponent.games_against }}</a></td>
+            <td><a href="{{ opponent.skater_to_skater_link }}">{{ opponent.wins_losses|safe }}</a></td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+{% endif %}
 
 <h4>Games Per Teammate</h4>
 <table class="table table-striped">
@@ -107,6 +111,24 @@
             <td><a href="{{ url_for('human_stats.human_stats', human_id=teammate.teammate_id) }}">{{
                     teammate.teammate_name }}</a></td>
             <td>{{ teammate.games_played|int }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h4>Games Per Team</h4>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Team Name</th>
+            <th>Games Played</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for team in most_games_played %}
+        <tr>
+            <td><a href="{{ url_for('team_stats.team_stats', team_id=team.team_id) }}">{{ team.team_name }}</a></td>
+            <td>{{ team.games_played|int }}</td>
         </tr>
         {% endfor %}
     </tbody>

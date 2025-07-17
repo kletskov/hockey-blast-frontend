@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block title %}Skater to Skater Comparison{% endblock %}
+
+{% block content %}
+<style>
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .table th,
+    .table td {
+        white-space: normal;
+        padding: 1px;
+        font-size: 0.8rem;
+    }
+
+    .table {
+        table-layout: auto;
+        width: 100%;
+    }
+
+    .head2head-header {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .player-name {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    .vs-label {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #dc3545;
+    }
+
+    .section-header {
+        background-color: #e9ecef;
+        padding: 8px;
+        margin-top: 20px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+    }
+
+    .stat-cell {
+        font-weight: bold;
+    }
+
+    .winner {
+        color: #7CFC00;
+    }
+
+    .loser {
+        color: #FF0000;
+    }
+</style>
+
+<div class="container">
+    <div style="text-align: center; margin-bottom: 10px;">
+        <a href="{{ url_for('two_skaters_selection.select_skaters') }}" class="btn btn-sm"
+            style="background-color: orange; color: white;">Compare Other
+            Skaters</a>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-warning">
+        {{ error }}
+    </div>
+    {% else %}
+
+    <div class="head2head-header">
+        <div class="player-name">
+            <a href="{{ url_for('human_stats.human_stats', human_id=human1.id, top_n=20) }}">{{ human1_name }}</a>
+        </div>
+        <div class="vs-label">vs</div>
+        <div class="player-name" style="text-align: right;">
+            <a href="{{ url_for('human_stats.human_stats', human_id=human2.id, top_n=20) }}">{{ human2_name }}</a>
+        </div>
+    </div>
+
+    <div class="section-header">
+        <h4 class="text-center">Head-to-Head ({{ stats.games_against }} games)</h4>
+    </div>
+
+    {% if stats.games_against > 0 %}
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Statistic</th>
+                    <th class="text-center">{{ human1_name }}</th>
+                    <th class="text-center">{{ human2_name }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Wins</td>
+                    <td class="text-center stat-cell 
+                        {% if stats.skater1_wins > stats.skater2_wins %}winner
+                        {% elif stats.skater1_wins < stats.skater2_wins %}loser{% endif %}">
+                        {{ stats.skater1_wins }} ({{ "%.1f"|format(stats.skater1_win_percentage) }}%)
+                    </td>
+                    <td class="text-center stat-cell 
+                        {% if stats.skater2_wins > stats.skater1_wins %}winner
+                        {% elif stats.skater2_wins < stats.skater1_wins %}loser{% endif %}">
+                        {{ stats.skater2_wins }} ({{ "%.1f"|format(stats.skater2_win_percentage) }}%)
+                    </td>
+                </tr>
+                <tr>
+                    <td>Points (G + A)</td>
+                    <td class="text-center stat-cell 
+                        {% if stats.skater1_points > stats.skater2_points %}winner
+                        {% elif stats.skater1_points < stats.skater2_points %}loser{% endif %}">
+                        {{ stats.skater1_points }}
+                    </td>
+                    <td class="text-center stat-cell 
+                        {% if stats.skater2_points > stats.skater1_points %}winner
+                        {% elif stats.skater2_points < stats.skater1_points %}loser{% endif %}">
+                        {{ stats.skater2_points }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>Points per Game</td>
+                    <td class="text-center stat-cell 
+                        {% if stats.skater1_points_per_game > stats.skater2_points_per_game %}winner
+                        {% elif stats.skater1_points_per_game < stats.skater2_points_per_game %}loser{% endif %}">
+                        {{ "%.2f"|format(stats.skater1_points_per_game) }}
+                    </td>
+                    <td class="text-center stat-cell 
+                        {% if stats.skater2_points_per_game > stats.skater1_points_per_game %}winner
+                        {% elif stats.skater2_points_per_game < stats.skater1_points_per_game %}loser{% endif %}">
+                        {{ "%.2f"|format(stats.skater2_points_per_game) }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>Penalties</td>
+                    <td class="text-center stat-cell 
+                        {% if stats.skater1_penalties < stats.skater2_penalties %}winner
+                        {% elif stats.skater1_penalties > stats.skater2_penalties %}loser{% endif %}">
+                        {{ stats.skater1_penalties }}
+                    </td>
+                    <td class="text-center stat-cell 
+                        {% if stats.skater2_penalties < stats.skater1_penalties %}winner
+                        {% elif stats.skater2_penalties > stats.skater1_penalties %}loser{% endif %}">
+                        {{ stats.skater2_penalties }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>Penalties per Game</td>
+                    <td
+                        class="text-center stat-cell 
+                        {% if stats.skater1_penalties_per_game < stats.skater2_penalties_per_game %}winner
+                        {% elif stats.skater1_penalties_per_game > stats.skater2_penalties_per_game %}loser{% endif %}">
+                        {{ "%.2f"|format(stats.skater1_penalties_per_game) }}
+                    </td>
+                    <td
+                        class="text-center stat-cell 
+                        {% if stats.skater2_penalties_per_game < stats.skater1_penalties_per_game %}winner
+                        {% elif stats.skater2_penalties_per_game > stats.skater1_penalties_per_game %}loser{% endif %}">
+                        {{ "%.2f"|format(stats.skater2_penalties_per_game) }}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    {% endif %} {% if level_comparisons %}
+    <div class="section-header">
+        <h4 class="text-center">Same Level (Per-Game)</h4>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Level</th>
+                    <th class="text-center">Statistic</th>
+                    <th class="text-center">{{ human1_name }}</th>
+                    <th class="text-center">{{ human2_name }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for level in level_comparisons %}
+                <tr>
+                    <td rowspan="3" style="vertical-align: middle;"><strong>{{ level.level_name }}</strong></td>
+                    <td>Games Played</td>
+                    <td class="text-center stat-cell 
+                        {% if level.skater1_games_played > level.skater2_games_played %}winner
+                        {% elif level.skater1_games_played < level.skater2_games_played %}loser{% endif %}">
+                        {{ level.skater1_games_played }}
+                    </td>
+                    <td class="text-center stat-cell 
+                        {% if level.skater2_games_played > level.skater1_games_played %}winner
+                        {% elif level.skater2_games_played < level.skater1_games_played %}loser{% endif %}">
+                        {{ level.skater2_games_played }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>Points (G+A)</td>
+                    <td class="text-center stat-cell 
+                        {% if level.skater1_points_per_game > level.skater2_points_per_game %}winner
+                        {% elif level.skater1_points_per_game < level.skater2_points_per_game %}loser{% endif %}">
+                        {{ "%.2f"|format(level.skater1_points_per_game) }} ({{
+                        "%.2f"|format(level.skater1_goals_per_game) }}+{{ "%.2f"|format(level.skater1_assists_per_game)
+                        }})
+                    </td>
+                    <td class="text-center stat-cell 
+                        {% if level.skater2_points_per_game > level.skater1_points_per_game %}winner
+                        {% elif level.skater2_points_per_game < level.skater1_points_per_game %}loser{% endif %}">
+                        {{ "%.2f"|format(level.skater2_points_per_game) }} ({{
+                        "%.2f"|format(level.skater2_goals_per_game) }}+{{ "%.2f"|format(level.skater2_assists_per_game)
+                        }})
+                    </td>
+                </tr>
+                <tr>
+                    <td>Penalties</td>
+                    <td
+                        class="text-center stat-cell 
+                        {% if level.skater1_penalties_per_game < level.skater2_penalties_per_game %}winner
+                        {% elif level.skater1_penalties_per_game > level.skater2_penalties_per_game %}loser{% endif %}">
+                        {{ "%.2f"|format(level.skater1_penalties_per_game) }}
+                    </td>
+                    <td
+                        class="text-center stat-cell 
+                        {% if level.skater2_penalties_per_game < level.skater1_penalties_per_game %}winner
+                        {% elif level.skater2_penalties_per_game > level.skater1_penalties_per_game %}loser{% endif %}">
+                        {{ "%.2f"|format(level.skater2_penalties_per_game) }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <div class="section-header">
+        <h4 class="text-center">Skill Estimate (To Be Fixed)</h4>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Statistic</th>
+                    <th class="text-center">{{ human1_name }}</th>
+                    <th class="text-center">{{ human2_name }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Skater Skill Value</td>
+                    <td class="text-center stat-cell 
+                        {% if human1.skater_skill_value and human2.skater_skill_value %}
+                            {% if human1.skater_skill_value < human2.skater_skill_value %}winner
+                            {% elif human1.skater_skill_value > human2.skater_skill_value %}loser{% endif %}
+                        {% endif %}">
+                        {{ "%.1f"|format(human1.skater_skill_value) if human1.skater_skill_value else "N/A" }}
+                    </td>
+                    <td class="text-center stat-cell 
+                        {% if human1.skater_skill_value and human2.skater_skill_value %}
+                            {% if human2.skater_skill_value < human1.skater_skill_value %}winner
+                            {% elif human2.skater_skill_value > human1.skater_skill_value %}loser{% endif %}
+                        {% endif %}">
+                        {{ "%.1f"|format(human2.skater_skill_value) if human2.skater_skill_value else "N/A" }}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    {% endif %}
+</div>
+{% endblock %}
