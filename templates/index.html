@@ -1,10 +1,19 @@
 {% extends "base.html" %}
 
-{% block title %}Hockey B.L.A.S.T (Beer League Analytics and Stats){% endblock %}
+{% block title %}Hockey B.L.A.S.T (Beer <h5>Top Skaters - Last Day</h5>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Org</th>
+            <th>GP</th>
+            <th>PTS(G+A)</th>
+        </tr>
+    </thead>lytics and Stats){% endblock %}
 
-{% block content %}
-<div style="text-align: center;">
-    <!-- <h1 class="mb-4 outlined-text" style="font-size: 2.5rem; margin-left: 0px;">
+    {% block content %}
+    <div style="text-align: center;">
+        <!-- <h1 class="mb-4 outlined-text" style="font-size: 2.5rem; margin-left: 0px;">
         HOCKEY B.L.A.S.T.
         <br>
         <br>
@@ -20,240 +29,260 @@
         Completed: <strong>{{ last_played.date }} {{ last_played_time }}</strong>
     </h5> -->
 
-    <!-- <h3>Search Teams and People</h3> -->
-    <form method="post" class="mb-4">
-        <table class="table table-striped">
-            <tr>
-                <td style="vertical-align: middle;">
-                    <div class="form-group">
-                        <input type="text" class="form-control" id="first_name" name="first_name" placeholder="First"
-                            oninput="clearOtherFields('first_name')">
-                    </div>
-                    <div class="form-group">
-                        <input type="text" class="form-control" id="last_name" name="last_name" placeholder="Last"
-                            oninput="clearOtherFields('last_name')">
-                    </div>
-                </td>
-                <td style="vertical-align: middle; text-align: center;">
-                    <strong>OR</strong>
-                </td>
-                <td style="vertical-align: middle;">
-                    <div class="form-group">
-                        <input type="text" class="form-control" id="team_name" name="team_name" placeholder="Team"
-                            oninput="clearOtherFields('team_name')">
-                    </div>
-                </td>
-                <td style="vertical-align: middle;">
-                    <button type="submit" class="btn btn-primary">Search</button>
-                </td>
-            </tr>
-        </table>
-    </form>
+        <!-- <h3>Search Teams and People</h3> -->
+        <form method="post" class="mb-4">
+            <table class="table table-striped">
+                <tr>
+                    <td style="vertical-align: middle;">
+                        <div class="form-group">
+                            <input type="text" class="form-control" id="first_name" name="first_name"
+                                placeholder="First" oninput="clearOtherFields('first_name')">
+                        </div>
+                        <div class="form-group">
+                            <input type="text" class="form-control" id="last_name" name="last_name" placeholder="Last"
+                                oninput="clearOtherFields('last_name')">
+                        </div>
+                    </td>
+                    <td style="vertical-align: middle; text-align: center;">
+                        <strong>OR</strong>
+                    </td>
+                    <td style="vertical-align: middle;">
+                        <div class="form-group">
+                            <input type="text" class="form-control" id="team_name" name="team_name" placeholder="Team"
+                                oninput="clearOtherFields('team_name')">
+                        </div>
+                    </td>
+                    <td style="vertical-align: middle;">
+                        <button type="submit" class="btn btn-primary">Search</button>
+                    </td>
+                </tr>
+            </table>
+        </form>
 
-    {% if search_results is not none %}
-    <div>
-        {% if search_results %}
-        <h6>Search Results: </h6>
-        <ul class="list-group">
-            {% for link in search_results %}
-            <li class="list-group-item">{{ link|safe }}</li>
-            {% endfor %}
-        </ul>
-        {% else %}
-        <p>No search results.</p>
+        {% if search_results is not none %}
+        <div>
+            {% if search_results %}
+            <h6>Search Results: </h6>
+            <ul class="list-group">
+                {% for link in search_results %}
+                <li class="list-group-item">{{ link|safe }}</li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p>No search results.</p>
+            {% endif %}
+        </div>
         {% endif %}
+
+        <h5>Top Skaters - Last Day</h5>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Org</h>
+                    <th>GP</th>
+                    <th>PTS(G+A)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for skater, human, org in daily_skater_points %}
+                <tr>
+                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                            human.last_name }}</a></td>
+                    <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
+                    <td>{{ skater.games_played }}</td>
+                    <td>
+                        {% if skater.goals > 0 and skater.assists > 0 %}
+                        {{ skater.points }}P({{ skater.goals }}G+{{ skater.assists }}A)
+                        {% elif skater.goals > 0 and skater.assists == 0 %}
+                        {{ skater.goals }}G
+                        {% elif skater.goals == 0 and skater.assists > 0 %}
+                        {{ skater.assists }}A
+                        {% else %}
+                        {{ skater.points }}P
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <h5>Top Skaters - Last Week</h5>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Org</th>
+                    <th>GP</th>
+                    <th>PTS(G+A)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for skater, human, org in weekly_skater_points %}
+                <tr>
+                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                            human.last_name }}</a></td>
+                    <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
+                    <td>{{ skater.games_played }}</td>
+                    <td>
+                        {% if skater.goals > 0 and skater.assists > 0 %}
+                        {{ skater.points }}P({{ skater.goals }}G+{{ skater.assists }}A)
+                        {% elif skater.goals > 0 and skater.assists == 0 %}
+                        {{ skater.goals }}G
+                        {% elif skater.goals == 0 and skater.assists > 0 %}
+                        {{ skater.assists }}A
+                        {% else %}
+                        {{ skater.points }}P
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h5>Top Goalies - Last Day</h5>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Org</th>
+                    <th>GP</th>
+                    <th>SV%</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for goalie, human, org in daily_goalie_games_played %}
+                <tr>
+                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                            human.last_name }}</a></td>
+                    <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
+                    <td>{{ goalie.games_played }}</td>
+                    <td>{{ "%.2f" % goalie.save_percentage }}SV%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <h5>Top Goalies - Last Week</h5>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Org</th>
+                    <th>GP</th>
+                    <th>SV%</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for goalie, human, org in weekly_goalie_games_played %}
+                <tr>
+                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                            human.last_name }}</a></td>
+                    <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
+                    <td>{{ goalie.games_played }}</td>
+                    <td>{{ "%.2f" % goalie.save_percentage }}SV%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h5>Top Referees - Last Day</h5>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Org</th>
+                    <th>GM</th>
+                    <th>Whistle</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for referee, human, org in daily_referee_games_reffed %}
+                <tr>
+                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                            human.last_name }}</a></td>
+                    <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
+                    <td>{{ referee.games_reffed }}</td>
+                    <td>{{ referee.penalties_given }}PIM{% if referee.gm_given > 0 %}, {{ referee.gm_given }}GM{% endif
+                        %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <h5>Top Referees - Last Week</h5>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Org</th>
+                    <th>GM</th>
+                    <th>Whistle</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for referee, human, org in weekly_referee_games_reffed %}
+                <tr>
+                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                            human.last_name }}</a></td>
+                    <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
+                    <td>{{ referee.games_reffed }}</td>
+                    <td>{{ referee.penalties_given }}PIM{% if referee.gm_given > 0 %}, {{ referee.gm_given }}GM{% endif
+                        %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h5>Top Scorekeepers - Last Day</h5>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Org</th>
+                    <th>GM</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for scorekeeper, human, org in daily_scorekeeper_games %}
+                <tr>
+                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                            human.last_name }}</a></td>
+                    <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
+                    <td>{{ scorekeeper.games_scorekeeper }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <h5>Top Scorekeepers - Last Week</h5>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Org</th>
+                    <th>GM</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for scorekeeper, human, org in weekly_scorekeeper_games %}
+                <tr>
+                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                            human.last_name }}</a></td>
+                    <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
+                    <td>{{ scorekeeper.games_scorekeeper }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-    {% endif %}
 
-    <h5>Top Skaters - Last Day</h5>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Org</h>
-                <th>GP</th>
-                <th>PTS(G,A)</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for skater, human, org in daily_skater_points %}
-            <tr>
-                <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                        human.last_name }}</a></td>
-                <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
-                <td>{{ skater.games_played }}</td>
-                <td>{{ skater.points }}P{% if skater.goals > 0 %}({{ skater.goals }}G{% if skater.assists > 0 %},{{
-                    skater.assists }}A{% endif %}){% endif %}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <h5>Top Skaters - Last Week</h5>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Org</th>
-                <th>GP</th>
-                <th>PTS(G,A)</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for skater, human, org in weekly_skater_points %}
-            <tr>
-                <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                        human.last_name }}</a></td>
-                <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
-                <td>{{ skater.games_played }}</td>
-                <td>{{ skater.points }}P{% if skater.goals > 0 %}({{ skater.goals }}G{% if skater.assists > 0 %},{{
-                    skater.assists }}A{% endif %}){% endif %}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <h5>Top Goalies - Last Day</h5>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Org</th>
-                <th>GP</th>
-                <th>SV%</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for goalie, human, org in daily_goalie_games_played %}
-            <tr>
-                <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                        human.last_name }}</a></td>
-                <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
-                <td>{{ goalie.games_played }}</td>
-                <td>{{ "%.2f" % goalie.save_percentage }}SV%</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <h5>Top Goalies - Last Week</h5>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Org</th>
-                <th>GP</th>
-                <th>SV%</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for goalie, human, org in weekly_goalie_games_played %}
-            <tr>
-                <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                        human.last_name }}</a></td>
-                <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
-                <td>{{ goalie.games_played }}</td>
-                <td>{{ "%.2f" % goalie.save_percentage }}SV%</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <h5>Top Referees - Last Day</h5>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Org</th>
-                <th>GM</th>
-                <th>Whistle</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for referee, human, org in daily_referee_games_reffed %}
-            <tr>
-                <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                        human.last_name }}</a></td>
-                <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
-                <td>{{ referee.games_reffed }}</td>
-                <td>{{ referee.penalties_given }}PIM{% if referee.gm_given > 0 %}, {{ referee.gm_given }}GM{% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <h5>Top Referees - Last Week</h5>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Org</th>
-                <th>GM</th>
-                <th>Whistle</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for referee, human, org in weekly_referee_games_reffed %}
-            <tr>
-                <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                        human.last_name }}</a></td>
-                <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
-                <td>{{ referee.games_reffed }}</td>
-                <td>{{ referee.penalties_given }}PIM{% if referee.gm_given > 0 %}, {{ referee.gm_given }}GM{% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <h5>Top Scorekeepers - Last Day</h5>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Org</th>
-                <th>GM</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for scorekeeper, human, org in daily_scorekeeper_games %}
-            <tr>
-                <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                        human.last_name }}</a></td>
-                <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
-                <td>{{ scorekeeper.games_scorekeeper }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <h5>Top Scorekeepers - Last Week</h5>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Org</th>
-                <th>GM</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for scorekeeper, human, org in weekly_scorekeeper_games %}
-            <tr>
-                <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                        human.last_name }}</a></td>
-                <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
-                <td>{{ scorekeeper.games_scorekeeper }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-<script>
-    function clearOtherFields(focusedField) {
-        if (focusedField === 'first_name' || focusedField === 'last_name') {
-            document.getElementById('team_name').value = '';
-        } else if (focusedField === 'team_name') {
-            document.getElementById('first_name').value = '';
-            document.getElementById('last_name').value = '';
+    <script>
+        function clearOtherFields(focusedField) {
+            if (focusedField === 'first_name' || focusedField === 'last_name') {
+                document.getElementById('team_name').value = '';
+            } else if (focusedField === 'team_name') {
+                document.getElementById('first_name').value = '';
+                document.getElementById('last_name').value = '';
+            }
         }
-    }
-</script>
-{% endblock %}
+    </script>
+    {% endblock %}

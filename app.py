@@ -1,7 +1,8 @@
 import logging
-from flask import Flask, render_template, request, g, jsonify, send_from_directory, url_for, redirect
+from flask import Flask, render_template, request, g, jsonify, send_from_directory, url_for, redirect, session
 from flask_restx import Api
 from flask_sqlalchemy import SQLAlchemy
+from flask_session import Session
 from threading import Thread
 from hockey_blast_common_lib.models import db, Organization, Game, Human, RequestLog, Team, HumanAlias
 from hockey_blast_common_lib.stats_models import OrgStatsWeeklyHuman, OrgStatsDailySkater, OrgStatsWeeklySkater, OrgStatsDailyGoalie, OrgStatsWeeklyGoalie, OrgStatsDailyReferee, OrgStatsWeeklyReferee, OrgStatsSkater, OrgStatsGoalie, OrgStatsReferee, OrgStatsDailyHuman, OrgStatsHuman
@@ -21,13 +22,22 @@ from hockey_blast_common_lib.stats_utils import ALL_ORGS_ID
 from options import MAX_TEAM_SEARCH_RESULTS
 from options import MAX_HUMAN_SEARCH_RESULTS
 import urllib.parse
+from dotenv import load_dotenv
+
+# Import kinde_flask to register the Flask framework - exactly like their example
+import kinde_flask
+from kinde_sdk.auth.oauth import OAuth
+
+# Load environment variables
+load_dotenv()
+print("Loading environment variables from .env")
 
 # Debug: Print the DB_HOST environment variable
 flask_table.table.Markup = Markup
 flask_table.columns.Markup = Markup
 
 # Setup logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
 from blueprints.teams_per_season import teams_per_season_bp
@@ -175,6 +185,22 @@ def _create_app(db_name):
     app.config['BACKGROUND_IMAGE'] = 'default_background.jpg'
     app.config['ORG_NAME'] = 'Hockey Blast'
     app.config['DEBUG'] = debug_mode
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-here-change-this-in-production')
+
+    # Critical session settings for HTTPS production deployment
+    app.config['SESSION_TYPE'] = os.getenv('SESSION_TYPE', 'filesystem')
+    app.config['SESSION_PERMANENT'] = os.getenv('SESSION_PERMANENT', 'False').lower() == 'true'
+    app.config['SESSION_USE_SIGNER'] = True
+    app.config['SESSION_COOKIE_SECURE'] = os.getenv('SESSION_COOKIE_SECURE', 'True').lower() == 'true'  # Only send cookies over HTTPS
+    app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access
+    
+    # Fix SameSite value - ensure it's one of the valid values
+    samesite_value = os.getenv('SESSION_COOKIE_SAMESITE', 'Lax')
+    if samesite_value not in ['Strict', 'Lax', 'None']:
+        samesite_value = 'Lax'  # Default to Lax if invalid
+    app.config['SESSION_COOKIE_SAMESITE'] = samesite_value
+    
+    Session(app)    
     
     # Set up more verbose logging in debug mode
     if debug_mode:
@@ -182,10 +208,40 @@ def _create_app(db_name):
         logger.setLevel(logging.DEBUG)
         logger.debug("Debug mode enabled")
         logger.debug(f"Database URL: {db_url.replace(db_params['password'], '***')}")
-        # Enable SQLAlchemy query logging in debug mode
+        # Only enable SQLAlchemy query logging in debug mode
         logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+    else:
+        # In production, suppress SQLAlchemy INFO messages
+        logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
+        logging.getLogger('sqlalchemy.pool').setLevel(logging.WARNING)
+        logging.getLogger('sqlalchemy.dialects').setLevel(logging.WARNING)
     
     db.init_app(app)
+    
+    # Initialize Kinde OAuth with Flask framework - exactly like their example
+    kinde_oauth = OAuth(
+        framework="flask",
+        app=app
+    )
+    
+    def get_authorized_data():
+        """Get user data if authenticated - following Kinde example exactly"""
+        if not kinde_oauth.is_authenticated():
+            return None
+        
+        user = kinde_oauth.get_user_info()
+        if not user:
+            return None
+        
+        user_data = {
+            "id": user.get("id"),
+            "user_given_name": user.get("given_name"),
+            "user_family_name": user.get("family_name"),
+            "user_email": user.get("email"),
+            "user_picture": user.get("picture"),
+        }
+        
+        return user_data
 
     # Register blueprints
     app.register_blueprint(teams_per_season_bp)
@@ -257,6 +313,9 @@ def _create_app(db_name):
             if 'top_n' not in request.args:
                 return redirect(url_for('index', top_n=top_n))
 
+            # Check if user is authenticated - following Kinde example
+            auth_data = get_authorized_data()
+            
             # Fetch the latest date and time
             last_scheduled = db.session.query(Game).order_by(Game.date.desc(), Game.time.desc()).first()
             last_played = db.session.query(Game).filter(Game.status.startswith("Final")).order_by(Game.date.desc(), Game.time.desc()).first()
@@ -323,11 +382,13 @@ def _create_app(db_name):
 
                 return render_template('index.html',
                                        search_results=links,
+                                       auth_data=auth_data,
                                 last_scheduled=last_scheduled, last_scheduled_time=last_scheduled_time, last_played=last_played, last_played_time=last_played_time,
                                 daily_skater_points=daily_skater_points, daily_goalie_games_played=daily_goalie_games_played, daily_referee_games_reffed=daily_referee_games_reffed, daily_scorekeeper_games=daily_scorekeeper_games,
                                 weekly_skater_points=weekly_skater_points, weekly_goalie_games_played=weekly_goalie_games_played, weekly_referee_games_reffed=weekly_referee_games_reffed, weekly_scorekeeper_games=weekly_scorekeeper_games)
             return render_template('index.html',
                                 search_results=None,
+                                auth_data=auth_data,
                                 last_scheduled=last_scheduled, last_scheduled_time=last_scheduled_time, last_played=last_played, last_played_time=last_played_time,
                                 daily_skater_points=daily_skater_points, daily_goalie_games_played=daily_goalie_games_played, daily_referee_games_reffed=daily_referee_games_reffed, daily_scorekeeper_games=daily_scorekeeper_games,
                                 weekly_skater_points=weekly_skater_points, weekly_goalie_games_played=weekly_goalie_games_played, weekly_referee_games_reffed=weekly_referee_games_reffed, weekly_scorekeeper_games=weekly_scorekeeper_games)
@@ -337,6 +398,39 @@ def _create_app(db_name):
                 "db_params": {**db_params, "password": "HIDDEN"}
             }
             return render_template('error.html', error_info=error_info)
+
+    @app.route('/auth/status')
+    def auth_status():
+        """Show authentication status - for testing"""
+        auth_data = get_authorized_data()
+        is_authenticated = kinde_oauth.is_authenticated()
+        
+        return jsonify({
+            "is_authenticated": is_authenticated,
+            "auth_data": auth_data,
+            "message": "Authentication working!" if is_authenticated else "Not authenticated"
+        })
+
+    @app.route('/session')
+    def session_info():
+        """Show detailed session information"""
+        auth_data = get_authorized_data()
+        is_authenticated = kinde_oauth.is_authenticated()
+        
+        # Get Flask session data (be careful not to expose sensitive info)
+        session_data = {}
+        for key in session.keys():
+            # Don't expose sensitive session data
+            if key not in ['_permanent', '_fresh']:
+                session_data[key] = str(session[key])[:100] + "..." if len(str(session[key])) > 100 else session[key]
+        
+        return jsonify({
+            "is_authenticated": is_authenticated,
+            "auth_data": auth_data,
+            "session_keys": list(session.keys()),
+            "session_data": session_data,
+            "message": "Session info retrieved successfully"
+        })
 
     @app.route('/special_stats')
     def special_stats():

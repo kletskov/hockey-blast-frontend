@@ -24,3 +24,5 @@ node_modules/
 .vscode/
 .DS_Store
 .common_lib_for_docker_db_restore
+
+flask_session/**

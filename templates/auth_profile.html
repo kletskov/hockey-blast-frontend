@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}User Profile - Hockey B.L.A.S.T{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>User Profile</h3>
+                </div>
+                <div class="card-body">
+                    <h4>Raw User Data:</h4>
+                    <pre>{{ user | tojson(indent=2) }}</pre>
+
+                    <hr>
+
+                    <h4>Key Information:</h4>
+                    <table class="table">
+                        <tr>
+                            <th>Kinde User ID:</th>
+                            <td>{{ user.get('sub') or user.get('id') or 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <th>First Name:</th>
+                            <td>{{ user.get('given_name') or 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Last Name:</th>
+                            <td>{{ user.get('family_name') or 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Email:</th>
+                            <td>{{ user.get('email') or 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Picture:</th>
+                            <td>
+                                {% if user.get('picture') %}
+                                <img src="{{ user.get('picture') }}" alt="Profile Picture" class="img-thumbnail"
+                                    style="max-width: 100px;">
+                                {% else %}
+                                N/A
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div class="mt-3">
+                        <a href="{{ url_for('auth_logout') }}" class="btn btn-danger">Logout</a>
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary">Home</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

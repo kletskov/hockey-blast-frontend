@@ -114,12 +114,12 @@
         |
         <a href="{{ url_for('hall_of_fame.hall_of_fame', top_n=20) }}">Hall Of Fame</a> |
         <a href="{{ url_for('special_stats') }}">Special</a> |
-        <a href="https://forms.gle/YJuJ9Jw4Xxrz5JLQ9">Feature Request</a> |
-        <a href="{{ url_for('about') }}">About</a> |
+        <a href="{{ url_for('about') }}">About</a>
+        <!-- |
         <a href="https://www.facebook.com/groups/1336941614177211/">
             <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg"
                 alt="Facebook Group" class="facebook-icon">Discuss
-        </a>
+        </a> -->
     </nav>
     <div class="container">
         {% block content %}{% endblock %}
