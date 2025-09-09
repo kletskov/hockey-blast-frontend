@@ -1,0 +1,5 @@
+# Development requirements with editable common lib
+-r requirements-base.txt
+
+# Development version - editable install from local path
+-e ../hockey-blast-common-lib/

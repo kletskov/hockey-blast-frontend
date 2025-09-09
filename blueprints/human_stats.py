@@ -36,18 +36,41 @@ def human_stats():
     roles_data = []
 
     def calculate_rank(rank, total, reverse=False):
-        percentile = (rank / total) * 100
+        # Standard percentile: if you're better than X% of people, you're in Xth percentile
+        # reverse=True means higher values are worse (like penalties)
         if reverse:
-            percentile = 100 - percentile
+            percentile = (rank / total) * 100  # For penalties: higher rank = higher percentile (worse)
+        else:
+            percentile = (total - rank) / total * 100  # For good stats: lower rank = higher percentile (better)
         return f"{rank}/{total} ({round(percentile)}th)"
 
     # Fetch overall stats from OrgStatsHuman for all organizations
     org_stats = db.session.query(OrgStatsHuman).filter(OrgStatsHuman.human_id == human_id, OrgStatsHuman.org_id == org_id).first()
 
+    # Batch load all game dates to avoid N+1 queries
+    game_ids_to_fetch = []
+    if org_stats:
+        if org_stats.first_game_id_skater: game_ids_to_fetch.append(org_stats.first_game_id_skater)
+        if org_stats.last_game_id_skater: game_ids_to_fetch.append(org_stats.last_game_id_skater)
+        if org_stats.first_game_id_goalie: game_ids_to_fetch.append(org_stats.first_game_id_goalie)
+        if org_stats.last_game_id_goalie: game_ids_to_fetch.append(org_stats.last_game_id_goalie)
+        if org_stats.first_game_id_scorekeeper: game_ids_to_fetch.append(org_stats.first_game_id_scorekeeper)
+        if org_stats.last_game_id_scorekeeper: game_ids_to_fetch.append(org_stats.last_game_id_scorekeeper)
+        if org_stats.first_game_id_referee: game_ids_to_fetch.append(org_stats.first_game_id_referee)
+        if org_stats.last_game_id_referee: game_ids_to_fetch.append(org_stats.last_game_id_referee)
+        if org_stats.first_game_id: game_ids_to_fetch.append(org_stats.first_game_id)
+        if org_stats.last_game_id: game_ids_to_fetch.append(org_stats.last_game_id)
+    
+    # Single query to get all needed game dates
+    games_cache = {}
+    if game_ids_to_fetch:
+        games_data = db.session.query(Game.id, Game.date, Game.time).filter(Game.id.in_(game_ids_to_fetch)).all()
+        games_cache = {game.id: game for game in games_data}
+
     if org_stats:
         if org_stats.games_skater > 0:
-            skater_first_game = db.session.query(Game.date, Game.time).filter(Game.id == org_stats.first_game_id_skater).first()
-            skater_last_game = db.session.query(Game.date, Game.time).filter(Game.id == org_stats.last_game_id_skater).first()
+            skater_first_game = games_cache.get(org_stats.first_game_id_skater)
+            skater_last_game = games_cache.get(org_stats.last_game_id_skater)
             skater_first_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.first_game_id_skater)}'>{skater_first_game.date.strftime('%m/%d/%y')}</a>" if skater_first_game else None
             skater_last_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.last_game_id_skater)}'>{skater_last_game.date.strftime('%m/%d/%y')}</a>" if skater_last_game else None
             roles_data.append({
@@ -58,8 +81,8 @@ def human_stats():
                 'last_date': skater_last_game_link
             })
         if org_stats.games_goalie > 0:
-            goalie_first_game = db.session.query(Game.date, Game.time).filter(Game.id == org_stats.first_game_id_goalie).first()
-            goalie_last_game = db.session.query(Game.date, Game.time).filter(Game.id == org_stats.last_game_id_goalie).first()
+            goalie_first_game = games_cache.get(org_stats.first_game_id_goalie)
+            goalie_last_game = games_cache.get(org_stats.last_game_id_goalie)
             goalie_first_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.first_game_id_goalie)}'>{goalie_first_game.date.strftime('%m/%d/%y')}</a>" if goalie_first_game else None
             goalie_last_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.last_game_id_goalie)}'>{goalie_last_game.date.strftime('%m/%d/%y')}</a>" if goalie_last_game else None
             roles_data.append({
@@ -70,8 +93,8 @@ def human_stats():
                 'last_date': goalie_last_game_link
             })
         if org_stats.games_scorekeeper > 0:
-            scorekeeper_first_game = db.session.query(Game.date, Game.time).filter(Game.id == org_stats.first_game_id_scorekeeper).first()
-            scorekeeper_last_game = db.session.query(Game.date, Game.time).filter(Game.id == org_stats.last_game_id_scorekeeper).first()
+            scorekeeper_first_game = games_cache.get(org_stats.first_game_id_scorekeeper)
+            scorekeeper_last_game = games_cache.get(org_stats.last_game_id_scorekeeper)
             scorekeeper_first_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.first_game_id_scorekeeper)}'>{scorekeeper_first_game.date.strftime('%m/%d/%y')}</a>" if scorekeeper_first_game else None
             scorekeeper_last_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.last_game_id_scorekeeper)}'>{scorekeeper_last_game.date.strftime('%m/%d/%y')}</a>" if scorekeeper_last_game else None
             roles_data.append({
@@ -82,8 +105,8 @@ def human_stats():
                 'last_date': scorekeeper_last_game_link
             })
         if org_stats.games_referee > 0:
-            referee_first_game = db.session.query(Game.date, Game.time).filter(Game.id == org_stats.first_game_id_referee).first()
-            referee_last_game = db.session.query(Game.date, Game.time).filter(Game.id == org_stats.last_game_id_referee).first()
+            referee_first_game = games_cache.get(org_stats.first_game_id_referee)
+            referee_last_game = games_cache.get(org_stats.last_game_id_referee)
             referee_first_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.first_game_id_referee)}'>{referee_first_game.date.strftime('%m/%d/%y')}</a>" if referee_first_game else None
             referee_last_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.last_game_id_referee)}'>{referee_last_game.date.strftime('%m/%d/%y')}</a>" if referee_last_game else None
             roles_data.append({
@@ -93,8 +116,8 @@ def human_stats():
                 'first_date': referee_first_game_link,
                 'last_date': referee_last_game_link
             })
-    # Pull all rosters where this human was present
-    rosters = db.session.query(GameRoster, Game, Division).join(Game, GameRoster.game_id == Game.id).join(Division, Game.division_id == Division.id).filter(GameRoster.human_id == human_id).all() #, Division.org_id == org_id).all()
+    # Pull recent rosters where this human was present (limit to improve performance)
+    rosters = db.session.query(GameRoster, Game, Division).join(Game, GameRoster.game_id == Game.id).join(Division, Game.division_id == Division.id).filter(GameRoster.human_id == human_id).order_by(Game.date.desc(), Game.time.desc()).limit(1000).all()
     
     # Convert rosters to a dataframe
     rosters_df = pd.DataFrame([(r.GameRoster.team_id,
@@ -179,10 +202,14 @@ def human_stats():
 
     overall_first_game_id = org_stats.first_game_id if org_stats else None
     overall_last_game_id = org_stats.last_game_id if org_stats else None
+    overall_first_game_date = None
+    overall_last_game_date = None
     if overall_first_game_id:
-        overall_first_game_date = db.session.query(Game).filter(Game.id == overall_first_game_id).first().date
+        overall_first_game = games_cache.get(overall_first_game_id)
+        overall_first_game_date = overall_first_game.date if overall_first_game else None
     if overall_last_game_id:
-        overall_last_game_date = db.session.query(Game).filter(Game.id == overall_last_game_id).first().date
+        overall_last_game = games_cache.get(overall_last_game_id)
+        overall_last_game_date = overall_last_game.date if overall_last_game else None
 
     # Prepare links for overall first and last game dates
     overall_first_game_link = f"<a href='{url_for('game_card.game_card', game_id=overall_first_game_id)}'>{overall_first_game_date.strftime('%m/%d/%y')}</a>" if overall_first_game_date else None
@@ -197,11 +224,16 @@ def human_stats():
     # Get top N teams
     top_teams = team_game_counts.head(top_n)
     
+    # Batch load team names to avoid N+1 queries
+    team_ids = top_teams['team_id'].tolist()
+    teams_data = db.session.query(Team.id, Team.name).filter(Team.id.in_(team_ids)).all()
+    teams_cache = {team.id: team.name for team in teams_data}
+    
     # Get team names and prepare data for the template
     most_games_played = []
     for _, row in top_teams.iterrows():
         team_id = int(row['team_id'])  # Convert to standard Python integer
-        team_name = db.session.query(Team.name).filter(Team.id == team_id).first()[0]
+        team_name = teams_cache.get(team_id, 'Unknown Team')
         most_games_played.append({
             'team_id': team_id,
             'team_name': team_name,
@@ -244,12 +276,16 @@ def human_stats():
     # Get top N teammates
     top_teammates = teammate_game_counts.head(top_n)
     
+    # Batch load teammate names to avoid N+1 queries
+    teammate_ids = top_teammates['teammate_id'].tolist()
+    teammates_data = db.session.query(Human.id, Human.first_name, Human.middle_name, Human.last_name).filter(Human.id.in_(teammate_ids)).all()
+    teammates_cache = {human.id: f"{human.first_name} {human.middle_name} {human.last_name}".strip() for human in teammates_data}
+    
     # Get teammate names and prepare data for the template
     teammates = []
     for _, row in top_teammates.iterrows():
         teammate_id = int(row['teammate_id'])  # Convert to standard Python integer
-        teammate_name = db.session.query(Human).filter(Human.id == teammate_id).first()
-        full_teammate_name = f"{teammate_name.first_name} {teammate_name.middle_name} {teammate_name.last_name}".strip()
+        full_teammate_name = teammates_cache.get(teammate_id, 'Unknown Player')
         teammates.append({
             'teammate_id': teammate_id,
             'teammate_name': full_teammate_name,

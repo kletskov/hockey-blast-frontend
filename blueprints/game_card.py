@@ -124,4 +124,8 @@ def game_card():
         (game.home_ot_shots or 0)
     )
 
-    return render_template('game_card.html', game=game, division=division, league=league, scorekeeper=scorekeeper, referee_1=referee_1, referee_2=referee_2, home_roster=home_roster, visitor_roster=visitor_roster, goals=goals, visitor_goals_per_period=visitor_goals_per_period, home_goals_per_period=home_goals_per_period, penalties=penalties, shootouts=interleaved_shootouts, visitor_team=visitor_team, home_team=home_team, visitor_total_shots=visitor_total_shots, home_total_shots=home_total_shots, unique_periods=unique_periods, game_number=game.game_number, visitor_shootout_goals=visitor_shootout_goals, home_shootout_goals=home_shootout_goals)
+    # Day of week mapping to match human_stats format
+    day_of_week_map = {1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat', 7: 'Sun'}
+    day_of_week = day_of_week_map.get(game.day_of_week, '')
+
+    return render_template('game_card.html', game=game, division=division, league=league, scorekeeper=scorekeeper, referee_1=referee_1, referee_2=referee_2, home_roster=home_roster, visitor_roster=visitor_roster, goals=goals, visitor_goals_per_period=visitor_goals_per_period, home_goals_per_period=home_goals_per_period, penalties=penalties, shootouts=interleaved_shootouts, visitor_team=visitor_team, home_team=home_team, visitor_total_shots=visitor_total_shots, home_total_shots=home_total_shots, unique_periods=unique_periods, game_number=game.game_number, visitor_shootout_goals=visitor_shootout_goals, home_shootout_goals=home_shootout_goals, day_of_week=day_of_week)

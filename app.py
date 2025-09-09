@@ -18,6 +18,7 @@ from flask_limiter.util import get_remote_address
 from hockey_blast_common_lib.utils import get_fake_human_for_stats
 from datetime import datetime, timezone, timedelta
 import psycopg2
+import time
 from hockey_blast_common_lib.stats_utils import ALL_ORGS_ID
 from options import MAX_TEAM_SEARCH_RESULTS
 from options import MAX_HUMAN_SEARCH_RESULTS
@@ -274,25 +275,51 @@ def _create_app(db_name):
 
     @app.before_request
     def before_request():
+        # Record start time for response time calculation
+        g.start_time = time.time()
+        
         if request.path in ['/favicon.ico', '/dropdowns', '/dropdowns/filter_levels', '/dropdowns/filter_seasons', '/games/filter_games']:
+            g.skip_logging = True
             return
-        try:
-            user_agent = request.headers.get('User-Agent')
-            if is_obviously_junk_user_agent(user_agent):
-                logger.warning(f"JUNK USER-AGENT: {user_agent} from {client_ip}")
-                return '', 204  # Silently drop or use 403 to block
-            client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-            path = request.path
-            cgi_params = request.query_string.decode('utf-8')  # Get CGI parameters
-            pst = timezone(timedelta(hours=-8))
-            timestamp = datetime.now(pst)
+        
+        user_agent = request.headers.get('User-Agent')
+        client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+        
+        if is_obviously_junk_user_agent(user_agent):
+            logger.warning(f"JUNK USER-AGENT: {user_agent} from {client_ip}")
+            g.skip_logging = True
+            return '', 204  # Silently drop or use 403 to block
+        
+        # Store request data in g for logging in after_request
+        g.skip_logging = False
+        g.user_agent = user_agent
+        g.client_ip = client_ip
+        g.path = request.path
+        g.cgi_params = request.query_string.decode('utf-8')
+        pst = timezone(timedelta(hours=-8))
+        g.timestamp = datetime.now(pst)
 
+    @app.after_request
+    def after_request(response):
+        # Calculate response time
+        if hasattr(g, 'start_time'):
+            response_time_ms = (time.time() - g.start_time) * 1000  # Convert to milliseconds
+        else:
+            response_time_ms = None
+        
+        # Skip logging if flagged
+        if getattr(g, 'skip_logging', True):
+            return response
+        
+        # Log the request with response time
+        try:
             log_entry = RequestLog(
-                user_agent=user_agent,
-                client_ip=client_ip,
-                path=path,
-                timestamp=timestamp,
-                cgi_params=cgi_params  # Log CGI parameters
+                user_agent=g.user_agent,
+                client_ip=g.client_ip,
+                path=g.path,
+                timestamp=g.timestamp,
+                cgi_params=g.cgi_params,
+                response_time_ms=response_time_ms
             )
             db.session.add(log_entry)
             db.session.commit()
@@ -302,6 +329,8 @@ def _create_app(db_name):
         except Exception as e:
             db.session.rollback()
             logger.error(f"Failed to log request: {e}")
+        
+        return response
 
 
     @app.route('/', methods=['GET', 'POST'])
@@ -321,8 +350,8 @@ def _create_app(db_name):
             last_played = db.session.query(Game).filter(Game.status.startswith("Final")).order_by(Game.date.desc(), Game.time.desc()).first()
 
             # Format the time as HH:MM AM/PM
-            last_scheduled_time = last_scheduled.time.strftime('%I:%M %p') if last_scheduled else None
-            last_played_time = last_played.time.strftime('%I:%M %p') if last_played else None
+            last_scheduled_time = last_scheduled.time.strftime('%I:%M%p') if last_scheduled else None
+            last_played_time = last_played.time.strftime('%I:%M%p') if last_played else None
 
             # Get the fake human ID to exclude from scorekeeper stats
             fake_human_id = get_fake_human_for_stats(db.session)
@@ -338,6 +367,10 @@ def _create_app(db_name):
             weekly_goalie_games_played = db.session.query(OrgStatsWeeklyGoalie, Human, Organization).join(Human, OrgStatsWeeklyGoalie.human_id == Human.id).join(Organization, OrgStatsWeeklyGoalie.org_id == Organization.id).filter(OrgStatsWeeklyGoalie.games_played > 0, OrgStatsWeeklyGoalie.org_id != ALL_ORGS_ID).order_by(OrgStatsWeeklyGoalie.games_played.desc(), OrgStatsWeeklyGoalie.save_percentage.desc()).limit(top_n).all()
             weekly_referee_games_reffed = db.session.query(OrgStatsWeeklyReferee, Human, Organization).join(Human, OrgStatsWeeklyReferee.human_id == Human.id).join(Organization, OrgStatsWeeklyReferee.org_id == Organization.id).filter(OrgStatsWeeklyReferee.games_reffed > 0, OrgStatsWeeklyReferee.org_id != ALL_ORGS_ID).order_by(OrgStatsWeeklyReferee.games_reffed.desc(), (OrgStatsWeeklyReferee.gm_given + OrgStatsWeeklyReferee.penalties_given).desc()).limit(top_n).all()
             weekly_scorekeeper_games = db.session.query(OrgStatsWeeklyHuman, Human, Organization).join(Human, OrgStatsWeeklyHuman.human_id == Human.id).join(Organization, OrgStatsWeeklyHuman.org_id == Organization.id).filter(OrgStatsWeeklyHuman.games_scorekeeper > 0, OrgStatsWeeklyHuman.human_id != fake_human_id, OrgStatsWeeklyHuman.org_id != ALL_ORGS_ID).order_by(OrgStatsWeeklyHuman.games_scorekeeper.desc()).limit(top_n).all()
+
+            # Fetch top current point streak performers (all-time stats) - only show if last game within 1 month
+            one_month_ago = datetime.now() - timedelta(days=30)
+            current_point_streak_skaters = db.session.query(OrgStatsSkater, Human, Organization).join(Human, OrgStatsSkater.human_id == Human.id).join(Organization, OrgStatsSkater.org_id == Organization.id).join(Game, OrgStatsSkater.last_game_id == Game.id).filter(OrgStatsSkater.current_point_streak > 0, OrgStatsSkater.org_id != ALL_ORGS_ID, Game.date >= one_month_ago).order_by(OrgStatsSkater.current_point_streak.desc(), OrgStatsSkater.current_point_streak_avg_points.desc()).limit(top_n).all()
 
             if request.method == 'POST':
                 team_name = request.form.get('team_name')
@@ -385,13 +418,15 @@ def _create_app(db_name):
                                        auth_data=auth_data,
                                 last_scheduled=last_scheduled, last_scheduled_time=last_scheduled_time, last_played=last_played, last_played_time=last_played_time,
                                 daily_skater_points=daily_skater_points, daily_goalie_games_played=daily_goalie_games_played, daily_referee_games_reffed=daily_referee_games_reffed, daily_scorekeeper_games=daily_scorekeeper_games,
-                                weekly_skater_points=weekly_skater_points, weekly_goalie_games_played=weekly_goalie_games_played, weekly_referee_games_reffed=weekly_referee_games_reffed, weekly_scorekeeper_games=weekly_scorekeeper_games)
+                                weekly_skater_points=weekly_skater_points, weekly_goalie_games_played=weekly_goalie_games_played, weekly_referee_games_reffed=weekly_referee_games_reffed, weekly_scorekeeper_games=weekly_scorekeeper_games,
+                                current_point_streak_skaters=current_point_streak_skaters)
             return render_template('index.html',
                                 search_results=None,
                                 auth_data=auth_data,
                                 last_scheduled=last_scheduled, last_scheduled_time=last_scheduled_time, last_played=last_played, last_played_time=last_played_time,
                                 daily_skater_points=daily_skater_points, daily_goalie_games_played=daily_goalie_games_played, daily_referee_games_reffed=daily_referee_games_reffed, daily_scorekeeper_games=daily_scorekeeper_games,
-                                weekly_skater_points=weekly_skater_points, weekly_goalie_games_played=weekly_goalie_games_played, weekly_referee_games_reffed=weekly_referee_games_reffed, weekly_scorekeeper_games=weekly_scorekeeper_games)
+                                weekly_skater_points=weekly_skater_points, weekly_goalie_games_played=weekly_goalie_games_played, weekly_referee_games_reffed=weekly_referee_games_reffed, weekly_scorekeeper_games=weekly_scorekeeper_games,
+                                current_point_streak_skaters=current_point_streak_skaters)
         except Exception as e:
             error_info = {
                 "error": str(e),

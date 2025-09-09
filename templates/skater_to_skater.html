@@ -85,6 +85,42 @@
         </div>
     </div>
 
+
+    <div class="section-header">
+        <h4 class="text-center">Skill Estimate (Lower is more skill)</h4>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Statistic</th>
+                    <th class="text-center">{{ human1_name }}</th>
+                    <th class="text-center">{{ human2_name }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Skater Skill Value</td>
+                    <td class="text-center stat-cell 
+                        {% if human1.skater_skill_value and human2.skater_skill_value %}
+                            {% if human1.skater_skill_value < human2.skater_skill_value %}winner
+                            {% elif human1.skater_skill_value > human2.skater_skill_value %}loser{% endif %}
+                        {% endif %}">
+                        {{ "%.1f"|format(human1.skater_skill_value) if human1.skater_skill_value else "N/A" }}
+                    </td>
+                    <td class="text-center stat-cell 
+                        {% if human1.skater_skill_value and human2.skater_skill_value %}
+                            {% if human2.skater_skill_value < human1.skater_skill_value %}winner
+                            {% elif human2.skater_skill_value > human1.skater_skill_value %}loser{% endif %}
+                        {% endif %}">
+                        {{ "%.1f"|format(human2.skater_skill_value) if human2.skater_skill_value else "N/A" }}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
     <div class="section-header">
         <h4 class="text-center">Head-to-Head ({{ stats.games_against }} games)</h4>
     </div>
@@ -238,41 +274,6 @@
         </table>
     </div>
     {% endif %}
-
-    <div class="section-header">
-        <h4 class="text-center">Skill Estimate (To Be Fixed)</h4>
-    </div>
-
-    <div class="table-responsive">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Statistic</th>
-                    <th class="text-center">{{ human1_name }}</th>
-                    <th class="text-center">{{ human2_name }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Skater Skill Value</td>
-                    <td class="text-center stat-cell 
-                        {% if human1.skater_skill_value and human2.skater_skill_value %}
-                            {% if human1.skater_skill_value < human2.skater_skill_value %}winner
-                            {% elif human1.skater_skill_value > human2.skater_skill_value %}loser{% endif %}
-                        {% endif %}">
-                        {{ "%.1f"|format(human1.skater_skill_value) if human1.skater_skill_value else "N/A" }}
-                    </td>
-                    <td class="text-center stat-cell 
-                        {% if human1.skater_skill_value and human2.skater_skill_value %}
-                            {% if human2.skater_skill_value < human1.skater_skill_value %}winner
-                            {% elif human2.skater_skill_value > human1.skater_skill_value %}loser{% endif %}
-                        {% endif %}">
-                        {{ "%.1f"|format(human2.skater_skill_value) if human2.skater_skill_value else "N/A" }}
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
 
     {% endif %}
 </div>

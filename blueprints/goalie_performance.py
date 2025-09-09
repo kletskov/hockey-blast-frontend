@@ -11,8 +11,18 @@ from datetime import datetime
 goalie_performance_bp = Blueprint('goalie_performance', __name__)
 goalie_performance_bp.register_blueprint(team_division_goalie_stats_bp, url_prefix='/team_division_goalie_stats')
 
-def format_rank_percentile(rank, total):
-    percentile = (total - rank) / total * 100
+def format_rank_percentile(rank, total, reverse=False):
+    """
+    Calculate percentile based on rank.
+    reverse=False: Lower rank is better (games played, shots faced, save percentage)
+    reverse=True: Higher rank is better (goals allowed, GAA - lower values are better)
+    """
+    if reverse:
+        # For metrics where lower values are better (GAA), higher ranks should be higher percentiles (worse)
+        percentile = (rank / total) * 100
+    else:
+        # For metrics where higher values are better, lower ranks should be higher percentiles (better)
+        percentile = (total - rank) / total * 100
     return f"{rank}/{total}<br>{percentile:.0f}th"
 
 def format_date_link(date, game_id):
@@ -61,9 +71,9 @@ def append_goalie_performance_result(goalie_performance_results, stats, context,
         'games_played': games_played,
         'games_played_rank': format_rank_percentile(games_played_rank, stats['total_in_rank'] if isinstance(stats, dict) else stats.total_in_rank),
         'goals_allowed': goals_allowed,
-        'goals_allowed_rank': format_rank_percentile(goals_allowed_rank, stats['total_in_rank'] if isinstance(stats, dict) else stats.total_in_rank),
+        'goals_allowed_rank': format_rank_percentile(goals_allowed_rank, stats['total_in_rank'] if isinstance(stats, dict) else stats.total_in_rank, reverse=True),
         'goals_allowed_per_game': f"{goals_allowed_per_game:.2f}",
-        'goals_allowed_per_game_rank': format_rank_percentile(goals_allowed_per_game_rank, stats['total_in_rank'] if isinstance(stats, dict) else stats.total_in_rank),
+        'goals_allowed_per_game_rank': format_rank_percentile(goals_allowed_per_game_rank, stats['total_in_rank'] if isinstance(stats, dict) else stats.total_in_rank, reverse=True),
         'shots_faced': shots_faced,
         'shots_faced_rank': format_rank_percentile(shots_faced_rank, stats['total_in_rank'] if isinstance(stats, dict) else stats.total_in_rank),
         'save_percentage': f"{save_percentage:.2f}",

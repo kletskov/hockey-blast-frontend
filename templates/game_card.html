@@ -8,7 +8,7 @@
                 visitor_team.name }}</a></strong> at <strong><a
                 href="{{ url_for('team_stats.team_stats', team_id=home_team.id) }}">{{ home_team.name }}</a></strong>
         ({{ division.level }})</h1>
-    <h3>{{ game.date.strftime('%m/%d/%y') }} {{ game.time.strftime('%I:%M %p') }}, {{ game.location }}</h3>
+    <h3>{{ day_of_week }} {{ game.date.strftime('%m/%d/%y') }} {{ game.time.strftime('%I:%M%p') }}, {{ game.location }}</h3>
     <!-- Basic Game Info Table -->
     <table class="table table-striped">
         <thead>

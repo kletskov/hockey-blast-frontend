@@ -13,6 +13,7 @@ INTERNAL_ENDPOINTS = [
     r'/dropdowns/.*',
     r'/.*filter_.*',
     r'/get_.*',
+    r'/request_logs.*',  # Exclude request_logs endpoints from plotting themselves
 ]
 
 CRAWLER_USER_AGENTS = [
@@ -86,7 +87,7 @@ def get_request_logs_data(interval, top_n=20):
     now = datetime.now()
     if interval == 'minutely':
         start_time = now - timedelta(hours=1)
-        freq = 'T'
+        freq = 'min'
     elif interval == 'hourly':
         start_time = now - timedelta(hours=24)
         freq = 'H'
@@ -100,13 +101,13 @@ def get_request_logs_data(interval, top_n=20):
         start_time = now - timedelta(days=365)
         freq = 'M'
     else:
-        return None, None, None, None, None
+        return None, None, None, None, None, None, None, None, None
 
     logs = db.session.query(RequestLog).filter(RequestLog.timestamp >= start_time).all()
     if not logs:
-        return pd.Series([], dtype='int64'), pd.Series([], dtype='int64'), pd.DataFrame(), pd.DataFrame(), []
+        return pd.Series([], dtype='int64'), pd.Series([], dtype='int64'), pd.DataFrame(), pd.DataFrame(), [], pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), 'H'
 
-    df = pd.DataFrame([(log.timestamp, log.path, log.client_ip, log.user_agent) for log in logs], columns=['timestamp', 'path', 'client_ip', 'user_agent'])
+    df = pd.DataFrame([(log.timestamp, log.path, log.client_ip, log.user_agent, log.response_time_ms) for log in logs], columns=['timestamp', 'path', 'client_ip', 'user_agent', 'response_time_ms'])
     df['timestamp'] = pd.to_datetime(df['timestamp'])
     df.set_index('timestamp', inplace=True)
 
@@ -133,6 +134,23 @@ def get_request_logs_data(interval, top_n=20):
 
     endpoint_counts = df.groupby('path').resample(freq).size().unstack(level=0, fill_value=0)
 
+    # Calculate response time aggregations
+    # Filter out None/null response times for cleaner stats
+    df_with_response_time = df[df['response_time_ms'].notna()]
+    
+    if not df_with_response_time.empty:
+        # Overall response time stats by time window
+        response_time_stats = df_with_response_time.resample(freq)['response_time_ms'].agg(['median', 'mean', 'quantile'])
+        response_time_stats['p90'] = df_with_response_time.resample(freq)['response_time_ms'].quantile(0.9)
+        response_time_stats['p95'] = df_with_response_time.resample(freq)['response_time_ms'].quantile(0.95)
+        
+        # Response time stats by endpoint
+        endpoint_response_times = df_with_response_time.groupby('path')['response_time_ms'].agg(['median', 'mean', 'count']).sort_values('median', ascending=False)
+    else:
+        # Empty DataFrames if no response time data
+        response_time_stats = pd.DataFrame()
+        endpoint_response_times = pd.DataFrame()
+
     # Calculate average number of hits per session
     session_counts = df.groupby('client_ip').resample(freq).size()
     session_counts = session_counts[session_counts > 0]  # Filter out zeroes
@@ -150,7 +168,7 @@ def get_request_logs_data(interval, top_n=20):
 
     sample_logs_data = sample_logs[['timestamp', 'client_ip', 'path', 'user_agent']].to_dict(orient='records')
 
-    return request_counts, unique_ip_counts, endpoint_counts, session_stats, sample_logs_data
+    return request_counts, unique_ip_counts, endpoint_counts, session_stats, sample_logs_data, response_time_stats, endpoint_response_times, df_with_response_time, freq
 
 def simplify_endpoint(endpoint):
     parts = endpoint.strip('/').split('/')
@@ -162,7 +180,7 @@ def simplify_endpoint(endpoint):
 def request_logs():
     interval = request.args.get('interval', 'daily')
     top_n = int(request.args.get('top_n', 20))
-    request_counts, unique_ip_counts, endpoint_counts, session_stats, sample_logs_data = get_request_logs_data(interval, top_n)
+    request_counts, unique_ip_counts, endpoint_counts, session_stats, sample_logs_data, response_time_stats, endpoint_response_times, df_with_response_time, freq = get_request_logs_data(interval, top_n)
 
     endpoint_hits = []
     for endpoint in endpoint_counts.columns:
@@ -230,11 +248,124 @@ def request_logs():
     avg_hits_plot_fig = go.Figure(data=avg_hits_plot_data, layout=avg_hits_plot_layout)
     avg_hits_plot_div = pio.to_html(avg_hits_plot_fig, full_html=False)
 
+    # Create response time plots per endpoint (similar to request logs style)
+    median_response_time_plot_div = ""
+    p90_response_time_plot_div = ""
+    
+    if not df_with_response_time.empty:
+        # Calculate per-endpoint response times over time
+        endpoint_median_response_times = df_with_response_time.groupby('path').resample(freq)['response_time_ms'].median().unstack(level=0, fill_value=0)
+        endpoint_p90_response_times = df_with_response_time.groupby('path').resample(freq)['response_time_ms'].quantile(0.9).unstack(level=0, fill_value=0)
+        
+        # Calculate total response time data for sorting (same as endpoint hits logic)
+        endpoint_response_totals = []
+        for endpoint in endpoint_median_response_times.columns:
+            # Use count of non-zero response times as the "total"
+            total_responses = (endpoint_median_response_times[endpoint] > 0).sum()
+            simplified_endpoint = simplify_endpoint(endpoint)
+            endpoint_response_totals.append((simplified_endpoint, total_responses, endpoint))
+
+        # Sort endpoints by total responses (most active first)
+        endpoint_response_totals.sort(key=lambda x: x[1], reverse=True)
+        
+        # Create Median Response Time plot
+        median_plot_data = []
+        for simplified_endpoint, total_responses, original_endpoint in endpoint_response_totals:
+            if total_responses > 0:  # Only show endpoints with response time data
+                # Round to whole milliseconds
+                rounded_values = endpoint_median_response_times[original_endpoint].round(0)
+                median_plot_data.append(
+                    go.Scatter(
+                        x=endpoint_median_response_times.index, 
+                        y=rounded_values, 
+                        mode='lines', 
+                        name=f"{simplified_endpoint} ({total_responses} samples)",
+                        hovertemplate='<b>%{fullData.name}</b><br>Time: %{x}<br>Response Time: %{y:.0f}ms<extra></extra>'
+                    )
+                )
+        
+        # Calculate max value for Y-axis scaling (add 10% padding)
+        max_median_value = endpoint_median_response_times.max().max() if not endpoint_median_response_times.empty else 100
+        y_axis_max = max_median_value * 1.1
+        
+        median_plot_layout = go.Layout(
+            title=f'Median Response Times by Endpoint ({interval.capitalize()})',
+            xaxis=dict(title='Time'),
+            yaxis=dict(title='Response Time (ms)', range=[0, y_axis_max]),
+            plot_bgcolor='#f9f9f9',
+            paper_bgcolor='#ffffff',
+            font=dict(color='#333')
+        )
+        
+        median_response_time_plot_fig = go.Figure(data=median_plot_data, layout=median_plot_layout)
+        median_response_time_plot_div = pio.to_html(median_response_time_plot_fig, full_html=False)
+        
+        # Create P90 Response Time plot
+        p90_plot_data = []
+        for simplified_endpoint, total_responses, original_endpoint in endpoint_response_totals:
+            if total_responses > 0:  # Only show endpoints with response time data
+                # Round to whole milliseconds
+                rounded_p90_values = endpoint_p90_response_times[original_endpoint].round(0)
+                p90_plot_data.append(
+                    go.Scatter(
+                        x=endpoint_p90_response_times.index, 
+                        y=rounded_p90_values, 
+                        mode='lines', 
+                        name=f"{simplified_endpoint} ({total_responses} samples)",
+                        hovertemplate='<b>%{fullData.name}</b><br>Time: %{x}<br>Response Time: %{y:.0f}ms<extra></extra>'
+                    )
+                )
+        
+        # Calculate max value for Y-axis scaling (add 10% padding)
+        max_p90_value = endpoint_p90_response_times.max().max() if not endpoint_p90_response_times.empty else 100
+        y_axis_max_p90 = max_p90_value * 1.1
+        
+        p90_plot_layout = go.Layout(
+            title=f'P90 Response Times by Endpoint ({interval.capitalize()})',
+            xaxis=dict(title='Time'),
+            yaxis=dict(title='Response Time (ms)', range=[0, y_axis_max_p90]),
+            plot_bgcolor='#f9f9f9',
+            paper_bgcolor='#ffffff',
+            font=dict(color='#333')
+        )
+        
+        p90_response_time_plot_fig = go.Figure(data=p90_plot_data, layout=p90_plot_layout)
+        p90_response_time_plot_div = pio.to_html(p90_response_time_plot_fig, full_html=False)
+    
+    if not endpoint_response_times.empty:
+        # Endpoint response times bar chart (top 10 slowest)
+        top_slow_endpoints = endpoint_response_times.head(10)
+        
+        endpoint_response_time_plot_data = [
+            go.Bar(x=[simplify_endpoint(ep) for ep in top_slow_endpoints.index], 
+                  y=top_slow_endpoints['median'].round(0), 
+                  name='Median Response Time',
+                  text=[f"{val:.0f}ms ({count} reqs)" for val, count in zip(top_slow_endpoints['median'], top_slow_endpoints['count'])],
+                  textposition='outside',
+                  hovertemplate='<b>%{x}</b><br>Median Response Time: %{y:.0f}ms<extra></extra>')
+        ]
+        
+        endpoint_response_time_plot_layout = go.Layout(
+            title=f'Slowest Endpoints - Median Response Time ({interval.capitalize()})',
+            xaxis=dict(title='Endpoint', tickangle=45),
+            yaxis=dict(title='Response Time (ms)'),
+            plot_bgcolor='#f9f9f9',
+            paper_bgcolor='#ffffff',
+            font=dict(color='#333'),
+            margin=dict(b=150)  # Extra margin for rotated labels
+        )
+        
+        endpoint_response_time_plot_fig = go.Figure(data=endpoint_response_time_plot_data, layout=endpoint_response_time_plot_layout)
+        endpoint_response_time_plot_div = pio.to_html(endpoint_response_time_plot_fig, full_html=False)
+
     return render_template(
         'request_logs.html',
         plot_div=plot_div,
         avg_hits_plot_div=avg_hits_plot_div,
-        unique_ip_plot_div=unique_ip_plot_div,  # Add the new plot div
+        unique_ip_plot_div=unique_ip_plot_div,
+        median_response_time_plot_div=median_response_time_plot_div,
+        p90_response_time_plot_div=p90_response_time_plot_div,
+        endpoint_response_time_plot_div=endpoint_response_time_plot_div,
         interval=interval,
         sample_logs_data=sample_logs_data
     )
@@ -242,7 +373,7 @@ def request_logs():
 @request_logs_bp.route('/request_logs/data', methods=['GET'])
 def request_logs_data():
     interval = request.args.get('interval', 'daily')
-    request_counts, unique_ip_counts, endpoint_counts, session_stats, sample_logs_data = get_request_logs_data(interval)
+    request_counts, unique_ip_counts, endpoint_counts, session_stats, sample_logs_data, response_time_stats, endpoint_response_times, df_with_response_time, freq = get_request_logs_data(interval)
 
     endpoint_hits = []
     for endpoint in endpoint_counts.columns:
@@ -260,7 +391,11 @@ def request_logs_data():
         'endpoint_counts': {f"{simplified_endpoint} {total_hits}": endpoint_counts[next(ep for ep in endpoint_counts.columns if simplify_endpoint(ep) == simplified_endpoint)].tolist() for simplified_endpoint, total_hits in endpoint_hits},
         'avg_hits_per_session': session_stats['mean'].values.tolist(),
         'min_hits_per_session': session_stats['min'].values.tolist(),
-        'max_hits_per_session': session_stats['max'].values.tolist()
+        'max_hits_per_session': session_stats['max'].values.tolist(),
+        'response_time_median': response_time_stats['median'].values.tolist() if not response_time_stats.empty else [],
+        'response_time_p90': response_time_stats['p90'].values.tolist() if not response_time_stats.empty else [],
+        'response_time_p95': response_time_stats['p95'].values.tolist() if not response_time_stats.empty else [],
+        'endpoint_response_times': endpoint_response_times.to_dict('index') if not endpoint_response_times.empty else {}
     }
 
     return jsonify(data)

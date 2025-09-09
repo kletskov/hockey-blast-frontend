@@ -20,6 +20,18 @@
     <div id="endpoint-plot-div">{{ endpoint_plot_div|safe }}</div>
     <div id="total-requests-div">{{ total_requests_div|safe }}</div>
     <div id="avg-hits-plot-div">{{ avg_hits_plot_div|safe }}</div>
+    
+    {% if median_response_time_plot_div %}
+    <div id="median-response-time-plot-div">{{ median_response_time_plot_div|safe }}</div>
+    {% endif %}
+    
+    {% if p90_response_time_plot_div %}  
+    <div id="p90-response-time-plot-div">{{ p90_response_time_plot_div|safe }}</div>
+    {% endif %}
+    
+    {% if endpoint_response_time_plot_div %}
+    <div id="endpoint-response-time-plot-div">{{ endpoint_response_time_plot_div|safe }}</div>
+    {% endif %}
     <h2 class="mt-5">Sample Logs</h2>
     <table class="table table-striped">
         <thead>

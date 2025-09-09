@@ -73,7 +73,28 @@
             {% endif %}
         </div>
         {% endif %}
-
+        <h5>Current Point Streak</h5>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Org</th>
+                    <th>Point Streak</th>
+                    <th>Avg Points</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for skater, human, org in current_point_streak_skaters %}
+                <tr>
+                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                            human.last_name }}</a></td>
+                    <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
+                    <td>{{ skater.current_point_streak }} games</td>
+                    <td>{{ "%.2f" % skater.current_point_streak_avg_points }} pts/game</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
         <h5>Top Skaters - Last Day</h5>
         <table class="table table-striped">
             <thead>
@@ -273,6 +294,7 @@
                 {% endfor %}
             </tbody>
         </table>
+
     </div>
 
     <script>

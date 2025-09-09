@@ -11,8 +11,18 @@ from datetime import datetime
 skater_performance_bp = Blueprint('skater_performance', __name__)
 skater_performance_bp.register_blueprint(team_division_skater_stats_bp, url_prefix='/team_division_skater_stats')
 
-def format_rank_percentile(rank, total):
-    percentile = (total - rank) / total * 100
+def format_rank_percentile(rank, total, reverse=False):
+    """
+    Calculate percentile based on rank.
+    reverse=False: Lower rank is better (points, goals, assists, games played)
+    reverse=True: Higher rank is better (penalties - lower values are better)
+    """
+    if reverse:
+        # For metrics where lower values are better (penalties), higher ranks should be higher percentiles (worse)
+        percentile = (rank / total) * 100
+    else:
+        # For metrics where higher values are better, lower ranks should be higher percentiles (better)
+        percentile = (total - rank) / total * 100
     return f"{rank}/{total}<br>{percentile:.0f}th"
 
 def format_date_link(date, game_id):
@@ -71,9 +81,9 @@ def append_skater_performance_result(skater_performance_results, stats, context,
         'assists_per_game': f"{assists_per_game:.2f}",
         'assists_per_game_rank': format_rank_percentile(assists_per_game_rank, stats['total_in_rank'] if isinstance(stats, dict) else stats.total_in_rank),
         'penalties_per_game': f"{penalties_per_game:.2f}",
-        'penalties_per_game_rank': format_rank_percentile(penalties_per_game_rank, stats['total_in_rank'] if isinstance(stats, dict) else stats.total_in_rank),
+        'penalties_per_game_rank': format_rank_percentile(penalties_per_game_rank, stats['total_in_rank'] if isinstance(stats, dict) else stats.total_in_rank, reverse=True),
         'gm_penalties_per_game': f"{gm_penalties_per_game:.2f}",
-        'gm_penalties_per_game_rank': format_rank_percentile(gm_penalties_per_game_rank, stats['total_in_rank'] if isinstance(stats, dict) else stats.total_in_rank),
+        'gm_penalties_per_game_rank': format_rank_percentile(gm_penalties_per_game_rank, stats['total_in_rank'] if isinstance(stats, dict) else stats.total_in_rank, reverse=True),
         'first_game': format_date_link(first_game.date, first_game_id) if first_game else None,
         'last_game': format_date_link(last_game.date, last_game_id) if last_game else None
     })

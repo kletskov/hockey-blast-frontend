@@ -98,6 +98,9 @@ def filter_games():
         'T': 0,
         'OTL': 0
     }
+    
+    # Day of week mapping to match human_stats format
+    day_of_week_map = {1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat', 7: 'Sun'}
 
     for game in games:
         if game.home_team_id is None or game.visitor_team_id is None:
@@ -150,10 +153,13 @@ def filter_games():
         else:
             team_names = f"<a href='{url_for('team_stats.team_stats', team_id=visitor_team.id)}'>{visitor_team.name}</a> at <a href='{url_for('team_stats.team_stats', team_id=home_team.id)}'>{home_team.name}</a>"
 
+        day_of_week = day_of_week_map.get(game.day_of_week, '')
+        date_time = f"{day_of_week} {game.date.strftime('%m/%d/%y')} {game.time.strftime('%I:%M%p')}"
+        
         games_data.append({
             'id': game.id,
-            'date': game.date.strftime('%m/%d/%y'),
-            'time': game.time.strftime('%I:%M %p'),
+            'date': date_time,
+            'time': game.time.strftime('%I:%M%p'),
             'final_score': final_score,
             'team_names': team_names,
             'location': game.location,
