@@ -6,7 +6,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import io
 import base64
-from hockey_blast_common_lib.models import db, Human, Team, Division, PlayerRole, RefDivision, ScorekeeperDivision, Game, GameRoster, Goal, Penalty, TeamDivision, Comment, Season
+from hockey_blast_common_lib.models import db, Human, Team, Division, RefDivision, ScorekeeperDivision, Game, GameRoster, Goal, Penalty, TeamDivision, Comment, Season
 
 players_per_season_bp = Blueprint('players_per_season', __name__)
 
