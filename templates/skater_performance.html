@@ -68,6 +68,7 @@
                         <th style="color: black;" onclick="sortTable(6)">A/GP</th>
                         <th style="color: black;" onclick="sortTable(7)">Pen/GP</th>
                         <th style="color: black;" onclick="sortTable(8)">GM/GP</th>
+                        <th style="color: black;" onclick="sortTable(9)">SKLL</th>
                     </tr>
                 </thead>
                 <tbody id="skater-performance-table-body" class="text-center">
@@ -97,6 +98,7 @@
                             <th style="color: black;" onclick="sortTable(6, 'team-performance-table')">A/GP</th>
                             <th style="color: black;" onclick="sortTable(7, 'team-performance-table')">Pen/GP</th>
                             <th style="color: black;" onclick="sortTable(8, 'team-performance-table')">GM/GP</th>
+                            <th style="color: black;" onclick="sortTable(9, 'team-performance-table')">SKLL</th>
                         </tr>
                     </thead>
                     <tbody id="team-performance-table-body" class="text-center">
@@ -118,6 +120,7 @@
                             <th style="color: black;" onclick="sortTable(6, 'all-skaters-table')">A/GP</th>
                             <th style="color: black;" onclick="sortTable(7, 'all-skaters-table')">Pen/GP</th>
                             <th style="color: black;" onclick="sortTable(8, 'all-skaters-table')">GM/GP</th>
+                            <th style="color: black;" onclick="sortTable(9, 'all-skaters-table')">SKLL</th>
                         </tr>
                     </thead>
                     <tbody id="all-skaters-table-body" class="text-center">
@@ -166,6 +169,7 @@
                                 <td><strong style="color: black;">${item.assists_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.assists_per_game_rank}</span></td>
                                 <td><strong style="color: black;">${item.penalties_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.penalties_per_game_rank}</span></td>
                                 <td><strong style="color: black;">${item.gm_penalties_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.gm_penalties_per_game_rank}</span></td>
+                                <td><strong style="color: black;">${item.skill_value}</strong></td>
                             </tr>`;
                     });
 
@@ -193,6 +197,7 @@
                                 <td><strong style="color: black;">${item.assists_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.assists_per_game_rank}</span></td>
                                 <td><strong style="color: black;">${item.penalties_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.penalties_per_game_rank}</span></td>
                                 <td><strong style="color: black;">${item.gm_penalties_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.gm_penalties_per_game_rank}</span></td>
+                                <td><strong style="color: black;">${item.skill_value}</strong></td>
                             </tr>`;
                         }
                     });
@@ -221,6 +226,7 @@
                                 <td><strong style="color: black;">${item.assists_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.assists_per_game_rank}</span></td>
                                 <td><strong style="color: black;">${item.penalties_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.penalties_per_game_rank}</span></td>
                                 <td><strong style="color: black;">${item.gm_penalties_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.gm_penalties_per_game_rank}</span></td>
+                                <td><strong style="color: black;">${item.skill_value}</strong></td>
                             </tr>`;
                         }
                     });
@@ -250,7 +256,7 @@
         var rows = Array.from(table.rows).slice(1); // Exclude header row
 
         // Only allow sorting for specific columns
-        if (![3, 4, 5, 6, 7, 8].includes(columnIndex)) {
+        if (![3, 4, 5, 6, 7, 8, 9].includes(columnIndex)) {
             return;
         }
 
@@ -258,7 +264,14 @@
             var aText = a.cells[columnIndex].innerText.trim();
             var bText = b.cells[columnIndex].innerText.trim();
 
-            // Extract the rank value from the cell content
+            // Handle skill column (column 9) - sort by numeric value descending (lower skill value = better)
+            if (columnIndex === 9) {
+                var aValue = parseFloat(aText);
+                var bValue = parseFloat(bText);
+                return aValue - bValue; // Sort ascending (lower skill values are better)
+            }
+
+            // Extract the rank value from the cell content for other columns
             var aRank = extractRank(aText);
             var bRank = extractRank(bText);
 

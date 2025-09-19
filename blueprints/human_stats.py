@@ -353,6 +353,9 @@ def human_stats():
         goalie_games_per_month = goalie_games_per_month.reindex(all_months, fill_value=0)
         scorekeeper_games_per_month = scorekeeper_games_per_month.reindex(all_months, fill_value=0)
         referee_games_per_month = referee_games_per_month.reindex(all_months, fill_value=0)
+    else:
+        # Handle empty case - create empty period range
+        all_months = pd.period_range(start=pd.Period('2020-01'), end=pd.Period('2020-01'), freq='M')
 
     # Dynamically adjust tick frequency based on the number of months
     num_months = len(all_months)

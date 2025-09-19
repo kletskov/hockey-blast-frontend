@@ -66,6 +66,10 @@ def append_skater_performance_result(skater_performance_results, stats, context,
         gm_penalties_per_game = stats.gm_penalties_per_game
         gm_penalties_per_game_rank = stats.gm_penalties_per_game_rank
 
+    # Fetch human to get skill value
+    human = db.session.query(Human.skater_skill_value).filter(Human.id == human_id).first()
+    skill_value = human.skater_skill_value if human and human.skater_skill_value else 0
+    
     first_game = db.session.query(Game.date).filter(Game.id == first_game_id).first() if first_game_id else None
     last_game = db.session.query(Game.date).filter(Game.id == last_game_id).first() if last_game_id else None
     skater_performance_results.append({
@@ -85,7 +89,8 @@ def append_skater_performance_result(skater_performance_results, stats, context,
         'gm_penalties_per_game': f"{gm_penalties_per_game:.2f}",
         'gm_penalties_per_game_rank': format_rank_percentile(gm_penalties_per_game_rank, stats['total_in_rank'] if isinstance(stats, dict) else stats.total_in_rank, reverse=True),
         'first_game': format_date_link(first_game.date, first_game_id) if first_game else None,
-        'last_game': format_date_link(last_game.date, last_game_id) if last_game else None
+        'last_game': format_date_link(last_game.date, last_game_id) if last_game else None,
+        'skill_value': f"{skill_value:.1f}"
     })
 
 def extract_date_from_link(link):
