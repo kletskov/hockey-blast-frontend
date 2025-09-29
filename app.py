@@ -4,8 +4,8 @@ from flask_restx import Api
 from flask_sqlalchemy import SQLAlchemy
 from flask_session import Session
 from threading import Thread
-from hockey_blast_common_lib.models import db, Organization, Game, Human, RequestLog, Team, HumanAlias
-from hockey_blast_common_lib.stats_models import OrgStatsWeeklyHuman, OrgStatsDailySkater, OrgStatsWeeklySkater, OrgStatsDailyGoalie, OrgStatsWeeklyGoalie, OrgStatsDailyReferee, OrgStatsWeeklyReferee, OrgStatsSkater, OrgStatsGoalie, OrgStatsReferee, OrgStatsDailyHuman, OrgStatsHuman
+from hockey_blast_common_lib.models import db, Organization, Game, Human, RequestLog, Team, HumanAlias, ScorekeeperSaveQuality
+from hockey_blast_common_lib.stats_models import OrgStatsWeeklyHuman, OrgStatsDailySkater, OrgStatsWeeklySkater, OrgStatsDailyGoalie, OrgStatsWeeklyGoalie, OrgStatsDailyReferee, OrgStatsWeeklyReferee, OrgStatsSkater, OrgStatsGoalie, OrgStatsReferee, OrgStatsDailyHuman, OrgStatsHuman, OrgStatsScorekeeper
 from hockey_blast_common_lib.db_connection import get_db_params
 from markupsafe import Markup
 import flask_table.table
@@ -65,6 +65,8 @@ from blueprints.days_of_week import days_of_week_bp
 from blueprints.days_of_week_dropdowns import days_of_week_dropdowns_bp
 #from blueprints.rest_api import rest_api_bp
 from blueprints.referee_performance import referee_performance_bp
+from blueprints.scorekeeper_performance import scorekeeper_performance_bp
+from blueprints.scorekeeper_quality import scorekeeper_quality_bp
 from blueprints.skater_to_skater import skater_to_skater_bp  # Add this import
 from blueprints.two_skaters_selection import two_skaters_selection_bp  # Add this import
 
@@ -268,6 +270,8 @@ def _create_app(db_name):
     app.register_blueprint(days_of_week_bp, url_prefix='/days_of_week')
     app.register_blueprint(days_of_week_dropdowns_bp, url_prefix='/days_of_week')
     app.register_blueprint(referee_performance_bp, url_prefix='/referee_performance')
+    app.register_blueprint(scorekeeper_performance_bp, url_prefix='/scorekeeper_performance')
+    app.register_blueprint(scorekeeper_quality_bp, url_prefix='/scorekeeper_quality')
     app.register_blueprint(skater_to_skater_bp, url_prefix='/skater_to_skater')  # Add this line
     app.register_blueprint(two_skaters_selection_bp, url_prefix='/two_skaters_selection')  # Add this line
     # REST API blueprint (provides /swagger and /api/v1/* routes)

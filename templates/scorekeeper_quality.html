@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .table th,
+    .table td {
+        white-space: normal;
+        padding: 1px;
+        font-size: 0.8rem;
+    }
+
+    .table {
+        table-layout: auto;
+        width: 100%;
+    }
+
+    .loading-indicator {
+        display: none;
+        text-align: center;
+        font-weight: bold;
+        color: red;
+        animation: blink 1s linear infinite;
+    }
+
+    @keyframes blink {
+        50% {
+            opacity: 0;
+        }
+    }
+
+    .quality-warning {
+        background-color: #fff3cd;
+        border: 1px solid #ffeaa7;
+        color: #856404;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+    }
+
+    .quality-good {
+        color: #28a745;
+        font-weight: bold;
+    }
+
+    .quality-moderate {
+        color: #ffc107;
+        font-weight: bold;
+    }
+
+    .quality-poor {
+        color: #dc3545;
+        font-weight: bold;
+    }
+</style>
+
+<div class="table-responsive">
+    <h4>Scorekeeper Quality Analysis - Save Button Usage Patterns</h4>
+
+    <div class="quality-warning">
+        <strong>About Quality Analysis:</strong> This page identifies scorekeepers who may be "clicking the save button like crazy"
+        by analyzing their save recording patterns. Quality metrics help identify potential issues with frantic or excessive
+        button usage that could indicate poor data quality or scorekeeper behavior problems.
+    </div>
+
+    <p>
+        <strong>Quality Score:</strong> Higher values indicate more concerning save button usage patterns (0-100 scale).<br>
+        <strong>Peak Saves:</strong> Maximum saves recorded in 5 or 20 second windows during any single game.<br>
+        <strong>Avg Max:</strong> Average of the maximum saves per time window across all games.<br>
+        Rankings show worst quality first (higher percentiles = worse quality, more suspicious patterns).
+    </p>
+
+    <label for="organization">Organization:</label>
+    <select id="organization" name="organization">
+        {% for org in organizations %}
+            <option value="{{ org.id }}" {% if org.id == org_id %}selected{% endif %}>{{ org.organization_name }}</option>
+        {% endfor %}
+    </select>
+
+    <label for="top_n">Top N:</label>
+    <select id="top_n" name="top_n">
+        <option value="25" {% if top_n == 25 %}selected{% endif %}>25</option>
+        <option value="50" {% if top_n == 50 %}selected{% endif %}>50</option>
+        <option value="100" {% if top_n == 100 %}selected{% endif %}>100</option>
+        <option value="200" {% if top_n == 200 %}selected{% endif %}>200</option>
+    </select>
+
+    <label for="min_games">Min games with quality data:</label>
+    <select id="min_games" name="min_games">
+        <option value="1">1</option>
+        <option value="5">5</option>
+        <option value="10" selected>10</option>
+        <option value="25">25</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+    </select>
+
+    <div class="loading-indicator" id="loading-indicator">Loading quality analysis...</div>
+
+    <div class="table-responsive" id="scorekeeper-quality-results">
+        <div id="scorekeepers-section" style="display: none;">
+            <h5 id="results-title">Scorekeepers Ranked by Save Button Usage Quality Issues</h5>
+            <p id="org-filter-info"><span id="org-name"></span> - <span id="total-found"></span> scorekeepers found</p>
+
+            <table class="table table-striped text-center" id="scorekeepers-table">
+                <thead class="text-center">
+                    <tr>
+                        <th style="color: black;">Scorekeeper</th>
+                        <th style="color: black;">From</th>
+                        <th style="color: black;">To</th>
+                        <th style="color: black; cursor: pointer;" onclick="sortTable(3)">Quality Rank</th>
+                        <th style="color: black; cursor: pointer;" onclick="sortTable(4)">Quality Score</th>
+                        <th style="color: black; cursor: pointer;" onclick="sortTable(5)">Games Recorded</th>
+                        <th style="color: black; cursor: pointer;" onclick="sortTable(6)">Avg Max 5sec</th>
+                        <th style="color: black; cursor: pointer;" onclick="sortTable(7)">Avg Max 20sec</th>
+                        <th style="color: black; cursor: pointer;" onclick="sortTable(8)">Peak 5sec</th>
+                        <th style="color: black; cursor: pointer;" onclick="sortTable(9)">Peak 20sec</th>
+                        <th style="color: black; cursor: pointer;" onclick="sortTable(10)">Avg Saves/Game</th>
+                    </tr>
+                </thead>
+                <tbody id="scorekeepers-table-body">
+                    <!-- Data will be populated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    function getQualityClass(score) {
+        const numScore = parseFloat(score);
+        if (numScore < 10) return 'quality-good';
+        if (numScore < 25) return 'quality-moderate';
+        return 'quality-poor';
+    }
+
+    function fetchContent(orgId, topN) {
+        var minGames = document.getElementById('min_games').value;
+        var loadingIndicator = document.getElementById('loading-indicator');
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'block';
+        }
+
+        fetch('/scorekeeper_quality/filter_scorekeeper_quality', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                org_id: orgId,
+                top_n: topN,
+                min_games: minGames
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            var scorekeepersTableBody = document.getElementById('scorekeepers-table-body');
+            if (scorekeepersTableBody) {
+                scorekeepersTableBody.innerHTML = '';
+
+                if (data.scorekeepers && data.scorekeepers.length > 0) {
+                    data.scorekeepers.forEach(item => {
+                        const qualityClass = getQualityClass(item.quality_score);
+                        scorekeepersTableBody.innerHTML += `<tr>
+                            <td style="color: black;">${item.scorekeeper}</td>
+                            <td>${item.first_game || 'N/A'}</td>
+                            <td>${item.last_game || 'N/A'}</td>
+                            <td><span style="color: rgb(123, 0, 0);">${item.quality_rank}</span></td>
+                            <td><strong class="${qualityClass}">${item.quality_score}</strong></td>
+                            <td><strong style="color: black;">${item.games_recorded}</strong></td>
+                            <td><strong style="color: black;">${item.avg_max_5sec}</strong></td>
+                            <td><strong style="color: black;">${item.avg_max_20sec}</strong></td>
+                            <td><strong style="color: black;">${item.peak_5sec}</strong></td>
+                            <td><strong style="color: black;">${item.peak_20sec}</strong></td>
+                            <td><strong style="color: black;">${item.avg_saves_per_game}</strong></td>
+                        </tr>`;
+                    });
+
+                    // Update info display
+                    var orgNameElement = document.getElementById('org-name');
+                    var totalFoundElement = document.getElementById('total-found');
+
+                    if (orgNameElement) orgNameElement.innerText = data.org_name || 'All Organizations';
+                    if (totalFoundElement) totalFoundElement.innerText = data.total_found || 0;
+
+                    if (document.getElementById('scorekeepers-section')) {
+                        document.getElementById('scorekeepers-section').style.display = 'block';
+                    }
+                } else {
+                    // Show no data message
+                    scorekeepersTableBody.innerHTML = '<tr><td colspan="11" class="text-center">No scorekeeper quality data found for the selected criteria</td></tr>';
+
+                    if (document.getElementById('scorekeepers-section')) {
+                        document.getElementById('scorekeepers-section').style.display = 'block';
+                    }
+                }
+            }
+
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching data:', error);
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
+            }
+        });
+    }
+
+    function sortTable(columnIndex) {
+        var table = document.getElementById('scorekeepers-table');
+        if (!table) {
+            return;
+        }
+
+        var tbody = table.querySelector('tbody');
+        if (!tbody || tbody.children.length === 0) {
+            return;
+        }
+
+        var rows = Array.from(tbody.children);
+
+        // Reset all headers to remove sort indicators
+        var headers = table.querySelectorAll('th');
+        headers.forEach(header => {
+            header.textContent = header.textContent.replace(/[↑↓]\s*$/, '');
+        });
+
+        // Sort direction tracking
+        if (!table.dataset.sortCol || table.dataset.sortCol != columnIndex) {
+            table.dataset.sortDir = 'asc';
+            table.dataset.sortCol = columnIndex;
+        } else {
+            table.dataset.sortDir = table.dataset.sortDir === 'asc' ? 'desc' : 'asc';
+        }
+
+        const sortDir = table.dataset.sortDir;
+
+        // Add direction indicator to the header
+        if (columnIndex < headers.length) {
+            headers[columnIndex].textContent += (sortDir === 'asc' ? ' ↑' : ' ↓');
+        }
+
+        rows.sort((a, b) => {
+            if (!a.cells[columnIndex] || !b.cells[columnIndex]) {
+                return 0;
+            }
+
+            var aText = a.cells[columnIndex].innerText.trim();
+            var bText = b.cells[columnIndex].innerText.trim();
+
+            // Try to extract numeric values first
+            var aValue = extractValue(aText);
+            var bValue = extractValue(bText);
+
+            // If we can't extract numeric values, fall back to rank-based sorting
+            if (isNaN(aValue) || isNaN(bValue)) {
+                var aRank = extractRank(aText);
+                var bRank = extractRank(bText);
+                return sortDir === 'asc' ? aRank - bRank : bRank - aRank;
+            }
+
+            return sortDir === 'asc' ? aValue - bValue : bValue - aValue;
+        });
+
+        // Clear the table body and append sorted rows
+        while (tbody.firstChild) {
+            tbody.removeChild(tbody.firstChild);
+        }
+
+        rows.forEach(row => tbody.appendChild(row));
+    }
+
+    function extractValue(text) {
+        var match = text.match(/(\d+\.?\d*)/);
+        return match ? parseFloat(match[1]) : NaN;
+    }
+
+    function extractRank(text) {
+        var match = text.match(/(\d+)\/\d+/);
+        if (match) {
+            return parseInt(match[1]);
+        }
+        return 999999;
+    }
+
+    // Make column headers clickable
+    document.addEventListener('DOMContentLoaded', function () {
+        const sortableHeaders = document.querySelectorAll('th[onclick]');
+        sortableHeaders.forEach(header => {
+            header.style.cursor = 'pointer';
+            header.title = 'Click to sort';
+        });
+    });
+
+    function updatePageSpecificCGI(url) {
+        // Empty implementation to prevent runtime errors
+    }
+
+    // Add event listeners for dropdowns
+    document.getElementById('min_games').addEventListener('change', function () {
+        var orgId = document.getElementById('organization').value;
+        var topN = document.getElementById('top_n').value;
+        fetchContent(orgId, topN);
+    });
+
+    document.getElementById('organization').addEventListener('change', function () {
+        var orgId = document.getElementById('organization').value;
+        var topN = document.getElementById('top_n').value;
+        fetchContent(orgId, topN);
+    });
+
+    document.getElementById('top_n').addEventListener('change', function () {
+        var orgId = document.getElementById('organization').value;
+        var topN = document.getElementById('top_n').value;
+        fetchContent(orgId, topN);
+    });
+
+    // Load initial data when page loads
+    window.addEventListener('load', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const orgId = urlParams.get('org_id') || document.getElementById('organization').value;
+        const topN = urlParams.get('top_n') || document.getElementById('top_n').value;
+
+        fetchContent(orgId, topN);
+    });
+</script>
+{% endblock %}
