@@ -1,6 +1,6 @@
 import logging
 from flask import Blueprint, render_template, request, jsonify, url_for
-from hockey_blast_common_lib.models import db, Organization, Human, Game
+from hockey_blast_common_lib.models import db, Human, Game
 from hockey_blast_common_lib.stats_models import OrgStatsScorekeeper
 from hockey_blast_common_lib.stats_utils import ALL_ORGS_ID
 from datetime import datetime
@@ -31,29 +31,25 @@ def format_date_link(date, game_id):
     return None
 
 
-def get_scorekeepers_with_quality_issues(org_id=None, min_games=10, limit=50):
-    """Get scorekeepers ranked by potential quality issues using aggregated stats"""
+def get_scorekeepers_with_quality_issues(min_games=10, limit=50):
+    """Get scorekeepers ranked by potential quality issues using aggregated cross-organizational stats"""
 
-    # Query OrgStatsScorekeeper for quality data
+    # Query OrgStatsScorekeeper for ALL_ORGS_ID quality data only
     query = db.session.query(OrgStatsScorekeeper).filter(
+        OrgStatsScorekeeper.org_id == ALL_ORGS_ID,
         OrgStatsScorekeeper.quality_score.isnot(None),
         OrgStatsScorekeeper.games_recorded >= min_games
     )
-
-    # Filter by organization if specified
-    if org_id and org_id != ALL_ORGS_ID:
-        query = query.filter(OrgStatsScorekeeper.org_id == org_id)
 
     # Order by quality score descending (worst quality first)
     results = query.order_by(desc(OrgStatsScorekeeper.quality_score)).limit(limit).all()
 
     # Get total count for rankings
     total_count_query = db.session.query(OrgStatsScorekeeper).filter(
+        OrgStatsScorekeeper.org_id == ALL_ORGS_ID,
         OrgStatsScorekeeper.quality_score.isnot(None),
         OrgStatsScorekeeper.games_recorded >= min_games
     )
-    if org_id and org_id != ALL_ORGS_ID:
-        total_count_query = total_count_query.filter(OrgStatsScorekeeper.org_id == org_id)
 
     total_count = total_count_query.count()
 
@@ -85,35 +81,21 @@ def get_scorekeepers_with_quality_issues(org_id=None, min_games=10, limit=50):
 
 @scorekeeper_quality_bp.route('/', methods=['GET'])
 def scorekeeper_quality():
-    """Main scorekeeper quality page"""
-    organizations = db.session.query(Organization).all()
+    """Main scorekeeper quality page - cross-organizational analysis"""
     top_n = request.args.get('top_n', default=50, type=int)
-    org_id = request.args.get('org_id', type=int)
-
-    if org_id is None and organizations:
-        org_id = min(org.id for org in organizations)
-
     min_games = request.args.get('min_games', default=10, type=int)
 
     return render_template('scorekeeper_quality.html',
-                         organizations=organizations,
                          top_n=top_n,
-                         org_id=org_id,
                          min_games=min_games)
 
 @scorekeeper_quality_bp.route('/filter_scorekeeper_quality', methods=['POST'])
 def filter_scorekeeper_quality():
-    """API endpoint to filter scorekeeper quality data"""
-    org_id = request.json.get('org_id')
+    """API endpoint to filter scorekeeper quality data - cross-organizational only"""
     top_n = request.json.get('top_n', 50)
     min_games = request.json.get('min_games', 10)
 
     # Convert parameters
-    try:
-        org_id = int(org_id) if org_id is not None else ALL_ORGS_ID
-    except (ValueError, TypeError):
-        org_id = ALL_ORGS_ID
-
     try:
         top_n = int(top_n)
     except (ValueError, TypeError):
@@ -124,17 +106,11 @@ def filter_scorekeeper_quality():
     except (ValueError, TypeError):
         min_games = 10
 
-    # Get organization name
-    org_name = ""
-    if org_id != ALL_ORGS_ID:
-        organization = db.session.query(Organization).filter(Organization.id == org_id).first()
-        org_name = organization.organization_name if organization else "Selected Organization"
-    else:
-        org_name = "All Organizations"
+    # Always show all organizations
+    org_name = "All Organizations"
 
-    # Get scorekeeper quality data
+    # Get scorekeeper quality data (always cross-organizational)
     scorekeepers_data = get_scorekeepers_with_quality_issues(
-        org_id=org_id if org_id != ALL_ORGS_ID else None,
         min_games=min_games,
         limit=top_n
     )

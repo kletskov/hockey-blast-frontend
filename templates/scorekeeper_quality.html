@@ -58,11 +58,11 @@
 </style>
 
 <div class="table-responsive">
-    <h4>Scorekeeper Quality Analysis - Save Button Usage Patterns</h4>
+    <h4>Scorekeeper Quality Analysis - Cross-Organizational Save Button Usage Patterns</h4>
 
     <div class="quality-warning">
         <strong>About Quality Analysis:</strong> This page identifies scorekeepers who may be "clicking the save button like crazy"
-        by analyzing their save recording patterns. Quality metrics help identify potential issues with frantic or excessive
+        by analyzing their save recording patterns across all organizations. Quality metrics help identify potential issues with frantic or excessive
         button usage that could indicate poor data quality or scorekeeper behavior problems.
     </div>
 
@@ -70,15 +70,9 @@
         <strong>Quality Score:</strong> Higher values indicate more concerning save button usage patterns (0-100 scale).<br>
         <strong>Peak Saves:</strong> Maximum saves recorded in 5 or 20 second windows during any single game.<br>
         <strong>Avg Max:</strong> Average of the maximum saves per time window across all games.<br>
-        Rankings show worst quality first (higher percentiles = worse quality, more suspicious patterns).
+        Rankings show worst quality first (higher percentiles = worse quality, more suspicious patterns).<br>
+        <strong>Cross-Organizational:</strong> This analysis considers scorekeeper performance across all organizations they work for.
     </p>
-
-    <label for="organization">Organization:</label>
-    <select id="organization" name="organization">
-        {% for org in organizations %}
-            <option value="{{ org.id }}" {% if org.id == org_id %}selected{% endif %}>{{ org.organization_name }}</option>
-        {% endfor %}
-    </select>
 
     <label for="top_n">Top N:</label>
     <select id="top_n" name="top_n">
@@ -102,8 +96,8 @@
 
     <div class="table-responsive" id="scorekeeper-quality-results">
         <div id="scorekeepers-section" style="display: none;">
-            <h5 id="results-title">Scorekeepers Ranked by Save Button Usage Quality Issues</h5>
-            <p id="org-filter-info"><span id="org-name"></span> - <span id="total-found"></span> scorekeepers found</p>
+            <h5 id="results-title">Scorekeepers Ranked by Save Button Usage Quality Issues (All Organizations)</h5>
+            <p id="org-filter-info"><span id="total-found"></span> scorekeepers found across all organizations</p>
 
             <table class="table table-striped text-center" id="scorekeepers-table">
                 <thead class="text-center">
@@ -137,7 +131,7 @@
         return 'quality-poor';
     }
 
-    function fetchContent(orgId, topN) {
+    function fetchContent(topN) {
         var minGames = document.getElementById('min_games').value;
         var loadingIndicator = document.getElementById('loading-indicator');
         if (loadingIndicator) {
@@ -150,7 +144,6 @@
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                org_id: orgId,
                 top_n: topN,
                 min_games: minGames
             })
@@ -180,10 +173,7 @@
                     });
 
                     // Update info display
-                    var orgNameElement = document.getElementById('org-name');
                     var totalFoundElement = document.getElementById('total-found');
-
-                    if (orgNameElement) orgNameElement.innerText = data.org_name || 'All Organizations';
                     if (totalFoundElement) totalFoundElement.innerText = data.total_found || 0;
 
                     if (document.getElementById('scorekeepers-section')) {
@@ -303,30 +293,21 @@
 
     // Add event listeners for dropdowns
     document.getElementById('min_games').addEventListener('change', function () {
-        var orgId = document.getElementById('organization').value;
         var topN = document.getElementById('top_n').value;
-        fetchContent(orgId, topN);
-    });
-
-    document.getElementById('organization').addEventListener('change', function () {
-        var orgId = document.getElementById('organization').value;
-        var topN = document.getElementById('top_n').value;
-        fetchContent(orgId, topN);
+        fetchContent(topN);
     });
 
     document.getElementById('top_n').addEventListener('change', function () {
-        var orgId = document.getElementById('organization').value;
         var topN = document.getElementById('top_n').value;
-        fetchContent(orgId, topN);
+        fetchContent(topN);
     });
 
     // Load initial data when page loads
     window.addEventListener('load', function() {
         const urlParams = new URLSearchParams(window.location.search);
-        const orgId = urlParams.get('org_id') || document.getElementById('organization').value;
         const topN = urlParams.get('top_n') || document.getElementById('top_n').value;
 
-        fetchContent(orgId, topN);
+        fetchContent(topN);
     });
 </script>
 {% endblock %}

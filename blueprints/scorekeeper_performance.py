@@ -1,7 +1,7 @@
 import logging
 from flask import Blueprint, render_template, request, jsonify, url_for
 from hockey_blast_common_lib.models import db, Organization, Level, Division, Season, Team, Human, Game, ScorekeeperSaveQuality
-from hockey_blast_common_lib.stats_models import OrgStatsScorekeeper, DivisionStatsScorekeeper
+from hockey_blast_common_lib.stats_models import OrgStatsScorekeeper
 from hockey_blast_common_lib.stats_utils import ALL_ORGS_ID
 from .scorekeeper_performance_dropdowns import filter_levels, filter_seasons, filter_teams, get_levels_for_scorekeeper_in_org, get_divisions_and_seasons
 import re
@@ -233,52 +233,45 @@ def filter_scorekeeper_performance():
             all_scorekeepers_results.sort(key=lambda x: (x['games_recorded']), reverse=True)
             all_scorekeepers_results = all_scorekeepers_results[:top_n]
         else:
-            # Show scorekeepers at the division level when org_id and level_id are provided
-            # For now, we'll handle this similarly to organization level since DivisionStatsScorekeeper exists
+            # Level-specific requests now fall back to organization-level stats
+            # since scorekeeper quality is independent of game level/division
             level = db.session.query(Level).filter(Level.id == level_id).first()
             level_name = level.level_name if level else ""
 
-            # Get divisions for this org and level
-            divisions = db.session.query(Division.id).filter(
-                Division.org_id == org_id,
-                Division.level_id == level_id
-            )
-
             if season_id:
-                divisions = divisions.filter(Division.season_id == season_id)
                 season = db.session.query(Season).filter(Season.id == season_id).first()
                 season_name = season.season_name if season else ""
 
-            division_ids = [div.id for div in divisions.all()]
+            # Use org-level scorekeeper stats (scorekeeper quality is org-wide)
+            query = db.session.query(OrgStatsScorekeeper).filter(
+                OrgStatsScorekeeper.org_id == org_id,
+                OrgStatsScorekeeper.games_recorded >= min_games
+            )
 
-            if division_ids:
-                query = db.session.query(DivisionStatsScorekeeper).filter(
-                    DivisionStatsScorekeeper.division_id.in_(division_ids),
-                    DivisionStatsScorekeeper.games_recorded >= min_games
-                )
+            if human_id:
+                query = query.filter(OrgStatsScorekeeper.human_id == human_id)
 
-                if human_id:
-                    query = query.filter(DivisionStatsScorekeeper.human_id == human_id)
+            org_stats = query.order_by(OrgStatsScorekeeper.sog_per_game_rank).all()
 
-                division_stats = query.order_by(DivisionStatsScorekeeper.sog_per_game_rank).all()
+            for stats in org_stats:
+                human = db.session.query(Human).filter(Human.id == stats.human_id).first()
+                if human:
+                    link_text = f"{human.first_name} {human.middle_name} {human.last_name}".strip()
+                    link = f'<a href="{url_for("human_stats.human_stats", human_id=human.id, top_n=20)}">{link_text}</a>'
+                    quality_data = get_scorekeeper_quality_data(stats.human_id)
+                    append_scorekeeper_performance_result(all_scorekeepers_results, stats, link, quality_data=quality_data)
 
-                for stats in division_stats:
-                    human = db.session.query(Human).filter(Human.id == stats.human_id).first()
-                    if human:
-                        link_text = f"{human.first_name} {human.middle_name} {human.last_name}".strip()
-                        link = f'<a href="{url_for("human_stats.human_stats", human_id=human.id, top_n=20)}">{link_text}</a>'
-                        quality_data = get_scorekeeper_quality_data(stats.human_id)
-                        append_scorekeeper_performance_result(all_scorekeepers_results, stats, link, quality_data=quality_data)
+                    if human_id and human_id == stats.human_id:
+                        context = f"{org_name} (org-wide)"
+                        if level_name:
+                            context += f" - {level_name} level requested"
+                        if season_name:
+                            context += f" - {season_name}"
+                        append_scorekeeper_performance_result(scorekeeper_performance_results, stats, context, quality_data=quality_data)
 
-                        if human_id and human_id == stats.human_id:
-                            context = f"{org_name} - {level_name}"
-                            if season_name:
-                                context += f" - {season_name}"
-                            append_scorekeeper_performance_result(scorekeeper_performance_results, stats, context, quality_data=quality_data)
-
-                # Apply proper sorting, then limit the results
-                all_scorekeepers_results.sort(key=lambda x: (x['games_recorded']), reverse=True)
-                all_scorekeepers_results = all_scorekeepers_results[:top_n]
+            # Apply proper sorting, then limit the results
+            all_scorekeepers_results.sort(key=lambda x: (x['games_recorded']), reverse=True)
+            all_scorekeepers_results = all_scorekeepers_results[:top_n]
 
     # Sort the final results before returning
     all_scorekeepers_results.sort(key=lambda x: (x['games_recorded']), reverse=True)
