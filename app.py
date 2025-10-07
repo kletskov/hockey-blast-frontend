@@ -15,7 +15,7 @@ import os
 import json
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from hockey_blast_common_lib.utils import get_fake_human_for_stats
+from hockey_blast_common_lib.utils import get_fake_human_for_stats, get_non_human_ids
 from datetime import datetime, timezone, timedelta
 import psycopg2
 import time
@@ -398,12 +398,20 @@ def _create_app(db_name):
                 else:
                         first_name = request.form.get('first_name')
                         last_name = request.form.get('last_name')
+
+                        # Get non-human IDs to filter out
+                        non_human_ids = get_non_human_ids(db.session)
+
                         query = db.session.query(Human)
 
                         if first_name:
                             query = query.filter(Human.first_name.ilike(f'%{first_name}%'))
                         if last_name:
                             query = query.filter(Human.last_name.ilike(f'%{last_name}%'))
+
+                        # Filter out non-human entities
+                        if non_human_ids:
+                            query = query.filter(~Human.id.in_(non_human_ids))
 
                         # Apply limit directly in the query
                         results = query.limit(MAX_HUMAN_SEARCH_RESULTS).all()

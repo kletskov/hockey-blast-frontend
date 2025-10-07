@@ -2,4 +2,4 @@
 -r requirements-base.txt
 
 # Production version - pinned to specific PyPI version
-hockey-blast-common-lib==0.1.56
+hockey-blast-common-lib==0.1.61
