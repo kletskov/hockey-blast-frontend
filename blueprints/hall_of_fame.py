@@ -12,7 +12,7 @@ def get_top_skaters_data(session, org_id, category, top_n_stats=10):
     top_players = session.query(OrgStatsSkater, Human).join(Human, Human.id == OrgStatsSkater.human_id).filter(
         OrgStatsSkater.org_id == org_id,
         OrgStatsSkater.human_id != fake_human_id,
-        OrgStatsSkater.games_played >= 50
+        OrgStatsSkater.games_participated >= 50
     ).order_by(getattr(OrgStatsSkater, category).desc()).limit(top_n_stats).all()
     
     return [
@@ -31,7 +31,7 @@ def get_top_goalies_data(session, org_id, category, top_n_stats=10):
         OrgStatsGoalie.human_id != fake_human_id,
         OrgStatsGoalie.human_id != 131183,
         OrgStatsGoalie.human_id != 131145,
-        OrgStatsGoalie.games_played >= 100
+        OrgStatsGoalie.games_participated >= 100
 
     ).order_by(getattr(OrgStatsGoalie, category).desc()).limit(top_n_stats).all()
     
@@ -51,7 +51,7 @@ def get_top_referees_data(session, org_id, category, top_n_stats=10):
         OrgStatsReferee.human_id != fake_human_id,
         OrgStatsReferee.human_id != 131183,
         OrgStatsReferee.human_id != 131145,
-        OrgStatsReferee.games_reffed >= 50
+        OrgStatsReferee.games_participated >= 50
     ).order_by(getattr(OrgStatsReferee, category).desc()).limit(top_n_stats).all()
     
     return [
@@ -68,7 +68,7 @@ def get_top_scorekeepers_data(session, org_id, category, top_n_stats=10):
     top_players = session.query(OrgStatsScorekeeper, Human).join(Human, Human.id == OrgStatsScorekeeper.human_id).filter(
         OrgStatsScorekeeper.org_id == org_id,
         OrgStatsScorekeeper.human_id != fake_human_id,
-        OrgStatsScorekeeper.games_recorded >= 50
+        OrgStatsScorekeeper.games_participated >= 50
     ).order_by(getattr(OrgStatsScorekeeper, category).desc()).limit(top_n_stats).all()
     
     return [
@@ -109,21 +109,21 @@ def hall_of_fame():
     top_n_stats = request.args.get('top_n', default=10)
   
     # Fetch top skaters in different categories
-    top_games_played_data = get_top_skaters_data(db.session, org_id, 'games_played', top_n_stats)
+    top_games_played_data = get_top_skaters_data(db.session, org_id, 'games_participated', top_n_stats)
     top_goals_data = get_top_skaters_data(db.session, org_id, 'goals', top_n_stats)
     top_points_data = get_top_skaters_data(db.session, org_id, 'points', top_n_stats)
     top_points_per_game_data = get_top_skaters_data(db.session, org_id, 'points_per_game', top_n_stats)
     top_penalties_per_game_data = get_top_skaters_data(db.session, org_id, 'penalties_per_game', top_n_stats)
     
     # Fetch top goalies in different categories
-    top_goalies_data = get_top_goalies_data(db.session, org_id, 'games_played', top_n_stats)
+    top_goalies_data = get_top_goalies_data(db.session, org_id, 'games_participated', top_n_stats)
     top_goalies_save_percentage_data = get_top_goalies_data(db.session, org_id, 'save_percentage', top_n_stats)
-    
+
     # Fetch top referees in different categories
-    top_referees_data = get_top_referees_data(db.session, org_id, 'games_reffed', top_n_stats)
-    
+    top_referees_data = get_top_referees_data(db.session, org_id, 'games_participated', top_n_stats)
+
     # Fetch top scorekeepers in different categories
-    top_scorekeepers_data = get_top_scorekeepers_data(db.session, org_id, 'games_recorded', top_n_stats)
+    top_scorekeepers_data = get_top_scorekeepers_data(db.session, org_id, 'games_participated', top_n_stats)
     
     humans_data = get_top_humans_data(db.session, org_id, top_n_stats)
     

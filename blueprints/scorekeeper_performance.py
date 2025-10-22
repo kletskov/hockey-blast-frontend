@@ -28,8 +28,8 @@ def append_scorekeeper_performance_result(scorekeeper_performance_results, stats
         human_id = stats.get('human_id')
         first_game_id = stats.get('first_game_id')
         last_game_id = stats.get('last_game_id')
-        games_recorded = stats.get('games_recorded')
-        games_recorded_rank = stats.get('games_recorded_rank')
+        games_participated = stats.get('games_participated')
+        games_participated_rank = stats.get('games_participated_rank')
         sog_given = stats.get('sog_given')
         sog_given_rank = stats.get('sog_given_rank')
         sog_per_game = stats.get('sog_per_game')
@@ -39,8 +39,8 @@ def append_scorekeeper_performance_result(scorekeeper_performance_results, stats
         human_id = stats.human_id
         first_game_id = stats.first_game_id
         last_game_id = stats.last_game_id
-        games_recorded = stats.games_recorded
-        games_recorded_rank = stats.games_recorded_rank
+        games_participated = stats.games_participated
+        games_participated_rank = stats.games_participated_rank
         sog_given = stats.sog_given
         sog_given_rank = stats.sog_given_rank
         sog_per_game = stats.sog_per_game
@@ -65,15 +65,15 @@ def append_scorekeeper_performance_result(scorekeeper_performance_results, stats
 
         # Calculate a basic quality score (lower = better quality, less suspicious clicking)
         # High spikes in short timeframes indicate potential button mashing
-        if games_recorded > 0:
+        if games_participated > 0:
             quality_score = f"{avg_saves_5sec:.1f}"
 
     scorekeeper_performance_results.append({
         'human_id': human_id,
         'context': context,
         'context_value': context_value,
-        'games_recorded': games_recorded,
-        'games_recorded_rank': format_rank_percentile(games_recorded_rank, total_in_rank),
+        'games_participated': games_participated,
+        'games_participated_rank': format_rank_percentile(games_participated_rank, total_in_rank),
         'sog_given': sog_given,
         'sog_given_rank': format_rank_percentile(sog_given_rank, total_in_rank),
         'sog_per_game': f"{sog_per_game:.2f}",
@@ -197,8 +197,8 @@ def filter_scorekeeper_performance():
                 append_scorekeeper_performance_result(scorekeeper_performance_results, stats, context, quality_data=quality_data)
 
             # Apply sorting, then min_games filter, then limit
-            scorekeeper_performance_results.sort(key=lambda x: (x['games_recorded']), reverse=True)
-            scorekeeper_performance_results = [r for r in scorekeeper_performance_results if r['games_recorded'] >= min_games]
+            scorekeeper_performance_results.sort(key=lambda x: (x['games_participated']), reverse=True)
+            scorekeeper_performance_results = [r for r in scorekeeper_performance_results if r['games_participated'] >= min_games]
             scorekeeper_performance_results = scorekeeper_performance_results[:top_n]
     else:
         # Get organization name
@@ -209,7 +209,7 @@ def filter_scorekeeper_performance():
             # Show all scorekeepers at the organization level when only org_id is provided
             query = db.session.query(OrgStatsScorekeeper).filter(
                 OrgStatsScorekeeper.org_id == org_id,
-                OrgStatsScorekeeper.games_recorded >= min_games
+                OrgStatsScorekeeper.games_participated >= min_games
             )
 
             if human_id:
@@ -230,7 +230,7 @@ def filter_scorekeeper_performance():
                         append_scorekeeper_performance_result(scorekeeper_performance_results, stats, org_name, quality_data=quality_data)
 
             # Apply proper sorting, then limit the results
-            all_scorekeepers_results.sort(key=lambda x: (x['games_recorded']), reverse=True)
+            all_scorekeepers_results.sort(key=lambda x: (x['games_participated']), reverse=True)
             all_scorekeepers_results = all_scorekeepers_results[:top_n]
         else:
             # Level-specific requests now fall back to organization-level stats
@@ -245,7 +245,7 @@ def filter_scorekeeper_performance():
             # Use org-level scorekeeper stats (scorekeeper quality is org-wide)
             query = db.session.query(OrgStatsScorekeeper).filter(
                 OrgStatsScorekeeper.org_id == org_id,
-                OrgStatsScorekeeper.games_recorded >= min_games
+                OrgStatsScorekeeper.games_participated >= min_games
             )
 
             if human_id:
@@ -270,11 +270,11 @@ def filter_scorekeeper_performance():
                         append_scorekeeper_performance_result(scorekeeper_performance_results, stats, context, quality_data=quality_data)
 
             # Apply proper sorting, then limit the results
-            all_scorekeepers_results.sort(key=lambda x: (x['games_recorded']), reverse=True)
+            all_scorekeepers_results.sort(key=lambda x: (x['games_participated']), reverse=True)
             all_scorekeepers_results = all_scorekeepers_results[:top_n]
 
     # Sort the final results before returning
-    all_scorekeepers_results.sort(key=lambda x: (x['games_recorded']), reverse=True)
+    all_scorekeepers_results.sort(key=lambda x: (x['games_participated']), reverse=True)
     all_scorekeepers_results = all_scorekeepers_results[:top_n]
 
     return jsonify({

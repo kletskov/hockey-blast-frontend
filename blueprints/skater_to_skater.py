@@ -191,8 +191,8 @@ def get_level_comparisons(human_id_1, human_id_2):
         if skater1_stats and skater2_stats:
             comparison = {
                 'level_name': level_names.get(level_id, 'Unknown Level'),
-                'skater1_games_played': skater1_stats.games_played,
-                'skater2_games_played': skater2_stats.games_played,
+                'skater1_games_played': skater1_stats.games_participated,
+                'skater2_games_played': skater2_stats.games_participated,
                 'skater1_goals_per_game': skater1_stats.goals_per_game,
                 'skater2_goals_per_game': skater2_stats.goals_per_game,
                 'skater1_assists_per_game': skater1_stats.assists_per_game,

@@ -67,55 +67,7 @@ def human_stats():
         games_data = db.session.query(Game.id, Game.date, Game.time).filter(Game.id.in_(game_ids_to_fetch)).all()
         games_cache = {game.id: game for game in games_data}
 
-    if org_stats:
-        if org_stats.games_skater > 0:
-            skater_first_game = games_cache.get(org_stats.first_game_id_skater)
-            skater_last_game = games_cache.get(org_stats.last_game_id_skater)
-            skater_first_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.first_game_id_skater)}'>{skater_first_game.date.strftime('%m/%d/%y')}</a>" if skater_first_game else None
-            skater_last_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.last_game_id_skater)}'>{skater_last_game.date.strftime('%m/%d/%y')}</a>" if skater_last_game else None
-            roles_data.append({
-                'role': f"Skater <a href='{url_for('skater_performance.skater_performance', human_id=human_id)}'>(See skater performance)</a>",
-                'games_count': org_stats.games_skater,
-                'rank': calculate_rank(org_stats.games_skater_rank, org_stats.skaters_in_rank),
-                'first_date': skater_first_game_link,
-                'last_date': skater_last_game_link
-            })
-        if org_stats.games_goalie > 0:
-            goalie_first_game = games_cache.get(org_stats.first_game_id_goalie)
-            goalie_last_game = games_cache.get(org_stats.last_game_id_goalie)
-            goalie_first_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.first_game_id_goalie)}'>{goalie_first_game.date.strftime('%m/%d/%y')}</a>" if goalie_first_game else None
-            goalie_last_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.last_game_id_goalie)}'>{goalie_last_game.date.strftime('%m/%d/%y')}</a>" if goalie_last_game else None
-            roles_data.append({
-                'role': f"Goalie <a href='{url_for('goalie_performance.goalie_performance', human_id=human_id)}'>(See goalie performance)</a>",
-                'games_count': org_stats.games_goalie,
-                'rank': calculate_rank(org_stats.games_goalie_rank, org_stats.goalies_in_rank),
-                'first_date': goalie_first_game_link,
-                'last_date': goalie_last_game_link
-            })
-        if org_stats.games_scorekeeper > 0:
-            scorekeeper_first_game = games_cache.get(org_stats.first_game_id_scorekeeper)
-            scorekeeper_last_game = games_cache.get(org_stats.last_game_id_scorekeeper)
-            scorekeeper_first_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.first_game_id_scorekeeper)}'>{scorekeeper_first_game.date.strftime('%m/%d/%y')}</a>" if scorekeeper_first_game else None
-            scorekeeper_last_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.last_game_id_scorekeeper)}'>{scorekeeper_last_game.date.strftime('%m/%d/%y')}</a>" if scorekeeper_last_game else None
-            roles_data.append({
-                'role': 'Scorekeeper',
-                'games_count': org_stats.games_scorekeeper,
-                'rank': calculate_rank(org_stats.games_scorekeeper_rank, org_stats.scorekeepers_in_rank),
-                'first_date': scorekeeper_first_game_link,
-                'last_date': scorekeeper_last_game_link
-            })
-        if org_stats.games_referee > 0:
-            referee_first_game = games_cache.get(org_stats.first_game_id_referee)
-            referee_last_game = games_cache.get(org_stats.last_game_id_referee)
-            referee_first_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.first_game_id_referee)}'>{referee_first_game.date.strftime('%m/%d/%y')}</a>" if referee_first_game else None
-            referee_last_game_link = f"<a href='{url_for('game_card.game_card', game_id=org_stats.last_game_id_referee)}'>{referee_last_game.date.strftime('%m/%d/%y')}</a>" if referee_last_game else None
-            roles_data.append({
-                'role': 'Referee',
-                'games_count': org_stats.games_referee,
-                'rank': calculate_rank(org_stats.games_referee_rank, org_stats.referees_in_rank),
-                'first_date': referee_first_game_link,
-                'last_date': referee_last_game_link
-            })
+    # Placeholder for org_stats - will populate roles_data after roster calculations
     # Pull recent rosters where this human was present (limit to improve performance)
     rosters = db.session.query(GameRoster, Game, Division).join(Game, GameRoster.game_id == Game.id).join(Division, Game.division_id == Division.id).filter(GameRoster.human_id == human_id).order_by(Game.date.desc(), Game.time.desc()).limit(1000).all()
     
@@ -166,6 +118,14 @@ def human_stats():
     # Extract first and last game dates for Goalie
     goalie_rosters_df = rosters_df[(rosters_df['role'].str.upper() == 'G') | (rosters_df['jersey_number'].str.upper() == 'G')]
 
+    goalie_first_game_date = goalie_rosters_df['game_date'].min() if not goalie_rosters_df.empty else None
+    goalie_last_game_date = goalie_rosters_df['game_date'].max() if not goalie_rosters_df.empty else None
+    goalie_first_game_id = goalie_rosters_df.loc[goalie_rosters_df['game_date'] == goalie_first_game_date, 'game_id'].values[0] if goalie_first_game_date else None
+    goalie_last_game_id = goalie_rosters_df.loc[goalie_rosters_df['game_date'] == goalie_last_game_date, 'game_id'].values[0] if goalie_last_game_date else None
+
+    # Prepare links for goalie first and last game dates
+    goalie_first_game_link = f"<a href='{url_for('game_card.game_card', game_id=goalie_first_game_id)}'>{goalie_first_game_date.strftime('%m/%d/%y')}</a>" if goalie_first_game_date else None
+    goalie_last_game_link = f"<a href='{url_for('game_card.game_card', game_id=goalie_last_game_id)}'>{goalie_last_game_date.strftime('%m/%d/%y')}</a>" if goalie_last_game_date else None
 
     # Extract first and last game dates for Player
     first_game_date = rosters_df['game_date'].min() if not rosters_df.empty else None
@@ -196,20 +156,99 @@ def human_stats():
     # Prepare links for first and last game dates
     scorekeeper_first_game_link = f"<a href='{url_for('game_card.game_card', game_id=scorekeeper_first_game_id)}'>{scorekeeper_first_game_date.strftime('%m/%d/%y')}</a>" if scorekeeper_first_game_date else None
     scorekeeper_last_game_link = f"<a href='{url_for('game_card.game_card', game_id=scorekeeper_last_game_id)}'>{scorekeeper_last_game_date.strftime('%m/%d/%y')}</a>" if scorekeeper_last_game_date else None
-    
-    overall_first_game_date = None
-    overall_last_game_date = None
 
-    overall_first_game_id = org_stats.first_game_id if org_stats else None
-    overall_last_game_id = org_stats.last_game_id if org_stats else None
-    overall_first_game_date = None
-    overall_last_game_date = None
-    if overall_first_game_id:
-        overall_first_game = games_cache.get(overall_first_game_id)
-        overall_first_game_date = overall_first_game.date if overall_first_game else None
-    if overall_last_game_id:
-        overall_last_game = games_cache.get(overall_last_game_id)
-        overall_last_game_date = overall_last_game.date if overall_last_game else None
+    # Query for Referee role
+    referee_games = db.session.query(Game).filter(
+        (Game.referee_1_id == human_id) | (Game.referee_2_id == human_id)
+    ).all()
+    referee_game_dates_list = [game.date for game in referee_games]
+    referee_first_game_date = min(referee_game_dates_list) if referee_game_dates_list else None
+    referee_last_game_date = max(referee_game_dates_list) if referee_game_dates_list else None
+    referee_first_game_id = None
+    referee_last_game_id = None
+    if referee_first_game_date:
+        for game in referee_games:
+            if game.date == referee_first_game_date:
+                referee_first_game_id = game.id
+                break
+    if referee_last_game_date:
+        for game in referee_games:
+            if game.date == referee_last_game_date:
+                referee_last_game_id = game.id
+                break
+
+    # Prepare links for referee first and last game dates
+    referee_first_game_link = f"<a href='{url_for('game_card.game_card', game_id=referee_first_game_id)}'>{referee_first_game_date.strftime('%m/%d/%y')}</a>" if referee_first_game_date else None
+    referee_last_game_link = f"<a href='{url_for('game_card.game_card', game_id=referee_last_game_id)}'>{referee_last_game_date.strftime('%m/%d/%y')}</a>" if referee_last_game_date else None
+
+    # Now populate roles_data with actual roster-based dates (not stale stats table dates)
+    if org_stats:
+        if org_stats.games_skater > 0:
+            roles_data.append({
+                'role': f"Skater <a href='{url_for('skater_performance.skater_performance', human_id=human_id)}'>(See skater performance)</a>",
+                'games_count': org_stats.games_skater,
+                'rank': calculate_rank(org_stats.games_skater_rank, org_stats.skaters_in_rank),
+                'first_date': skater_first_game_link,
+                'last_date': skater_last_game_link
+            })
+        if org_stats.games_goalie > 0:
+            roles_data.append({
+                'role': f"Goalie <a href='{url_for('goalie_performance.goalie_performance', human_id=human_id)}'>(See goalie performance)</a>",
+                'games_count': org_stats.games_goalie,
+                'rank': calculate_rank(org_stats.games_goalie_rank, org_stats.goalies_in_rank),
+                'first_date': goalie_first_game_link,
+                'last_date': goalie_last_game_link
+            })
+        if org_stats.games_scorekeeper > 0:
+            roles_data.append({
+                'role': 'Scorekeeper',
+                'games_count': org_stats.games_scorekeeper,
+                'rank': calculate_rank(org_stats.games_scorekeeper_rank, org_stats.scorekeepers_in_rank),
+                'first_date': scorekeeper_first_game_link,
+                'last_date': scorekeeper_last_game_link
+            })
+        if org_stats.games_referee > 0:
+            roles_data.append({
+                'role': 'Referee',
+                'games_count': org_stats.games_referee,
+                'rank': calculate_rank(org_stats.games_referee_rank, org_stats.referees_in_rank),
+                'first_date': referee_first_game_link,
+                'last_date': referee_last_game_link
+            })
+
+    # Determine overall first and last game dates from actual roster data
+    # This ensures we show the most up-to-date dates, not stale data from stats table
+    all_game_dates = []
+    all_game_ids_by_date = {}
+
+    # Collect dates from rosters_df (skater/goalie games)
+    if not rosters_df.empty:
+        for _, row in rosters_df.iterrows():
+            date = row['game_date'].date() if isinstance(row['game_date'], pd.Timestamp) else row['game_date']
+            all_game_dates.append(date)
+            if date not in all_game_ids_by_date:
+                all_game_ids_by_date[date] = row['game_id']
+
+    # Collect dates from scorekeeper games
+    if not scorekeeper_game_dates.empty:
+        for idx, date in enumerate(scorekeeper_game_dates):
+            date_obj = date.date() if isinstance(date, pd.Timestamp) else date
+            all_game_dates.append(date_obj)
+            if date_obj not in all_game_ids_by_date:
+                all_game_ids_by_date[date_obj] = scorekeeper_games[idx].id
+
+    # Collect dates from referee games
+    referee_game_dates_list = [game.date for game in referee_games]
+    for idx, date in enumerate(referee_game_dates_list):
+        all_game_dates.append(date)
+        if date not in all_game_ids_by_date:
+            all_game_ids_by_date[date] = referee_games[idx].id
+
+    # Determine overall first and last dates
+    overall_first_game_date = min(all_game_dates) if all_game_dates else None
+    overall_last_game_date = max(all_game_dates) if all_game_dates else None
+    overall_first_game_id = all_game_ids_by_date.get(overall_first_game_date) if overall_first_game_date else None
+    overall_last_game_id = all_game_ids_by_date.get(overall_last_game_date) if overall_last_game_date else None
 
     # Prepare links for overall first and last game dates
     overall_first_game_link = f"<a href='{url_for('game_card.game_card', game_id=overall_first_game_id)}'>{overall_first_game_date.strftime('%m/%d/%y')}</a>" if overall_first_game_date else None
@@ -330,14 +369,11 @@ def human_stats():
                     'wins_losses': f"{wins_formatted} {losses_formatted}",
                     'skater_to_skater_link': f"/skater_to_skater/?human_id_1={human_id}&human_id_2={opponent_id}"
                 })
-    
-        # Query for Referee role
-    referee_games = db.session.query(Game).filter(
-        (Game.referee_1_id == human_id) | (Game.referee_2_id == human_id)
-    ).all()
+
+    # Extract referee game dates for plotting (referee_games already queried earlier)
     referee_game_dates = [game.date for game in referee_games]
-    referee_game_dates = pd.to_datetime(referee_game_dates)  
-    
+    referee_game_dates = pd.to_datetime(referee_game_dates)
+
 
     # Prepare data for Plotly plot
     player_games_per_month = player_rosters_df['game_date'].dt.to_period('M').value_counts().sort_index()

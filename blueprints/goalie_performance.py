@@ -37,8 +37,8 @@ def append_goalie_performance_result(goalie_performance_results, stats, context,
         human_id = stats.get('human_id')
         first_game_id = stats.get('first_game_id')
         last_game_id = stats.get('last_game_id')
-        games_played = stats.get('games_played')
-        games_played_rank = stats.get('games_played_rank')
+        games_participated = stats.get('games_participated')
+        games_participated_rank = stats.get('games_participated_rank')
         goals_allowed = stats.get('goals_allowed')
         goals_allowed_rank = stats.get('goals_allowed_rank')
         goals_allowed_per_game = stats.get('goals_allowed_per_game')
@@ -51,8 +51,8 @@ def append_goalie_performance_result(goalie_performance_results, stats, context,
         human_id = stats.human_id
         first_game_id = stats.first_game_id
         last_game_id = stats.last_game_id
-        games_played = stats.games_played
-        games_played_rank = stats.games_played_rank
+        games_participated = stats.games_participated
+        games_participated_rank = stats.games_participated_rank
         goals_allowed = stats.goals_allowed
         goals_allowed_rank = stats.goals_allowed_rank
         goals_allowed_per_game = stats.goals_allowed_per_game
@@ -68,8 +68,8 @@ def append_goalie_performance_result(goalie_performance_results, stats, context,
         'human_id': human_id,
         'context': context,
         'context_value': context_value,
-        'games_played': games_played,
-        'games_played_rank': format_rank_percentile(games_played_rank, stats['total_in_rank'] if isinstance(stats, dict) else stats.total_in_rank),
+        'games_participated': games_participated,
+        'games_participated_rank': format_rank_percentile(games_participated_rank, stats['total_in_rank'] if isinstance(stats, dict) else stats.total_in_rank),
         'goals_allowed': goals_allowed,
         'goals_allowed_rank': format_rank_percentile(goals_allowed_rank, stats['total_in_rank'] if isinstance(stats, dict) else stats.total_in_rank, reverse=True),
         'goals_allowed_per_game': f"{goals_allowed_per_game:.2f}",
@@ -169,7 +169,7 @@ def filter_goalie_performance():
                 organization = db.session.query(Organization).filter(Organization.id == stats.org_id).first()
                 context = organization.organization_name
                 append_goalie_performance_result(goalie_performance_results, stats, context)
-            goalie_performance_results.sort(key=lambda x: (x['games_played']), reverse=True)
+            goalie_performance_results.sort(key=lambda x: (x['games_participated']), reverse=True)
     else:
         if level_id is None:
             if human_id:
@@ -185,7 +185,7 @@ def filter_goalie_performance():
                     for stats in level_stats:
                         context = level.level_name
                         append_goalie_performance_result(goalie_performance_results, stats, context)
-                goalie_performance_results.sort(key=lambda x: (x['games_played']), reverse=True)
+                goalie_performance_results.sort(key=lambda x: (x['games_participated']), reverse=True)
         else:
             if season_id is None:
                 if human_id:
@@ -256,8 +256,8 @@ def filter_goalie_performance():
                             append_goalie_performance_result(team_performance_results, stats, link)
 
     # Sort the results by last game date (descending) and first game date (ascending)
-    team_performance_results.sort(key=lambda x: (x['games_played']), reverse=True)
-    all_goalies_results.sort(key=lambda x: (x['games_played']), reverse=True)
+    team_performance_results.sort(key=lambda x: (x['games_participated']), reverse=True)
+    all_goalies_results.sort(key=lambda x: (x['games_participated']), reverse=True)
 
     return jsonify({
         'goalie_performance': goalie_performance_results,

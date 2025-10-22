@@ -108,23 +108,23 @@ def filter_penalties():
     if penalty_type == 'gm':
         penalties_data = db.session.query(stats_model, Human).join(Human, stats_model.human_id == Human.id).filter(
             getattr(stats_model, filter_column) == filter_value,
-            stats_model.games_played >= min_games,
+            stats_model.games_participated >= min_games,
             Human.id.in_(human_ids) if human_ids else True
         ).order_by(stats_model.gm_penalties_rank).limit(top_n_to_fetch).all()
         penalties_per_game_data = db.session.query(stats_model, Human).join(Human, stats_model.human_id == Human.id).filter(
             getattr(stats_model, filter_column) == filter_value,
-            stats_model.games_played >= min_games,
+            stats_model.games_participated >= min_games,
             Human.id.in_(human_ids) if human_ids else True
         ).order_by(stats_model.gm_penalties_per_game_rank).limit(top_n_to_fetch).all()
     else:
         penalties_data = db.session.query(stats_model, Human).join(Human, stats_model.human_id == Human.id).filter(
             getattr(stats_model, filter_column) == filter_value,
-            stats_model.games_played >= min_games,
+            stats_model.games_participated >= min_games,
             Human.id.in_(human_ids) if human_ids else True
         ).order_by(stats_model.penalties_rank).limit(top_n_to_fetch).all()
         penalties_per_game_data = db.session.query(stats_model, Human).join(Human, stats_model.human_id == Human.id).filter(
             getattr(stats_model, filter_column) == filter_value,
-            stats_model.games_played >= min_games,
+            stats_model.games_participated >= min_games,
             Human.id.in_(human_ids) if human_ids else True
         ).order_by(stats_model.penalties_per_game_rank).limit(top_n_to_fetch).all()
 

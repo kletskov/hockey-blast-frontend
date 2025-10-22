@@ -163,7 +163,7 @@
                                 <td style="color: black;">${item.context}</td>
                                 <td>${item.first_game}</td>
                                 <td>${item.last_game}</td>
-                                <td><strong style="color: black;">${item.games_played}</strong><br><span style="color: rgb(123, 0, 0);">${item.games_played_rank}</span></td>
+                                <td><strong style="color: black;">${item.games_participated}</strong><br><span style="color: rgb(123, 0, 0);">${item.games_participated_rank}</span></td>
                                 <td><strong style="color: black;">${item.points_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.points_per_game_rank}</span></td>
                                 <td><strong style="color: black;">${item.goals_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_per_game_rank}</span></td>
                                 <td><strong style="color: black;">${item.assists_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.assists_per_game_rank}</span></td>
@@ -185,13 +185,13 @@
                     document.getElementById('level-name').innerText = data.level_name;
                     document.getElementById('season-name').innerText = data.season_name;
                     data.team_performance.forEach(item => {
-                        if (item.games_played >= minGames) {
+                        if (item.games_participated >= minGames) {
                             const rowClass = String(item.human_id) === String(humanId) ? 'font-weight-bold highlight-row' : 'font-weight-bold';
                             teamPerformanceTableBody.innerHTML += `<tr class="${rowClass}">
                                 <td style="color: black;">${item.context}</td>
                                 <td>${item.first_game}</td>
                                 <td>${item.last_game}</td>
-                                <td><strong style="color: black;">${item.games_played}</strong><br><span style="color: rgb(123, 0, 0);">${item.games_played_rank}</span></td>
+                                <td><strong style="color: black;">${item.games_participated}</strong><br><span style="color: rgb(123, 0, 0);">${item.games_participated_rank}</span></td>
                                 <td><strong style="color: black;">${item.points_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.points_per_game_rank}</span></td>
                                 <td><strong style="color: black;">${item.goals_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_per_game_rank}</span></td>
                                 <td><strong style="color: black;">${item.assists_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.assists_per_game_rank}</span></td>
@@ -214,13 +214,13 @@
                     document.getElementById('level-name').innerText = data.level_name;
                     document.getElementById('season-name').innerText = data.season_name;
                     data.all_skaters.forEach(item => {
-                        if (item.games_played >= minGames) {
+                        if (item.games_participated >= minGames) {
                             const rowClass = String(item.human_id) === String(humanId) ? 'font-weight-bold highlight-row' : 'font-weight-bold';
                             allSkatersTableBody.innerHTML += `<tr class="${rowClass}">
                                 <td style="color: black;">${item.context}</td>
                                 <td>${item.first_game}</td>
                                 <td>${item.last_game}</td>
-                                <td><strong style="color: black;">${item.games_played}</strong><br><span style="color: rgb(123, 0, 0);">${item.games_played_rank}</span></td>
+                                <td><strong style="color: black;">${item.games_participated}</strong><br><span style="color: rgb(123, 0, 0);">${item.games_participated_rank}</span></td>
                                 <td><strong style="color: black;">${item.points_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.points_per_game_rank}</span></td>
                                 <td><strong style="color: black;">${item.goals_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_per_game_rank}</span></td>
                                 <td><strong style="color: black;">${item.assists_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.assists_per_game_rank}</span></td>

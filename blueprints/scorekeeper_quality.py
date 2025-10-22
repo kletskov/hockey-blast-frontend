@@ -38,7 +38,7 @@ def get_scorekeepers_with_quality_issues(min_games=10, limit=50):
     query = db.session.query(OrgStatsScorekeeper).filter(
         OrgStatsScorekeeper.org_id == ALL_ORGS_ID,
         OrgStatsScorekeeper.quality_score.isnot(None),
-        OrgStatsScorekeeper.games_recorded >= min_games
+        OrgStatsScorekeeper.games_participated >= min_games
     )
 
     # Order by quality score descending (worst quality first)
@@ -48,7 +48,7 @@ def get_scorekeepers_with_quality_issues(min_games=10, limit=50):
     total_count_query = db.session.query(OrgStatsScorekeeper).filter(
         OrgStatsScorekeeper.org_id == ALL_ORGS_ID,
         OrgStatsScorekeeper.quality_score.isnot(None),
-        OrgStatsScorekeeper.games_recorded >= min_games
+        OrgStatsScorekeeper.games_participated >= min_games
     )
 
     total_count = total_count_query.count()
@@ -63,7 +63,7 @@ def get_scorekeepers_with_quality_issues(min_games=10, limit=50):
         scorekeeper_data.append({
             'human_id': stats.human_id,
             'human_name': f"{human.first_name} {human.middle_name or ''} {human.last_name}".strip(),
-            'total_games_recorded': stats.games_recorded,
+            'total_games_recorded': stats.games_participated,
             'avg_max_saves_5sec': stats.avg_max_saves_per_5sec or 0,
             'avg_max_saves_20sec': stats.avg_max_saves_per_20sec or 0,
             'peak_saves_5sec': stats.peak_max_saves_per_5sec or 0,

@@ -362,19 +362,40 @@ def _create_app(db_name):
 
             # Fetch top performers for the last day
             daily_skater_points = db.session.query(OrgStatsDailySkater, Human, Organization).join(Human, OrgStatsDailySkater.human_id == Human.id).join(Organization, OrgStatsDailySkater.org_id == Organization.id).filter(OrgStatsDailySkater.points > 0, OrgStatsDailySkater.org_id != ALL_ORGS_ID).order_by(OrgStatsDailySkater.points.desc()).limit(top_n).all()
-            daily_goalie_games_played = db.session.query(OrgStatsDailyGoalie, Human, Organization).join(Human, OrgStatsDailyGoalie.human_id == Human.id).join(Organization, OrgStatsDailyGoalie.org_id == Organization.id).filter(OrgStatsDailyGoalie.games_played > 0, OrgStatsDailyGoalie.org_id != ALL_ORGS_ID).order_by(OrgStatsDailyGoalie.games_played.desc(), OrgStatsDailyGoalie.save_percentage.desc()).limit(top_n).all()
-            daily_referee_games_reffed = db.session.query(OrgStatsDailyReferee, Human, Organization).join(Human, OrgStatsDailyReferee.human_id == Human.id).join(Organization, OrgStatsDailyReferee.org_id == Organization.id).filter(OrgStatsDailyReferee.games_reffed > 0, OrgStatsDailyReferee.org_id != ALL_ORGS_ID).order_by(OrgStatsDailyReferee.games_reffed.desc(), (OrgStatsDailyReferee.gm_given + OrgStatsDailyReferee.penalties_given).desc()).limit(top_n).all()
+            daily_goalie_games_played = db.session.query(OrgStatsDailyGoalie, Human, Organization).join(Human, OrgStatsDailyGoalie.human_id == Human.id).join(Organization, OrgStatsDailyGoalie.org_id == Organization.id).filter(OrgStatsDailyGoalie.games_participated > 0, OrgStatsDailyGoalie.org_id != ALL_ORGS_ID).order_by(OrgStatsDailyGoalie.games_participated.desc(), OrgStatsDailyGoalie.save_percentage.desc()).limit(top_n).all()
+            daily_referee_games_reffed = db.session.query(OrgStatsDailyReferee, Human, Organization).join(Human, OrgStatsDailyReferee.human_id == Human.id).join(Organization, OrgStatsDailyReferee.org_id == Organization.id).filter(OrgStatsDailyReferee.games_participated > 0, OrgStatsDailyReferee.org_id != ALL_ORGS_ID).order_by(OrgStatsDailyReferee.games_participated.desc(), (OrgStatsDailyReferee.gm_given + OrgStatsDailyReferee.penalties_given).desc()).limit(top_n).all()
             daily_scorekeeper_games = db.session.query(OrgStatsDailyHuman, Human, Organization).join(Human, OrgStatsDailyHuman.human_id == Human.id).join(Organization, OrgStatsDailyHuman.org_id == Organization.id).filter(OrgStatsDailyHuman.games_scorekeeper > 0, OrgStatsDailyHuman.human_id != fake_human_id, OrgStatsDailyHuman.org_id != ALL_ORGS_ID).order_by(OrgStatsDailyHuman.games_scorekeeper.desc()).limit(top_n).all()
 
             # Fetch top performers for the last week
             weekly_skater_points = db.session.query(OrgStatsWeeklySkater, Human, Organization).join(Human, OrgStatsWeeklySkater.human_id == Human.id).join(Organization, OrgStatsWeeklySkater.org_id == Organization.id).filter(OrgStatsWeeklySkater.points > 0, OrgStatsWeeklySkater.org_id != ALL_ORGS_ID).order_by(OrgStatsWeeklySkater.points.desc()).limit(top_n).all()
-            weekly_goalie_games_played = db.session.query(OrgStatsWeeklyGoalie, Human, Organization).join(Human, OrgStatsWeeklyGoalie.human_id == Human.id).join(Organization, OrgStatsWeeklyGoalie.org_id == Organization.id).filter(OrgStatsWeeklyGoalie.games_played > 0, OrgStatsWeeklyGoalie.org_id != ALL_ORGS_ID).order_by(OrgStatsWeeklyGoalie.games_played.desc(), OrgStatsWeeklyGoalie.save_percentage.desc()).limit(top_n).all()
-            weekly_referee_games_reffed = db.session.query(OrgStatsWeeklyReferee, Human, Organization).join(Human, OrgStatsWeeklyReferee.human_id == Human.id).join(Organization, OrgStatsWeeklyReferee.org_id == Organization.id).filter(OrgStatsWeeklyReferee.games_reffed > 0, OrgStatsWeeklyReferee.org_id != ALL_ORGS_ID).order_by(OrgStatsWeeklyReferee.games_reffed.desc(), (OrgStatsWeeklyReferee.gm_given + OrgStatsWeeklyReferee.penalties_given).desc()).limit(top_n).all()
+            weekly_goalie_games_played = db.session.query(OrgStatsWeeklyGoalie, Human, Organization).join(Human, OrgStatsWeeklyGoalie.human_id == Human.id).join(Organization, OrgStatsWeeklyGoalie.org_id == Organization.id).filter(OrgStatsWeeklyGoalie.games_participated > 0, OrgStatsWeeklyGoalie.org_id != ALL_ORGS_ID).order_by(OrgStatsWeeklyGoalie.games_participated.desc(), OrgStatsWeeklyGoalie.save_percentage.desc()).limit(top_n).all()
+            weekly_referee_games_reffed = db.session.query(OrgStatsWeeklyReferee, Human, Organization).join(Human, OrgStatsWeeklyReferee.human_id == Human.id).join(Organization, OrgStatsWeeklyReferee.org_id == Organization.id).filter(OrgStatsWeeklyReferee.games_participated > 0, OrgStatsWeeklyReferee.org_id != ALL_ORGS_ID).order_by(OrgStatsWeeklyReferee.games_participated.desc(), (OrgStatsWeeklyReferee.gm_given + OrgStatsWeeklyReferee.penalties_given).desc()).limit(top_n).all()
             weekly_scorekeeper_games = db.session.query(OrgStatsWeeklyHuman, Human, Organization).join(Human, OrgStatsWeeklyHuman.human_id == Human.id).join(Organization, OrgStatsWeeklyHuman.org_id == Organization.id).filter(OrgStatsWeeklyHuman.games_scorekeeper > 0, OrgStatsWeeklyHuman.human_id != fake_human_id, OrgStatsWeeklyHuman.org_id != ALL_ORGS_ID).order_by(OrgStatsWeeklyHuman.games_scorekeeper.desc()).limit(top_n).all()
 
             # Fetch top current point streak performers (all-time stats) - only show if last game within 1 month
             one_month_ago = datetime.now() - timedelta(days=30)
             current_point_streak_skaters = db.session.query(OrgStatsSkater, Human, Organization).join(Human, OrgStatsSkater.human_id == Human.id).join(Organization, OrgStatsSkater.org_id == Organization.id).join(Game, OrgStatsSkater.last_game_id == Game.id).filter(OrgStatsSkater.current_point_streak > 0, OrgStatsSkater.org_id != ALL_ORGS_ID, Game.date >= one_month_ago).order_by(OrgStatsSkater.current_point_streak.desc(), OrgStatsSkater.current_point_streak_avg_points.desc()).limit(top_n).all()
+
+            # Fetch latest completed game per organization
+            from sqlalchemy import func
+            latest_completed_games = []
+            organizations = db.session.query(Organization).filter(Organization.id != ALL_ORGS_ID).all()
+            day_of_week_map = {1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat', 7: 'Sun'}
+
+            for org in organizations:
+                latest_game = db.session.query(Game).filter(
+                    Game.org_id == org.id,
+                    Game.status.startswith("Final")
+                ).order_by(Game.date.desc(), Game.time.desc()).first()
+
+                if latest_game:
+                    day_of_week = day_of_week_map.get(latest_game.day_of_week, '')
+                    date_time_str = f"{day_of_week} {latest_game.date.strftime('%m/%d/%y')} {latest_game.time.strftime('%I:%M%p')}"
+                    latest_completed_games.append({
+                        'org_name': org.organization_name,
+                        'game_id': latest_game.id,
+                        'date_time': date_time_str
+                    })
 
             if request.method == 'POST':
                 team_name = request.form.get('team_name')
@@ -431,14 +452,16 @@ def _create_app(db_name):
                                 last_scheduled=last_scheduled, last_scheduled_time=last_scheduled_time, last_played=last_played, last_played_time=last_played_time,
                                 daily_skater_points=daily_skater_points, daily_goalie_games_played=daily_goalie_games_played, daily_referee_games_reffed=daily_referee_games_reffed, daily_scorekeeper_games=daily_scorekeeper_games,
                                 weekly_skater_points=weekly_skater_points, weekly_goalie_games_played=weekly_goalie_games_played, weekly_referee_games_reffed=weekly_referee_games_reffed, weekly_scorekeeper_games=weekly_scorekeeper_games,
-                                current_point_streak_skaters=current_point_streak_skaters)
+                                current_point_streak_skaters=current_point_streak_skaters,
+                                latest_completed_games=latest_completed_games)
             return render_template('index.html',
                                 search_results=None,
                                 auth_data=auth_data,
                                 last_scheduled=last_scheduled, last_scheduled_time=last_scheduled_time, last_played=last_played, last_played_time=last_played_time,
                                 daily_skater_points=daily_skater_points, daily_goalie_games_played=daily_goalie_games_played, daily_referee_games_reffed=daily_referee_games_reffed, daily_scorekeeper_games=daily_scorekeeper_games,
                                 weekly_skater_points=weekly_skater_points, weekly_goalie_games_played=weekly_goalie_games_played, weekly_referee_games_reffed=weekly_referee_games_reffed, weekly_scorekeeper_games=weekly_scorekeeper_games,
-                                current_point_streak_skaters=current_point_streak_skaters)
+                                current_point_streak_skaters=current_point_streak_skaters,
+                                latest_completed_games=latest_completed_games)
         except Exception as e:
             error_info = {
                 "error": str(e),

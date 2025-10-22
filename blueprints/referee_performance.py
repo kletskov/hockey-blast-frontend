@@ -28,8 +28,8 @@ def append_referee_performance_result(referee_performance_results, stats, contex
         human_id = stats.get('human_id')
         first_game_id = stats.get('first_game_id')
         last_game_id = stats.get('last_game_id')
-        games_reffed = stats.get('games_reffed')
-        games_reffed_rank = stats.get('games_reffed_rank')
+        games_participated = stats.get('games_participated')
+        games_participated_rank = stats.get('games_participated_rank')
         penalties_given = stats.get('penalties_given')
         penalties_given_rank = stats.get('penalties_given_rank')
         penalties_per_game = stats.get('penalties_per_game')
@@ -43,8 +43,8 @@ def append_referee_performance_result(referee_performance_results, stats, contex
         human_id = stats.human_id
         first_game_id = stats.first_game_id
         last_game_id = stats.last_game_id
-        games_reffed = stats.games_reffed
-        games_reffed_rank = stats.games_reffed_rank
+        games_participated = stats.games_participated
+        games_participated_rank = stats.games_participated_rank
         penalties_given = stats.penalties_given
         penalties_given_rank = stats.penalties_given_rank
         penalties_per_game = stats.penalties_per_game
@@ -61,8 +61,8 @@ def append_referee_performance_result(referee_performance_results, stats, contex
         'human_id': human_id,
         'context': context,
         'context_value': context_value,
-        'games_reffed': games_reffed,
-        'games_reffed_rank': format_rank_percentile(games_reffed_rank, total_in_rank),
+        'games_participated': games_participated,
+        'games_participated_rank': format_rank_percentile(games_participated_rank, total_in_rank),
         'penalties_given': penalties_given,
         'penalties_given_rank': format_rank_percentile(penalties_given_rank, total_in_rank),
         'penalties_per_game': f"{penalties_per_game:.2f}",
@@ -157,8 +157,8 @@ def filter_referee_performance():
                 append_referee_performance_result(referee_performance_results, stats, context)
             
             # Apply sorting, then min_games filter, then limit
-            referee_performance_results.sort(key=lambda x: (x['games_reffed']), reverse=True)
-            referee_performance_results = [r for r in referee_performance_results if r['games_reffed'] >= min_games]
+            referee_performance_results.sort(key=lambda x: (x['games_participated']), reverse=True)
+            referee_performance_results = [r for r in referee_performance_results if r['games_participated'] >= min_games]
             referee_performance_results = referee_performance_results[:top_n]
     else:
         # Get organization name
@@ -169,7 +169,7 @@ def filter_referee_performance():
             # Show all referees at the organization level when only org_id is provided
             query = db.session.query(OrgStatsReferee).filter(
                 OrgStatsReferee.org_id == org_id,
-                OrgStatsReferee.games_reffed >= min_games
+                OrgStatsReferee.games_participated >= min_games
             )
 
             if human_id:
@@ -189,16 +189,16 @@ def filter_referee_performance():
                         append_referee_performance_result(referee_performance_results, stats, org_name)
             
             # Apply proper sorting, then limit the results
-            all_referees_results.sort(key=lambda x: (x['games_reffed']), reverse=True)
+            all_referees_results.sort(key=lambda x: (x['games_participated']), reverse=True)
             all_referees_results = all_referees_results[:top_n]
         elif season_id is None:
             # Show referees at the level when org_id and level_id are provided
             level = db.session.query(Level).filter(Level.id == level_id).first()
             level_name = level.level_name if level else ""
-            
+
             query = db.session.query(LevelStatsReferee).filter(
                 LevelStatsReferee.level_id == level_id,
-                LevelStatsReferee.games_reffed >= min_games
+                LevelStatsReferee.games_participated >= min_games
             )
 
             if human_id:
@@ -213,7 +213,7 @@ def filter_referee_performance():
             # Get all referees for this level for all_referees_results - no limit here
             level_stats = db.session.query(LevelStatsReferee).filter(
                 LevelStatsReferee.level_id == level_id,
-                LevelStatsReferee.games_reffed >= min_games
+                LevelStatsReferee.games_participated >= min_games
             ).order_by(LevelStatsReferee.penalties_per_game_rank).all()
 
             for stats in level_stats:
@@ -222,9 +222,9 @@ def filter_referee_performance():
                     link_text = f"{human.first_name} {human.middle_name} {human.last_name}".strip()
                     link = f'<a href="{url_for("human_stats.human_stats", human_id=human.id, top_n=20)}">{link_text}</a>'
                     append_referee_performance_result(all_referees_results, stats, link)
-                    
+
             # Apply proper sorting, then limit the results
-            all_referees_results.sort(key=lambda x: (x['games_reffed']), reverse=True)
+            all_referees_results.sort(key=lambda x: (x['games_participated']), reverse=True)
             all_referees_results = all_referees_results[:top_n]
         else:
             # Existing logic for when org_id, level_id, and season_id are all provided
@@ -249,7 +249,7 @@ def filter_referee_performance():
                         DivisionStatsReferee.division_id == division_id,
                         DivisionStatsReferee.human_id == human_id
                     ).first()
-                    
+
                     if human_stats:
                         context = f"{org_name} - {level_name} - {season_name}"
                         append_referee_performance_result(referee_performance_results, human_stats, context)
@@ -257,7 +257,7 @@ def filter_referee_performance():
                 # Fetch all referees for the selected division and season
                 all_referees_stats = db.session.query(DivisionStatsReferee).filter(
                     DivisionStatsReferee.division_id == division_id,
-                    DivisionStatsReferee.games_reffed >= min_games
+                    DivisionStatsReferee.games_participated >= min_games
                 ).order_by(DivisionStatsReferee.penalties_per_game_rank).all()
 
                 for stats in all_referees_stats:
@@ -268,7 +268,7 @@ def filter_referee_performance():
                         append_referee_performance_result(all_referees_results, stats, link)
 
     # Sort the final results before returning
-    all_referees_results.sort(key=lambda x: (x['games_reffed']), reverse=True)
+    all_referees_results.sort(key=lambda x: (x['games_participated']), reverse=True)
     all_referees_results = all_referees_results[:top_n]
 
     return jsonify({

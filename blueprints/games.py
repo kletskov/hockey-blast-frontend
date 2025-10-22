@@ -6,7 +6,7 @@ from datetime import datetime, date
 games_bp = Blueprint('games', __name__)
 
 DEFAULT_TOP_N = 50
-MAX_TOP_N = 200
+MAX_TOP_N = 2000
 
 @games_bp.route('/games', methods=['GET'])
 def games():
@@ -75,9 +75,11 @@ def filter_games():
 
     if game_status == 'completed':
         query = query.filter(Game.status.ilike("Final%")).order_by(Game.date.desc(), Game.time.desc())
-    else:
+    elif game_status == 'scheduled':
         today = date.today()
         query = query.filter(~Game.status.ilike("Final%"), Game.date >= today).order_by(Game.date.asc(), Game.time.asc())
+    elif game_status == 'all':
+        query = query.order_by(Game.date.desc(), Game.time.desc())
 
     if level_id:
         query = query.join(Division, Game.division_id == Division.id).filter(Division.level_id == level_id)

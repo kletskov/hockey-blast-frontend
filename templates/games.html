@@ -9,6 +9,7 @@
         <select id="game_status" name="game_status">
             <option value="completed" selected>Completed</option>
             <option value="scheduled">Scheduled</option>
+            <option value="all">All</option>
         </select>
         <label for="game_status">Games</label>
     </div>
@@ -66,7 +67,7 @@
             .then(response => response.json())
             .then(data => {
                 var gamesList = document.getElementById('games-list');
-                var header = gameStatus === 'completed' ? 'Final Score' : 'Location';
+                var header = gameStatus === 'completed' ? 'Final Score' : (gameStatus === 'all' ? 'Final Score / Location' : 'Location');
                 gamesList.innerHTML = `
                     <table class="table table-striped">
                         <thead>
@@ -82,9 +83,19 @@
                 `;
                 var tbody = gamesList.querySelector('tbody');
                 data.games.forEach(game => {
-                    var finalScoreOrLocation = gameStatus === 'completed' ?
-                        `<a href="/game_card?game_id=${game.id}">${game.final_score}</a>` :
-                        `<a href="${window.location.pathname}?org_id=&level_id=&season_id=&game_status=${gameStatus}&location=${encodeURIComponent(game.location)}">${game.location}</a>`;
+                    var finalScoreOrLocation;
+                    if (gameStatus === 'all') {
+                        // Show final score for completed games, location for scheduled games
+                        if (game.status && game.status.toLowerCase().startsWith('final')) {
+                            finalScoreOrLocation = `<a href="/game_card?game_id=${game.id}">${game.final_score}</a>`;
+                        } else {
+                            finalScoreOrLocation = `<a href="${window.location.pathname}?org_id=&level_id=&season_id=&game_status=all&location=${encodeURIComponent(game.location)}">${game.location}</a>`;
+                        }
+                    } else if (gameStatus === 'completed') {
+                        finalScoreOrLocation = `<a href="/game_card?game_id=${game.id}">${game.final_score}</a>`;
+                    } else {
+                        finalScoreOrLocation = `<a href="${window.location.pathname}?org_id=&level_id=&season_id=&game_status=${gameStatus}&location=${encodeURIComponent(game.location)}">${game.location}</a>`;
+                    }
                     tbody.innerHTML += `
                         <tr>
                             <td><a href="/game_card?game_id=${game.id}">${game.date} ${game.time}</a></td>

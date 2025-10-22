@@ -10,7 +10,7 @@ def compute_skater_stats(games, team_id):
     # Initialize stats dictionary
     stats_dict = defaultdict(lambda: {
         'human_id': None,
-        'games_played': 0,
+        'games_participated': 0,
         'goals': 0,
         'assists': 0,
         'penalties': 0,
@@ -90,7 +90,7 @@ def compute_skater_stats(games, team_id):
     for stat in games_played_stats:
         key = stat.human_id
         stats_dict[key]['human_id'] = key
-        stats_dict[key]['games_played'] += stat.games_played
+        stats_dict[key]['games_participated'] += stat.games_played
         stats_dict[key]['game_ids'].extend(stat.game_ids)
 
     for stat in goals_stats:
@@ -122,12 +122,12 @@ def compute_skater_stats(games, team_id):
 
     # Calculate per game stats
     for key, stat in stats_dict.items():
-        if stat['games_played'] > 0:
-            stat['goals_per_game'] = stat['goals'] / stat['games_played']
-            stat['points_per_game'] = stat['points'] / stat['games_played']
-            stat['assists_per_game'] = stat['assists'] / stat['games_played']
-            stat['penalties_per_game'] = stat['penalties'] / stat['games_played']
-            stat['gm_penalties_per_game'] = stat['gm_penalties'] / stat['games_played']
+        if stat['games_participated'] > 0:
+            stat['goals_per_game'] = stat['goals'] / stat['games_participated']
+            stat['points_per_game'] = stat['points'] / stat['games_participated']
+            stat['assists_per_game'] = stat['assists'] / stat['games_participated']
+            stat['penalties_per_game'] = stat['penalties'] / stat['games_participated']
+            stat['gm_penalties_per_game'] = stat['gm_penalties'] / stat['games_participated']
 
     # Populate first_game_id and last_game_id
     for key, stat in stats_dict.items():
@@ -149,7 +149,7 @@ def compute_skater_stats(games, team_id):
         for rank, (key, stat) in enumerate(sorted_stats, start=1):
             stats_dict[key][f'{field}_rank'] = rank
 
-    assign_ranks(stats_dict, 'games_played')
+    assign_ranks(stats_dict, 'games_participated')
     assign_ranks(stats_dict, 'goals')
     assign_ranks(stats_dict, 'assists')
     assign_ranks(stats_dict, 'points')
