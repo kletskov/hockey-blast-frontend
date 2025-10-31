@@ -2,12 +2,13 @@
 WSGI entry point for the Hockey Blast application.
 This file instantiates the application once and exposes it for Gunicorn to use.
 """
-import os
+
 import logging
+
 from dotenv import load_dotenv
 
 # Load production environment variables
-load_dotenv('.env.production')
+load_dotenv(".env.production")
 print("Loading environment variables from .env.production")
 
 # Set up basic logging

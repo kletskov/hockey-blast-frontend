@@ -22,6 +22,9 @@ gunicorn==23.0.0
 idna==3.10
 importlib_metadata==8.5.0
 importlib_resources==6.4.5
+isort==7.0.0
+pylint==4.0.2
+ruff==0.14.3
 itsdangerous==2.2.0
 jaraco.classes==3.4.0
 jaraco.context==6.0.1

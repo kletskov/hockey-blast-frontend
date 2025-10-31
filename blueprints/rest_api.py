@@ -1,11 +1,12 @@
-from flask import Blueprint, render_template
+from flask import Blueprint
 from flask_restx import Api
 
-rest_api_bp = Blueprint('rest_api', __name__)
+rest_api_bp = Blueprint("rest_api", __name__)
 
-@rest_api_bp.route('/bad')
+
+@rest_api_bp.route("/bad")
 def index():
-  return 'rest api root'
+    return "rest api root"
+
 
 api = Api(rest_api_bp, doc=False)
-
