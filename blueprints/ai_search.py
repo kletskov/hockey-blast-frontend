@@ -102,21 +102,96 @@ EVENTS:
 - get_penalties(human_id, limit=100) - Penalties taken
 
 Your task: Given the user's query, determine which tools to call and in what order.
-Respond with ONLY a JSON array of tool calls. Each tool call should be an object with:
-- "tool": tool name
-- "args": object with parameter names and values
 
-Example response format:
+HOW SEARCH WORKS:
+- search_humans_by_name searches BOTH first_name and last_name fields
+- It uses substring matching (case-insensitive)
+- Example: "Kletskov" will find "Pavel Kletskov", "Max Kletskov", etc.
+- Example: "Pavel" will find "Pavel Kletskov", "Pavel Smith", etc.
+
+CRITICAL RULES FOR NAME QUERIES:
+1. If user asks about "FirstName LastName", search by LAST NAME ONLY
+2. You will get multiple results (family members, same last name)
+3. LOOK at the search results and find the one matching the FIRST NAME
+4. Extract that person's human_id for subsequent calls
+5. NEVER invent or hallucinate human_id values
+
+WORKFLOW for "Show me Pavel Kletskov's stats":
+Step 1: Search by last name
 [
-  {{"tool": "search_humans_by_name", "args": {{"search_term": "Smith", "limit": 5}}}},
-  {{"tool": "get_org_skater_stats", "args": {{"human_id": 12345}}}}
+  {{"tool": "search_humans_by_name", "args": {{"search_term": "Kletskov", "limit": 10}}}}
 ]
+
+Step 2: After seeing results like:
+- {{"id": 117076, "first_name": "Pavel", "last_name": "Kletskov"}}
+- {{"id": 119999, "first_name": "Max", "last_name": "Kletskov"}}
+
+You pick the one where first_name matches "Pavel", which is id 117076
+
+Step 3: Use that ID:
+[
+  {{"tool": "get_org_skater_stats", "args": {{"human_id": 117076}}}}
+]
+
+For "Find players named Smith":
+[
+  {{"tool": "search_humans_by_name", "args": {{"search_term": "Smith", "limit": 20}}}}
+]
+Then STOP - user just wants the list, not detailed stats
 
 User query: {query}
 
-Respond with ONLY the JSON array, no other text:"""
+Respond with ONLY the JSON array for the FIRST step:"""
 
     return tools_description.format(query=user_query)
+
+
+def build_next_step_prompt(user_query: str, previous_results: list) -> str:
+    """
+    Build prompt for LLM to select next tools based on previous results.
+
+    Args:
+        user_query: Original user question
+        previous_results: Results from previous tool executions
+
+    Returns:
+        Formatted prompt for next tool selection
+    """
+    results_summary = json.dumps(previous_results, indent=2)
+
+    prompt = f"""You are continuing to answer this query: "{user_query}"
+
+You've already executed these tools and got these results:
+
+{results_summary}
+
+Based on these results, what tools should you call NEXT?
+
+CRITICAL RULES:
+1. If you got search results with multiple people, LOOK at first_name to match the query
+2. Use the CORRECT human_id from the person matching the first name in the query
+3. Do NOT just pick the first result - find the RIGHT person
+4. Do NOT invent IDs
+5. If you have all the data needed, return an empty array: []
+
+Example: Query was "Show me Pavel Kletskov's stats"
+- Search returned: [{{"id": 117076, "first_name": "Pavel"}}, {{"id": 119999, "first_name": "Max"}}]
+- You need Pavel, so use id 117076 (NOT 119999!)
+
+Available tools:
+- get_human_by_id(human_id)
+- get_org_human_stats(human_id)
+- get_org_skater_stats(human_id)
+- get_org_goalie_stats(human_id)
+- get_skater_games(human_id, limit)
+- get_goalie_games(human_id, limit)
+- get_goals_scored(human_id, limit)
+- get_assists(human_id, limit)
+- get_penalties(human_id, limit)
+
+Respond with ONLY a JSON array of tool calls, or [] if done:"""
+
+    return prompt
 
 
 def build_answer_prompt(user_query: str, tool_results: list) -> str:
@@ -228,7 +303,7 @@ def ai_search():
     AI search endpoint with text box interface.
 
     GET: Shows search form
-    POST: Processes search query with LLM + MCP tools
+    POST: Processes search query with LLM + MCP tools using multi-step agentic loop
     """
     if request.method == "GET":
         return render_template("ai_search.html")
@@ -240,35 +315,61 @@ def ai_search():
         return jsonify({"error": "Please provide a search query"}), 400
 
     try:
-        # Step 1: Ask LLM to select tools
         logger.info(f"AI Search Query: {user_query}")
-        tool_selection_prompt = build_tool_selection_prompt(user_query)
-        tool_selection_response = call_ollama(tool_selection_prompt)
-        logger.info(f"Tool selection response: {tool_selection_response}")
 
-        # Step 2: Parse tool calls
-        tool_calls = parse_tool_calls(tool_selection_response)
-        if not tool_calls:
-            return jsonify({
-                "error": "Could not determine which tools to use for your query",
-                "debug": {
-                    "query": user_query,
-                    "llm_response": tool_selection_response,
-                }
-            }), 500
+        all_tool_calls = []
+        all_tool_results = []
 
-        logger.info(f"Parsed tool calls: {tool_calls}")
+        # Multi-step agentic loop (max 3 iterations)
+        for iteration in range(3):
+            logger.info(f"Iteration {iteration + 1}")
 
-        # Step 3: Execute tools
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        tool_results = loop.run_until_complete(execute_tools(tool_calls))
-        loop.close()
+            # Step 1: Ask LLM to select next tools
+            if iteration == 0:
+                # First iteration: just the query
+                tool_selection_prompt = build_tool_selection_prompt(user_query)
+            else:
+                # Subsequent iterations: include previous results
+                tool_selection_prompt = build_next_step_prompt(
+                    user_query, all_tool_results
+                )
 
-        logger.info(f"Tool results: {tool_results}")
+            tool_selection_response = call_ollama(tool_selection_prompt)
+            logger.info(f"Tool selection response: {tool_selection_response}")
 
-        # Step 4: Ask LLM to generate answer from results
-        answer_prompt = build_answer_prompt(user_query, tool_results)
+            # Step 2: Parse tool calls
+            tool_calls = parse_tool_calls(tool_selection_response)
+
+            # Check if LLM says we're done (empty array or special marker)
+            if not tool_calls:
+                logger.info("LLM indicated no more tools needed")
+                break
+
+            logger.info(f"Parsed tool calls: {tool_calls}")
+            all_tool_calls.extend(tool_calls)
+
+            # Step 3: Execute tools
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            tool_results = loop.run_until_complete(execute_tools(tool_calls))
+            loop.close()
+
+            logger.info(f"Tool results: {tool_results}")
+            all_tool_results.extend(tool_results)
+
+            # Check if we got all the data we need
+            # (if all results are search results with 0 count, we're done)
+            all_empty_searches = all(
+                r.get("result", {}).get("count") == 0
+                for r in tool_results
+                if r.get("tool") == "search_humans_by_name"
+            )
+            if all_empty_searches:
+                logger.info("All searches returned 0 results, stopping")
+                break
+
+        # Step 4: Ask LLM to generate answer from all results
+        answer_prompt = build_answer_prompt(user_query, all_tool_results)
         final_answer = call_ollama(answer_prompt)
 
         logger.info(f"Final answer: {final_answer}")
@@ -278,8 +379,9 @@ def ai_search():
             "query": user_query,
             "answer": final_answer,
             "debug": {
-                "tool_calls": tool_calls,
-                "tool_results": tool_results,
+                "iterations": iteration + 1,
+                "tool_calls": all_tool_calls,
+                "tool_results": all_tool_results,
             }
         })
 
