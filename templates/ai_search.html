@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Hockey Search (Testing)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .badge {
+            background: #ff9800;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .search-form {
+            margin-top: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #2196F3;
+        }
+        button {
+            background: #2196F3;
+            color: white;
+            padding: 12px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #1976D2;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            border-left: 4px solid #2196F3;
+            display: none;
+        }
+        .result.show {
+            display: block;
+        }
+        .result h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .answer {
+            line-height: 1.6;
+            color: #444;
+            white-space: pre-wrap;
+        }
+        .error {
+            border-left-color: #f44336;
+            background: #ffebee;
+        }
+        .error h3 {
+            color: #f44336;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+        .loading.show {
+            display: block;
+        }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #2196F3;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .examples {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 4px;
+        }
+        .examples h4 {
+            margin-top: 0;
+            color: #1976D2;
+        }
+        .examples ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .examples li {
+            margin: 8px 0;
+            color: #555;
+            cursor: pointer;
+        }
+        .examples li:hover {
+            color: #2196F3;
+            text-decoration: underline;
+        }
+        .debug {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .debug h4 {
+            margin-top: 0;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI Hockey Search <span class="badge">TESTING</span></h1>
+        <p>Ask questions about hockey players and statistics in natural language.</p>
+
+        <div class="search-form">
+            <form id="searchForm">
+                <div class="form-group">
+                    <label for="query">Your Question:</label>
+                    <input
+                        type="text"
+                        id="query"
+                        name="query"
+                        placeholder="e.g., Show me Pavel Kletskov's career statistics"
+                        autocomplete="off"
+                        required
+                    >
+                </div>
+                <button type="submit" id="submitBtn">Search</button>
+            </form>
+        </div>
+
+        <div class="examples">
+            <h4>Example Questions:</h4>
+            <ul>
+                <li onclick="fillQuery(this)">Show me Pavel Kletskov's career statistics</li>
+                <li onclick="fillQuery(this)">How many goals has Pavel Kletskov scored?</li>
+                <li onclick="fillQuery(this)">Find players named Smith</li>
+                <li onclick="fillQuery(this)">What is Pavel Kletskov's skill level?</li>
+                <li onclick="fillQuery(this)">Show me Pavel Kletskov's last 10 games</li>
+            </ul>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Thinking...</p>
+        </div>
+
+        <div class="result" id="result">
+            <h3>Answer:</h3>
+            <div class="answer" id="answer"></div>
+            <div class="debug" id="debug"></div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('searchForm');
+        const queryInput = document.getElementById('query');
+        const submitBtn = document.getElementById('submitBtn');
+        const loadingDiv = document.getElementById('loading');
+        const resultDiv = document.getElementById('result');
+        const answerDiv = document.getElementById('answer');
+        const debugDiv = document.getElementById('debug');
+
+        function fillQuery(element) {
+            queryInput.value = element.textContent;
+            queryInput.focus();
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const query = queryInput.value.trim();
+            if (!query) return;
+
+            // Show loading, hide result
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Searching...';
+            loadingDiv.classList.add('show');
+            resultDiv.classList.remove('show');
+
+            try {
+                const formData = new FormData();
+                formData.append('query', query);
+
+                const response = await fetch('/ai-search', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                // Hide loading
+                loadingDiv.classList.remove('show');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Search';
+
+                if (response.ok) {
+                    // Show success result
+                    resultDiv.classList.remove('error');
+                    resultDiv.classList.add('show');
+                    answerDiv.textContent = data.answer;
+
+                    // Show debug info
+                    debugDiv.innerHTML = '<h4>Debug Info:</h4><pre>' +
+                        JSON.stringify(data.debug, null, 2) + '</pre>';
+                } else {
+                    // Show error
+                    resultDiv.classList.add('error');
+                    resultDiv.classList.add('show');
+                    answerDiv.textContent = data.error || 'An error occurred';
+
+                    if (data.debug) {
+                        debugDiv.innerHTML = '<h4>Debug Info:</h4><pre>' +
+                            JSON.stringify(data.debug, null, 2) + '</pre>';
+                    }
+                }
+            } catch (error) {
+                // Network error
+                loadingDiv.classList.remove('show');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Search';
+
+                resultDiv.classList.add('error');
+                resultDiv.classList.add('show');
+                answerDiv.textContent = 'Network error: ' + error.message;
+                debugDiv.innerHTML = '';
+            }
+        });
+    </script>
+</body>
+</html>

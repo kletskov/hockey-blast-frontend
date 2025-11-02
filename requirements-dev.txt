@@ -3,3 +3,4 @@
 
 # Development version - editable install from local path
 -e ../hockey-blast-common-lib/
+-e ../hockey-blast-mcp/

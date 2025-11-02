@@ -56,6 +56,7 @@ from api.v1.organizations import organizations_ns
 from api.v1.seasons import seasons_ns
 from blueprints.about import about_bp
 from blueprints.active_players import active_players_bp
+from blueprints.ai_search import ai_search_bp
 from blueprints.day_of_week import day_of_week_bp
 from blueprints.days_of_week import days_of_week_bp
 from blueprints.days_of_week_dropdowns import days_of_week_dropdowns_bp
@@ -320,6 +321,7 @@ def _create_app(db_name):
     app.register_blueprint(games_bp, url_prefix="/games")
     app.register_blueprint(dropdowns_bp, url_prefix="/dropdowns")
     app.register_blueprint(about_bp)
+    app.register_blueprint(ai_search_bp)
     app.register_blueprint(penalties_bp, url_prefix="/penalties")
     app.register_blueprint(skater_performance_bp, url_prefix="/skater_performance")
     app.register_blueprint(goalie_performance_bp, url_prefix="/goalie_performance")
@@ -358,7 +360,8 @@ def _create_app(db_name):
         user_agent = request.headers.get("User-Agent")
         client_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
 
-        if is_obviously_junk_user_agent(user_agent):
+        # Exempt /ai-search from bot detection (testing endpoint)
+        if request.path != "/ai-search" and is_obviously_junk_user_agent(user_agent):
             logger.warning(f"JUNK USER-AGENT: {user_agent} from {client_ip}")
             g.skip_logging = True
             return "", 204  # Silently drop or use 403 to block
