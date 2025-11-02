@@ -1,5 +1,5 @@
 """
-AI-powered search blueprint using Ollama LLM and MCP tools.
+AI-powered search blueprint using LLM (Ollama or AWS Bedrock Claude) and MCP tools.
 
 This endpoint is accessible but not linked from other pages (testing only).
 """
@@ -7,10 +7,16 @@ This endpoint is accessible but not linked from other pages (testing only).
 import asyncio
 import json
 import logging
+import os
 from flask import Blueprint, render_template, request, jsonify
 from hockey_blast_mcp.tools import human_basic, human_games, human_stats, human_events
 
 logger = logging.getLogger(__name__)
+
+# Configuration: Choose LLM provider
+LLM_PROVIDER = os.getenv("AI_SEARCH_LLM_PROVIDER", "ollama")  # "ollama" or "bedrock"
+BEDROCK_REGION = os.getenv("AWS_REGION", "us-west-2")
+BEDROCK_MODEL = os.getenv("AI_SEARCH_BEDROCK_MODEL", "anthropic.claude-3-5-sonnet-20241022-v2:0")
 
 ai_search_bp = Blueprint("ai_search", __name__)
 
@@ -35,6 +41,22 @@ TOOL_REGISTRY = {
     "get_points": human_events.get_points,
     "get_penalties": human_events.get_penalties,
 }
+
+
+def call_llm(prompt: str) -> str:
+    """
+    Call configured LLM provider (Ollama or AWS Bedrock).
+
+    Args:
+        prompt: User query
+
+    Returns:
+        LLM response as string
+    """
+    if LLM_PROVIDER == "bedrock":
+        return call_bedrock_claude(prompt)
+    else:
+        return call_ollama(prompt)
 
 
 def call_ollama(prompt: str, model: str = "llama3.1:8b") -> str:
@@ -64,6 +86,49 @@ def call_ollama(prompt: str, model: str = "llama3.1:8b") -> str:
         return response.json()["response"]
     except Exception as e:
         logger.error(f"Ollama API error: {e}")
+        raise
+
+
+def call_bedrock_claude(prompt: str) -> str:
+    """
+    Call AWS Bedrock with Claude model.
+
+    Args:
+        prompt: User query
+
+    Returns:
+        LLM response as string
+    """
+    import boto3
+
+    try:
+        bedrock = boto3.client(
+            service_name="bedrock-runtime",
+            region_name=BEDROCK_REGION
+        )
+
+        request_body = {
+            "anthropic_version": "bedrock-2023-05-31",
+            "max_tokens": 4096,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            "temperature": 0.0,  # Deterministic for tool selection
+        }
+
+        response = bedrock.invoke_model(
+            modelId=BEDROCK_MODEL,
+            body=json.dumps(request_body)
+        )
+
+        response_body = json.loads(response["body"].read())
+        return response_body["content"][0]["text"]
+
+    except Exception as e:
+        logger.error(f"AWS Bedrock API error: {e}")
         raise
 
 
@@ -334,7 +399,7 @@ def ai_search():
                     user_query, all_tool_results
                 )
 
-            tool_selection_response = call_ollama(tool_selection_prompt)
+            tool_selection_response = call_llm(tool_selection_prompt)
             logger.info(f"Tool selection response: {tool_selection_response}")
 
             # Step 2: Parse tool calls
@@ -370,7 +435,7 @@ def ai_search():
 
         # Step 4: Ask LLM to generate answer from all results
         answer_prompt = build_answer_prompt(user_query, all_tool_results)
-        final_answer = call_ollama(answer_prompt)
+        final_answer = call_llm(answer_prompt)
 
         logger.info(f"Final answer: {final_answer}")
 
