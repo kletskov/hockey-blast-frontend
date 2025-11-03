@@ -124,94 +124,80 @@ def build_tool_selection_prompt(user_query: str) -> str:
         Formatted prompt for tool selection
     """
     tools_description = """
-Available tools for hockey statistics queries:
+HOCKEY STATISTICS QUERY SYSTEM - ITERATION 1: ENTITY EXTRACTION
 
-SEMANTIC SEARCH (USE FIRST for entity disambiguation):
-- semantic_search(query, entity_type="all", limit=10) - AI-powered search for humans and teams
-  * entity_type: "human", "team", or "all" (default)
-  * Returns semantically similar entities even if query doesn't exactly match
-  * Example: "good guy" finds "Good Guys" team with 0.75 similarity
-  * Example: "pavel" finds "Pavel Kletskov" human
-  * USE THIS when query mentions team names, nicknames, or unclear entities
+DATABASE CONTAINS:
+- HUMANS: Players, goalies, referees, scorekeepers
+- TEAMS: Hockey teams that compete
+- ORGANIZATIONS: Leagues/venues (Sharks Ice, CAHA, etc.)
+- GAMES: Individual game records with detailed statistics
+
+MANDATORY TWO-PHASE QUERY PROCESSING:
+
+Phase 1 (THIS ITERATION): Extract ALL entities mentioned in the query
+Phase 2 (NEXT ITERATION): Use those entity IDs to answer the question
+
+WHY TWO PHASES?
+- Most queries have entities (WHO/WHERE) and questions (WHAT/HOW MANY)
+- Entities provide context needed to answer questions
+- Example: "goals by pavel" needs Pavel's ID before fetching goal stats
+
+YOUR TASK FOR THIS ITERATION:
+Identify and search for ALL entities mentioned in the query:
+- Player/human names (first, last, nicknames)
+- Team names (full names, nicknames like "good guys")
+- Organization names (if mentioned)
+
+ENTITY SEARCH TOOLS:
+- find_entities_by_name(query, limit) - PRIMARY TOOL: Searches ALL sources (substring + semantic)
+  * Searches humans AND teams simultaneously
+  * Combines substring matching + AI fuzzy matching
   * Returns: [{{"type": "team"/"human", "id": int, "name": str, "similarity": float}}]
+  * USE THIS FIRST for most queries
+- semantic_search(query, entity_type, limit) - Secondary: AI-powered search for specific entity type
+- search_humans_by_name(search_term, limit) - Secondary: Substring search for players only
+- search_teams_by_name(search_term, limit) - Secondary: Substring search for teams only
 
-BASIC INFO:
-- search_humans_by_name(search_term, limit=20) - Exact substring search for players by name
-- get_human_by_id(human_id) - Get player details by ID
-- get_human_skill_value(human_id) - Get player skill rating
+WORKED EXAMPLES:
 
-GAME PARTICIPATION:
-- get_all_games_for_human(human_id, limit=100) - All games played
-- get_skater_games(human_id, limit=100) - Games as skater
-- get_goalie_games(human_id, limit=100) - Games as goalie
-
-STATISTICS:
-- get_org_human_stats(human_id) - Overall participation stats
-- get_org_skater_stats(human_id) - Skater performance stats
-- get_org_goalie_stats(human_id) - Goalie performance stats
-
-EVENTS:
-- get_goals_scored(human_id, limit=100) - Goals scored
-- get_assists(human_id, limit=100) - Assists made
-- get_points(human_id, limit=100) - Goals + assists
-- get_penalties(human_id, limit=100) - Penalties taken
-
-Your task: Given the user's query, determine which tools to call and in what order.
-
-HOW SEARCH WORKS:
-- search_humans_by_name searches BOTH first_name and last_name fields
-- It uses substring matching (case-insensitive)
-- Example: "Kletskov" will find "Pavel Kletskov", "Max Kletskov", etc.
-- Example: "Pavel" will find "Pavel Kletskov", "Pavel Smith", etc.
-
-CRITICAL RULES FOR NAME QUERIES:
-1. If user asks about "FirstName LastName", search by LAST NAME ONLY
-2. You will get multiple results (family members, same last name)
-3. LOOK at the search results and find the one matching the FIRST NAME
-4. Extract that person's human_id for subsequent calls
-5. NEVER invent or hallucinate human_id values
-
-WORKFLOW for "Show me Pavel Kletskov's stats":
-Step 1: Search by last name
+Example 1:
+Query: "How many games has pavel kletskov played in sharks ice organization"
+Iteration 1 (Entity Extraction):
 [
-  {{"tool": "search_humans_by_name", "args": {{"search_term": "Kletskov", "limit": 10}}}}
+  {{"tool": "find_entities_by_name", "args": {{"query": "pavel kletskov", "limit": 10}}}},
+  {{"tool": "find_entities_by_name", "args": {{"query": "sharks ice", "limit": 5}}}}
 ]
+→ Finds: Pavel Kletskov (human_id: 123), Sharks Ice (org_id: 1)
 
-Step 2: After seeing results like:
-- {{"id": 117076, "first_name": "Pavel", "last_name": "Kletskov"}}
-- {{"id": 119999, "first_name": "Max", "last_name": "Kletskov"}}
-
-You pick the one where first_name matches "Pavel", which is id 117076
-
-Step 3: Use that ID:
+Example 2:
+Query: "who scored most goals for good guys all time"
+Iteration 1 (Entity Extraction):
 [
-  {{"tool": "get_org_skater_stats", "args": {{"human_id": 117076}}}}
+  {{"tool": "find_entities_by_name", "args": {{"query": "good guys", "limit": 5}}}}
 ]
+→ Finds: Good Guys (team_id: 708)
 
-For "Find players named Smith":
+Example 3:
+Query: "did good guys win any championships"
+Iteration 1 (Entity Extraction):
 [
-  {{"tool": "search_humans_by_name", "args": {{"search_term": "Smith", "limit": 20}}}}
+  {{"tool": "find_entities_by_name", "args": {{"query": "good guys", "limit": 5}}}}
 ]
-Then STOP - user just wants the list, not detailed stats
+→ Finds: Good Guys (team_id: 708)
 
-WORKFLOW for "Who is the good guy with longest tenure?" (TEAM disambiguation):
-Step 1: Use semantic search to understand "good guy" refers to a team
-[
-  {{"tool": "semantic_search", "args": {{"query": "good guy", "entity_type": "team", "limit": 5}}}}
-]
+Example 4:
+Query: "total number of goals in the database"
+Iteration 1 (Entity Extraction):
+[]
+→ No entities mentioned
 
-Step 2: After seeing results like:
-- {{"type": "team", "id": 708, "name": "Good Guys", "similarity": 0.7498}}
+CURRENT QUERY: "{query}"
 
-You identified the team_id is 708. Now you need to find the player with most games on that team.
-This requires custom SQL (not available as a tool), so you should explain that you found "Good Guys"
-team (id 708) but don't have a direct tool to find "player with most games on specific team".
+YOUR RESPONSE:
+Return JSON array of entity search tool calls for ALL entities in this query.
+If no entities mentioned, return empty array [].
 
-Alternative: Search for players on that team and manually count their games, but this is inefficient.
-
-User query: {query}
-
-Respond with ONLY the JSON array for the FIRST step:"""
+Format: [{{"tool": "tool_name", "args": {{"param": value}}}}]"""
 
     return tools_description.format(query=user_query)
 
@@ -229,38 +215,101 @@ def build_next_step_prompt(user_query: str, previous_results: list) -> str:
     """
     results_summary = json.dumps(previous_results, indent=2)
 
-    prompt = f"""You are continuing to answer this query: "{user_query}"
+    prompt = f"""HOCKEY STATISTICS QUERY SYSTEM - ITERATION 2+: ANSWER THE QUESTION
 
-You've already executed these tools and got these results:
+ORIGINAL QUERY: "{user_query}"
 
+ENTITIES FOUND IN ITERATION 1:
 {results_summary}
 
-Based on these results, what tools should you call NEXT?
+YOUR TASK:
+Now that we have entity IDs, use them to answer the original question.
 
-CRITICAL RULES:
-1. If you got search results with multiple people, LOOK at first_name to match the query
-2. Use the CORRECT human_id from the person matching the first name in the query
-3. Do NOT just pick the first result - find the RIGHT person
-4. Do NOT invent IDs
-5. If you have all the data needed, return an empty array: []
+AVAILABLE DATA RETRIEVAL TOOLS:
 
-Example: Query was "Show me Pavel Kletskov's stats"
-- Search returned: [{{"id": 117076, "first_name": "Pavel"}}, {{"id": 119999, "first_name": "Max"}}]
-- You need Pavel, so use id 117076 (NOT 119999!)
+Team Player Data (CRITICAL FOR "WHO SCORED MOST" QUESTIONS):
+- get_all_players_for_team(team_id) - Get ALL player IDs for a team
+- get_org_skater_stats_batch(human_ids) - Get goal/assist/point stats for list of players (ACCEPTS LIST!)
+  * Returns goals, assists, points, games_played for each player
+  * Results sorted by goals descending (highest first)
+  * USE THIS to answer "who scored most" questions!
 
-Available tools:
-- semantic_search(query, entity_type, limit) - AI search for humans/teams
-- get_human_by_id(human_id)
-- get_org_human_stats(human_id)
-- get_org_skater_stats(human_id)
-- get_org_goalie_stats(human_id)
-- get_skater_games(human_id, limit)
-- get_goalie_games(human_id, limit)
-- get_goals_scored(human_id, limit)
-- get_assists(human_id, limit)
-- get_penalties(human_id, limit)
+Team Data:
+- get_team_roster(team_id, limit) - Players sorted by games_played (NO goal stats!)
+- get_team_stats(team_id) - Win/loss/championships
+- get_team_by_id(team_id) - Basic team info
 
-Respond with ONLY a JSON array of tool calls, or [] if done:"""
+Human/Player Data (Single ID only):
+- get_org_skater_stats(human_id) - Goals/assists/points/penalties for ONE player
+- get_org_goalie_stats(human_id) - Saves/GAA/save percentage for ONE goalie
+- get_org_human_stats(human_id) - Games played, roles for ONE human
+- get_human_by_id(human_id) - Basic human info
+
+Leaderboards:
+- get_top_scorers(org_id, limit, min_games) - Top goal scorers org-wide
+- get_top_by_stat(stat_name, org_id, limit) - Top performers in any stat
+
+Game Data:
+- get_skater_games(human_id, limit) - Games played as skater
+- get_goalie_games(human_id, limit) - Games played as goalie
+
+Comparisons:
+- compare_two_skaters(human_id_1, human_id_2) - Head-to-head comparison
+
+WORKED EXAMPLES (Iteration 2):
+
+Example 1:
+Query: "How many games has pavel kletskov played in sharks ice organization"
+Previous Results: Pavel Kletskov (human_id: 123), Sharks Ice (org_id: 1)
+Iteration 2:
+[
+  {{"tool": "get_org_human_stats", "args": {{"human_id": 123}}}}
+]
+→ Returns games_participated count
+
+Example 2:
+Query: "who scored most goals for good guys all time"
+Previous Results: Good Guys (team_id: 708)
+Iteration 2 Step 1:
+[
+  {{"tool": "get_all_players_for_team", "args": {{"team_id": 708}}}}
+]
+→ Returns list of all player IDs: [117076, 114087, 111913, ...]
+Iteration 3 Step 2:
+[
+  {{"tool": "get_org_skater_stats_batch", "args": {{"human_ids": [117076, 114087, 111913]}}}}
+]
+→ Returns goal stats for all players, SORTED BY GOALS (highest first)
+
+Example 3:
+Query: "did good guys win any championships"
+Previous Results: Good Guys (team_id: 708)
+Iteration 2:
+[
+  {{"tool": "get_team_stats", "args": {{"team_id": 708}}}}
+]
+→ Returns championships_won count
+
+Example 4:
+Query: "who is the best performer in kletskov family"
+Previous Results: Pavel Kletskov (human_id: 123), Andrei Kletskov (human_id: 456)
+Iteration 2:
+[
+  {{"tool": "get_org_skater_stats", "args": {{"human_id": 123}}}},
+  {{"tool": "get_org_skater_stats", "args": {{"human_id": 456}}}}
+]
+→ Returns stats for both, allowing comparison
+
+CURRENT SITUATION:
+- Query: "{user_query}"
+- Entities found: See above
+- What tool(s) will get the data to answer this question?
+
+YOUR RESPONSE:
+Return JSON array of tool calls needed to answer the question.
+Return [] ONLY if you already have the complete answer data from iteration 1.
+
+Format: [{{"tool": "tool_name", "args": {{"param": value}}}}]"""
 
     return prompt
 
@@ -329,7 +378,23 @@ async def execute_tools(tool_calls: list) -> list:
         List of tool results
     """
     results = []
-    for call in tool_calls:
+    for i, call in enumerate(tool_calls):
+        # Validate tool call format
+        if not isinstance(call, dict):
+            logger.error(f"Tool call {i} is not a dict: {call}")
+            results.append({"error": f"Invalid tool call format: {call}"})
+            continue
+
+        if "tool" not in call:
+            logger.error(f"Tool call {i} missing 'tool' key: {call}")
+            results.append({"error": f"Missing tool name: {call}"})
+            continue
+
+        if "args" not in call:
+            logger.error(f"Tool call {i} missing 'args' key: {call}")
+            results.append({"error": f"Missing args for tool {call.get('tool')}: {call}"})
+            continue
+
         result = await execute_tool(call["tool"], call["args"])
         results.append(result)
     return results
@@ -390,31 +455,40 @@ def ai_search():
 
         all_tool_calls = []
         all_tool_results = []
+        completed_iterations = 0
 
-        # Multi-step agentic loop (max 3 iterations)
+        # Multi-step agentic loop (max 3 iterations, MINIMUM 2)
         for iteration in range(3):
             logger.info(f"Iteration {iteration + 1}")
 
             # Step 1: Ask LLM to select next tools
             if iteration == 0:
-                # First iteration: just the query
+                # First iteration: entity extraction
                 tool_selection_prompt = build_tool_selection_prompt(user_query)
             else:
-                # Subsequent iterations: include previous results
+                # Subsequent iterations: question answering
                 tool_selection_prompt = build_next_step_prompt(
                     user_query, all_tool_results
                 )
 
             tool_selection_response = call_llm(tool_selection_prompt)
-            logger.info(f"Tool selection response: {tool_selection_response}")
+            logger.info(f"Iteration {iteration + 1} - Tool selection response: {tool_selection_response}")
 
             # Step 2: Parse tool calls
             tool_calls = parse_tool_calls(tool_selection_response)
+            logger.info(f"Iteration {iteration + 1} - Parsed tool calls: {tool_calls}")
 
-            # Check if LLM says we're done (empty array or special marker)
+            # Check if LLM says we're done (empty array)
+            # BUT enforce minimum 2 iterations (entity extraction + question answering)
             if not tool_calls:
-                logger.info("LLM indicated no more tools needed")
-                break
+                if completed_iterations < 2:
+                    # Must complete at least 2 iterations total
+                    logger.info(f"Iteration {iteration + 1}: Empty tool calls but {completed_iterations} iterations completed, need minimum 2. Forcing continuation...")
+                    # Force continuation by repeating the prompt with emphasis
+                    continue
+                else:
+                    logger.info(f"Iteration {iteration + 1}: LLM indicated no more tools needed (after {completed_iterations} completed iterations)")
+                    break
 
             logger.info(f"Parsed tool calls: {tool_calls}")
             all_tool_calls.extend(tool_calls)
@@ -428,16 +502,19 @@ def ai_search():
             logger.info(f"Tool results: {tool_results}")
             all_tool_results.extend(tool_results)
 
-            # Check if we got all the data we need
-            # (if all results are search results with 0 count, we're done)
-            all_empty_searches = all(
-                r.get("result", {}).get("count") == 0
-                for r in tool_results
-                if r.get("tool") == "search_humans_by_name"
-            )
-            if all_empty_searches:
-                logger.info("All searches returned 0 results, stopping")
-                break
+            # Track that we completed an iteration with actual work
+            completed_iterations += 1
+
+            # Check if all searches returned 0 results (entity not found)
+            search_tools = [r for r in tool_results if "search" in r.get("tool", "").lower()]
+            if search_tools:  # Only check if we actually did searches
+                all_empty_searches = all(
+                    r.get("result", {}).get("count") == 0
+                    for r in search_tools
+                )
+                if all_empty_searches:
+                    logger.info("All searches returned 0 results, stopping")
+                    break
 
         # Step 4: Ask LLM to generate answer from all results
         answer_prompt = build_answer_prompt(user_query, all_tool_results)
