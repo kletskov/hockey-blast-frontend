@@ -9,7 +9,7 @@ import json
 import logging
 import os
 from flask import Blueprint, render_template, request, jsonify
-from hockey_blast_mcp.tools import human_basic, human_games, human_stats, human_events
+from hockey_blast_mcp.tools import get_all_tools
 
 logger = logging.getLogger(__name__)
 
@@ -20,27 +20,8 @@ BEDROCK_MODEL = os.getenv("AI_SEARCH_BEDROCK_MODEL", "anthropic.claude-3-5-sonne
 
 ai_search_bp = Blueprint("ai_search", __name__)
 
-
-# Tool registry mapping tool names to functions
-TOOL_REGISTRY = {
-    # Basic human info
-    "get_human_by_id": human_basic.get_human_by_id,
-    "search_humans_by_name": human_basic.search_humans_by_name,
-    "get_human_skill_value": human_basic.get_human_skill_value,
-    # Game participation
-    "get_all_games_for_human": human_games.get_all_games_for_human,
-    "get_skater_games": human_games.get_skater_games,
-    "get_goalie_games": human_games.get_goalie_games,
-    # Statistics
-    "get_org_human_stats": human_stats.get_org_human_stats,
-    "get_org_skater_stats": human_stats.get_org_skater_stats,
-    "get_org_goalie_stats": human_stats.get_org_goalie_stats,
-    # Events
-    "get_goals_scored": human_events.get_goals_scored,
-    "get_assists": human_events.get_assists,
-    "get_points": human_events.get_points,
-    "get_penalties": human_events.get_penalties,
-}
+# Tool registry - single source of truth from MCP tools package
+TOOL_REGISTRY = get_all_tools()
 
 
 def call_llm(prompt: str) -> str:
@@ -145,8 +126,17 @@ def build_tool_selection_prompt(user_query: str) -> str:
     tools_description = """
 Available tools for hockey statistics queries:
 
+SEMANTIC SEARCH (USE FIRST for entity disambiguation):
+- semantic_search(query, entity_type="all", limit=10) - AI-powered search for humans and teams
+  * entity_type: "human", "team", or "all" (default)
+  * Returns semantically similar entities even if query doesn't exactly match
+  * Example: "good guy" finds "Good Guys" team with 0.75 similarity
+  * Example: "pavel" finds "Pavel Kletskov" human
+  * USE THIS when query mentions team names, nicknames, or unclear entities
+  * Returns: [{{"type": "team"/"human", "id": int, "name": str, "similarity": float}}]
+
 BASIC INFO:
-- search_humans_by_name(search_term, limit=20) - Find players by name
+- search_humans_by_name(search_term, limit=20) - Exact substring search for players by name
 - get_human_by_id(human_id) - Get player details by ID
 - get_human_skill_value(human_id) - Get player skill rating
 
@@ -204,6 +194,21 @@ For "Find players named Smith":
 ]
 Then STOP - user just wants the list, not detailed stats
 
+WORKFLOW for "Who is the good guy with longest tenure?" (TEAM disambiguation):
+Step 1: Use semantic search to understand "good guy" refers to a team
+[
+  {{"tool": "semantic_search", "args": {{"query": "good guy", "entity_type": "team", "limit": 5}}}}
+]
+
+Step 2: After seeing results like:
+- {{"type": "team", "id": 708, "name": "Good Guys", "similarity": 0.7498}}
+
+You identified the team_id is 708. Now you need to find the player with most games on that team.
+This requires custom SQL (not available as a tool), so you should explain that you found "Good Guys"
+team (id 708) but don't have a direct tool to find "player with most games on specific team".
+
+Alternative: Search for players on that team and manually count their games, but this is inefficient.
+
 User query: {query}
 
 Respond with ONLY the JSON array for the FIRST step:"""
@@ -244,6 +249,7 @@ Example: Query was "Show me Pavel Kletskov's stats"
 - You need Pavel, so use id 117076 (NOT 119999!)
 
 Available tools:
+- semantic_search(query, entity_type, limit) - AI search for humans/teams
 - get_human_by_id(human_id)
 - get_org_human_stats(human_id)
 - get_org_skater_stats(human_id)
