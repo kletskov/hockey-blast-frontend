@@ -28,8 +28,7 @@ from hockey_blast_common_lib.stats_models import (OrgStatsDailyGoalie,
                                                   OrgStatsWeeklyReferee,
                                                   OrgStatsWeeklySkater)
 from hockey_blast_common_lib.stats_utils import ALL_ORGS_ID
-from hockey_blast_common_lib.utils import (get_fake_human_for_stats,
-                                           get_non_human_ids)
+from hockey_blast_common_lib.utils import get_non_human_ids
 from kinde_sdk.auth.oauth import OAuth
 from markupsafe import Markup
 
@@ -282,6 +281,10 @@ def _create_app(db_name):
 
     db.init_app(app)
 
+    # Load non-human IDs once for filtering (static data, loaded at startup)
+    with app.app_context():
+        non_human_ids = frozenset(get_non_human_ids(db.session))
+
     # Initialize Kinde OAuth with Flask framework - exactly like their example
     kinde_oauth = OAuth(framework="flask", app=app)
 
@@ -445,9 +448,6 @@ def _create_app(db_name):
                 last_played.time.strftime("%I:%M%p") if last_played else None
             )
 
-            # Get the fake human ID to exclude from scorekeeper stats
-            fake_human_id = get_fake_human_for_stats(db.session)
-
             # Fetch top performers for the last day
             daily_skater_points = (
                 db.session.query(OrgStatsDailySkater, Human, Organization)
@@ -455,6 +455,7 @@ def _create_app(db_name):
                 .join(Organization, OrgStatsDailySkater.org_id == Organization.id)
                 .filter(
                     OrgStatsDailySkater.points > 0,
+                    ~OrgStatsDailySkater.human_id.in_(non_human_ids),
                     OrgStatsDailySkater.org_id != ALL_ORGS_ID,
                 )
                 .order_by(OrgStatsDailySkater.points.desc())
@@ -467,6 +468,7 @@ def _create_app(db_name):
                 .join(Organization, OrgStatsDailyGoalie.org_id == Organization.id)
                 .filter(
                     OrgStatsDailyGoalie.games_participated > 0,
+                    ~OrgStatsDailyGoalie.human_id.in_(non_human_ids),
                     OrgStatsDailyGoalie.org_id != ALL_ORGS_ID,
                 )
                 .order_by(
@@ -482,6 +484,7 @@ def _create_app(db_name):
                 .join(Organization, OrgStatsDailyReferee.org_id == Organization.id)
                 .filter(
                     OrgStatsDailyReferee.games_participated > 0,
+                    ~OrgStatsDailyReferee.human_id.in_(non_human_ids),
                     OrgStatsDailyReferee.org_id != ALL_ORGS_ID,
                 )
                 .order_by(
@@ -500,7 +503,7 @@ def _create_app(db_name):
                 .join(Organization, OrgStatsDailyHuman.org_id == Organization.id)
                 .filter(
                     OrgStatsDailyHuman.games_scorekeeper > 0,
-                    OrgStatsDailyHuman.human_id != fake_human_id,
+                    ~OrgStatsDailyHuman.human_id.in_(non_human_ids),
                     OrgStatsDailyHuman.org_id != ALL_ORGS_ID,
                 )
                 .order_by(OrgStatsDailyHuman.games_scorekeeper.desc())
@@ -515,6 +518,7 @@ def _create_app(db_name):
                 .join(Organization, OrgStatsWeeklySkater.org_id == Organization.id)
                 .filter(
                     OrgStatsWeeklySkater.points > 0,
+                    ~OrgStatsWeeklySkater.human_id.in_(non_human_ids),
                     OrgStatsWeeklySkater.org_id != ALL_ORGS_ID,
                 )
                 .order_by(OrgStatsWeeklySkater.points.desc())
@@ -527,6 +531,7 @@ def _create_app(db_name):
                 .join(Organization, OrgStatsWeeklyGoalie.org_id == Organization.id)
                 .filter(
                     OrgStatsWeeklyGoalie.games_participated > 0,
+                    ~OrgStatsWeeklyGoalie.human_id.in_(non_human_ids),
                     OrgStatsWeeklyGoalie.org_id != ALL_ORGS_ID,
                 )
                 .order_by(
@@ -542,6 +547,7 @@ def _create_app(db_name):
                 .join(Organization, OrgStatsWeeklyReferee.org_id == Organization.id)
                 .filter(
                     OrgStatsWeeklyReferee.games_participated > 0,
+                    ~OrgStatsWeeklyReferee.human_id.in_(non_human_ids),
                     OrgStatsWeeklyReferee.org_id != ALL_ORGS_ID,
                 )
                 .order_by(
@@ -560,7 +566,7 @@ def _create_app(db_name):
                 .join(Organization, OrgStatsWeeklyHuman.org_id == Organization.id)
                 .filter(
                     OrgStatsWeeklyHuman.games_scorekeeper > 0,
-                    OrgStatsWeeklyHuman.human_id != fake_human_id,
+                    ~OrgStatsWeeklyHuman.human_id.in_(non_human_ids),
                     OrgStatsWeeklyHuman.org_id != ALL_ORGS_ID,
                 )
                 .order_by(OrgStatsWeeklyHuman.games_scorekeeper.desc())
@@ -577,6 +583,7 @@ def _create_app(db_name):
                 .join(Game, OrgStatsSkater.last_game_id == Game.id)
                 .filter(
                     OrgStatsSkater.current_point_streak > 0,
+                    ~OrgStatsSkater.human_id.in_(non_human_ids),
                     OrgStatsSkater.org_id != ALL_ORGS_ID,
                     Game.date >= one_month_ago,
                 )
@@ -655,9 +662,6 @@ def _create_app(db_name):
                 else:
                     first_name = request.form.get("first_name")
                     last_name = request.form.get("last_name")
-
-                    # Get non-human IDs to filter out
-                    non_human_ids = get_non_human_ids(db.session)
 
                     query = db.session.query(Human)
 
