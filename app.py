@@ -56,6 +56,7 @@ from api.v1.seasons import seasons_ns
 from blueprints.about import about_bp
 from blueprints.active_players import active_players_bp
 from blueprints.ai_search import ai_search_bp
+from blueprints.ai_chat import ai_chat_bp
 from blueprints.day_of_week import day_of_week_bp
 from blueprints.days_of_week import days_of_week_bp
 from blueprints.days_of_week_dropdowns import days_of_week_dropdowns_bp
@@ -325,6 +326,7 @@ def _create_app(db_name):
     app.register_blueprint(dropdowns_bp, url_prefix="/dropdowns")
     app.register_blueprint(about_bp)
     app.register_blueprint(ai_search_bp)
+    app.register_blueprint(ai_chat_bp)
     app.register_blueprint(penalties_bp, url_prefix="/penalties")
     app.register_blueprint(skater_performance_bp, url_prefix="/skater_performance")
     app.register_blueprint(goalie_performance_bp, url_prefix="/goalie_performance")
