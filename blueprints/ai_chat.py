@@ -98,20 +98,27 @@ def format_conversation_for_llm(conversation: list, current_query: str) -> str:
     return history_text
 
 
-def call_llm(prompt: str) -> str:
+def call_llm(prompt: str, conversation_history: list = None, system_prompt: str = None) -> str:
     """
     Call configured LLM provider (Ollama or AWS Bedrock).
 
     Args:
-        prompt: User query with conversation context
+        prompt: User query
+        conversation_history: List of previous messages with role and content
+        system_prompt: Optional system instruction (for Bedrock)
 
     Returns:
         LLM response as string
     """
     if LLM_PROVIDER == "bedrock":
-        return call_bedrock_claude(prompt)
+        return call_bedrock_claude(prompt, conversation_history, system_prompt)
     else:
-        return call_ollama(prompt)
+        # Ollama doesn't support message arrays, so format as text
+        if conversation_history:
+            formatted_history = format_conversation_for_llm(conversation_history, prompt)
+            full_prompt = system_prompt + "\n\n" + formatted_history if system_prompt else formatted_history
+            return call_ollama(full_prompt)
+        return call_ollama(system_prompt + "\n\n" + prompt if system_prompt else prompt)
 
 
 def call_ollama(prompt: str, model: str = "llama3.1:8b") -> str:
@@ -144,12 +151,14 @@ def call_ollama(prompt: str, model: str = "llama3.1:8b") -> str:
         raise
 
 
-def call_bedrock_claude(prompt: str) -> str:
+def call_bedrock_claude(prompt: str, conversation_history: list = None, system_prompt: str = None) -> str:
     """
     Call AWS Bedrock with Claude model.
 
     Args:
-        prompt: User query
+        prompt: Current user query
+        conversation_history: List of previous messages with role and content
+        system_prompt: Optional system instruction (separate from conversation)
 
     Returns:
         LLM response as string
@@ -162,17 +171,33 @@ def call_bedrock_claude(prompt: str) -> str:
             region_name=BEDROCK_REGION
         )
 
+        # Build messages array from conversation history
+        messages = []
+        if conversation_history:
+            for msg in conversation_history:
+                # Only include user and assistant messages (skip any with debug info)
+                if msg["role"] in ["user", "assistant"]:
+                    messages.append({
+                        "role": msg["role"],
+                        "content": msg["content"]
+                    })
+
+        # Add current prompt as user message
+        messages.append({
+            "role": "user",
+            "content": prompt
+        })
+
         request_body = {
             "anthropic_version": "bedrock-2023-05-31",
             "max_tokens": 4096,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
+            "messages": messages,
             "temperature": 0.0,  # Deterministic for tool selection
         }
+
+        # Add system prompt if provided
+        if system_prompt:
+            request_body["system"] = system_prompt
 
         response = bedrock.invoke_model(
             modelId=BEDROCK_MODEL,
@@ -276,15 +301,13 @@ Iteration 1 (Entity Extraction):
 []
 → No entities mentioned
 
-CURRENT QUERY: "{query}"
-
 YOUR RESPONSE:
 Return JSON array of entity search tool calls for ALL entities in this query.
 If no entities mentioned, return empty array [].
 
 Format: [{{"tool": "tool_name", "args": {{"param": value}}}}]"""
 
-    return tools_description.format(query=user_query)
+    return tools_description
 
 
 def build_next_step_prompt(user_query: str, previous_results: list) -> str:
@@ -302,8 +325,6 @@ def build_next_step_prompt(user_query: str, previous_results: list) -> str:
 
     prompt = f"""HOCKEY STATISTICS QUERY SYSTEM - ITERATION 2+: ANSWER THE QUESTION
 
-ORIGINAL QUERY: "{user_query}"
-
 ENTITIES FOUND IN ITERATION 1:
 {results_summary}
 
@@ -312,31 +333,39 @@ Now that we have entity IDs, use them to answer the original question.
 
 AVAILABLE DATA RETRIEVAL TOOLS:
 
-Team Player Data (CRITICAL FOR "WHO SCORED MOST" QUESTIONS):
-- get_all_players_for_team(team_id) - Get ALL player IDs for a team
-- get_org_skater_stats_batch(human_ids) - Get goal/assist/point stats for list of players (ACCEPTS LIST!)
-  * Returns goals, assists, points, games_played for each player
+Team Player Data (CRITICAL FOR "WHO SCORED MOST FOR TEAM X" QUESTIONS):
+- get_all_players_for_teams(team_ids) - Get ALL player IDs for one or more teams
+- get_org_skater_team_stats_batch(human_ids, team_id) - **CRITICAL: USE THIS for team-specific scoring queries!**
+  * Returns goals/assists/points SCOPED TO A SPECIFIC TEAM (not all-time!)
   * Results sorted by goals descending (highest first)
-  * USE THIS to answer "who scored most" questions!
+  * REQUIRED when query mentions "for team X" or "while on team Y"
+  * Example: "who scored most for Good Guys" → use this with team_id=708
+- get_org_skaters_stats(human_ids) - All-time stats across ALL teams (use only for career totals!)
+  * DO NOT use for team-specific queries
+  * Only use when question asks about "career", "all-time", or doesn't mention specific team
 
 Team Data:
-- get_team_roster(team_id, limit) - Players sorted by games_played (NO goal stats!)
-- get_team_stats(team_id) - Win/loss/championships
-- get_team_by_id(team_id) - Basic team info
+- get_teams_rosters(team_ids, limit) - Players sorted by games_played (NO goal stats!)
+- get_teams_stats(team_ids) - Win/loss/championships
+- get_teams_by_ids(team_ids) - Basic team info
 
-Human/Player Data (Single ID only):
-- get_org_skater_stats(human_id) - Goals/assists/points/penalties for ONE player
-- get_org_goalie_stats(human_id) - Saves/GAA/save percentage for ONE goalie
-- get_org_human_stats(human_id) - Games played, roles for ONE human
-- get_human_by_id(human_id) - Basic human info
+Human/Player Data:
+- get_org_skaters_stats(human_ids) - Goals/assists/points/penalties (batch capable)
+- get_org_goalies_stats(human_ids) - Saves/GAA/save percentage (batch capable)
+- get_org_humans_stats(human_ids) - Games played, roles (batch capable)
+- get_humans_by_ids(human_ids) - Basic human info (batch capable)
+- get_teams_for_human(human_id) - **USE FOR "WHAT TEAMS" QUERIES!** Get all teams a player has played for
+  * Returns team roster history with games_played, roles (G/C/A/S), date ranges
+  * REQUIRED when query asks "what teams", "which teams", "where did X play", "team history"
+  * Example: "what teams did pavel play for" → use this with human_id
 
 Leaderboards:
 - get_top_scorers(org_id, limit, min_games) - Top goal scorers org-wide
 - get_top_by_stat(stat_name, org_id, limit) - Top performers in any stat
 
 Game Data:
-- get_skater_games(human_id, limit) - Games played as skater
-- get_goalie_games(human_id, limit) - Games played as goalie
+- get_skaters_games(human_ids, limit) - Games played as skater (batch capable)
+- get_goalies_games(human_ids, limit) - Games played as goalie (batch capable)
 
 Comparisons:
 - compare_two_skaters(human_id_1, human_id_2) - Head-to-head comparison
@@ -348,7 +377,7 @@ Query: "How many games has pavel kletskov played in sharks ice organization"
 Previous Results: Pavel Kletskov (human_id: 123), Sharks Ice (org_id: 1)
 Iteration 2:
 [
-  {{"tool": "get_org_human_stats", "args": {{"human_id": 123}}}}
+  {{"tool": "get_org_humans_stats", "args": {{"human_ids": 123}}}}
 ]
 → Returns games_participated count
 
@@ -357,21 +386,21 @@ Query: "who scored most goals for good guys all time"
 Previous Results: Good Guys (team_id: 708)
 Iteration 2 Step 1:
 [
-  {{"tool": "get_all_players_for_team", "args": {{"team_id": 708}}}}
+  {{"tool": "get_all_players_for_teams", "args": {{"team_ids": 708}}}}
 ]
 → Returns list of all player IDs: [117076, 114087, 111913, ...]
 Iteration 3 Step 2:
 [
-  {{"tool": "get_org_skater_stats_batch", "args": {{"human_ids": [117076, 114087, 111913]}}}}
+  {{"tool": "get_org_skater_team_stats_batch", "args": {{"human_ids": [117076, 114087, 111913], "team_id": 708}}}}
 ]
-→ Returns goal stats for all players, SORTED BY GOALS (highest first)
+→ Returns goal stats for all players WHILE ON THIS TEAM, SORTED BY GOALS (highest first)
 
 Example 3:
 Query: "did good guys win any championships"
 Previous Results: Good Guys (team_id: 708)
 Iteration 2:
 [
-  {{"tool": "get_team_stats", "args": {{"team_id": 708}}}}
+  {{"tool": "get_teams_stats", "args": {{"team_ids": 708}}}}
 ]
 → Returns championships_won count
 
@@ -380,15 +409,9 @@ Query: "who is the best performer in kletskov family"
 Previous Results: Pavel Kletskov (human_id: 123), Andrei Kletskov (human_id: 456)
 Iteration 2:
 [
-  {{"tool": "get_org_skater_stats", "args": {{"human_id": 123}}}},
-  {{"tool": "get_org_skater_stats", "args": {{"human_id": 456}}}}
+  {{"tool": "get_org_skaters_stats", "args": {{"human_ids": [123, 456]}}}}
 ]
-→ Returns stats for both, allowing comparison
-
-CURRENT SITUATION:
-- Query: "{user_query}"
-- Entities found: See above
-- What tool(s) will get the data to answer this question?
+→ Returns stats for both in single call, allowing comparison
 
 YOUR RESPONSE:
 Return JSON array of tool calls needed to answer the question.
@@ -414,15 +437,27 @@ def build_answer_prompt(user_query: str, tool_results: list) -> str:
 
     prompt = f"""You are a helpful hockey statistics assistant.
 
-The user asked: "{user_query}"
-
 I executed these tools and got the following data:
 
 {results_json}
 
-Please provide a clear, concise answer to the user's question based on this data.
-Format numbers appropriately (e.g., "0.50 goals per game" not "0.5").
-If the data shows the user wasn't found or has no stats, say so politely.
+IMPORTANT INSTRUCTIONS:
+1. Provide a clear, concise answer to the user's question based on this data.
+2. Format numbers appropriately (e.g., "0.50 goals per game" not "0.5").
+3. If the data shows the user wasn't found or has no stats, say so politely.
+4. **CRITICAL - ENTITY LINKING**: When you mention ANY entity, you MUST copy the link from the data EXACTLY as shown:
+
+   EXAMPLE:
+   If the data contains: "human_link": "[Pavel Kletskov](https://hockey-blast.com/skater_performance/?human_id=117076)"
+   Then write: "[Pavel Kletskov](https://hockey-blast.com/skater_performance/?human_id=117076) has 292 goals..."
+
+   NOT: "Pavel Kletskov has 292 goals..."  (WRONG - missing link!)
+
+   - For players: Copy the ENTIRE "human_link" value exactly
+   - For teams: Copy the ENTIRE "team_link" value exactly
+   - For games: Copy the ENTIRE "first_game_link" or "last_game_link" or "game_link" value exactly
+   - These are pre-formatted markdown links - copy them character-for-character
+   - ALWAYS include the link when mentioning the entity name
 
 Answer:"""
 
@@ -541,14 +576,21 @@ def send_message():
         return jsonify({"error": "Please provide a message"}), 400
 
     try:
-        logger.info(f"AI Chat Message: {user_message}")
+        print(f"\n====== AI Chat Message: {user_message} ======")
 
         # Add user message to conversation
         add_to_conversation("user", user_message)
 
-        # Get conversation history and format for LLM
+        # Get conversation history (exclude current message for context)
         conversation = get_conversation_history()
-        query_with_context = format_conversation_for_llm(conversation[:-1], user_message)  # Exclude current message
+        conversation_context = conversation[:-1]  # All messages before current
+
+        print(f"Conversation history length: {len(conversation_context)}")
+        if conversation_context:
+            print(f"Last context message role: {conversation_context[-1].get('role')}")
+            print(f"Last context message content preview: {conversation_context[-1].get('content')[:100] if len(conversation_context[-1].get('content', '')) > 100 else conversation_context[-1].get('content')}")
+        else:
+            print("No conversation history - this is the first message")
 
         all_tool_calls = []
         all_tool_results = []
@@ -561,14 +603,25 @@ def send_message():
             # Step 1: Ask LLM to select next tools
             if iteration == 0:
                 # First iteration: entity extraction
-                tool_selection_prompt = build_tool_selection_prompt(query_with_context)
+                # Use tool selection prompt as system instruction
+                system_instructions = build_tool_selection_prompt(user_message)
+                # For Bedrock: pass conversation history + current query
+                # The system instructions are separate
+                tool_selection_response = call_llm(
+                    user_message,
+                    conversation_history=conversation_context,
+                    system_prompt=system_instructions
+                )
             else:
                 # Subsequent iterations: question answering
-                tool_selection_prompt = build_next_step_prompt(
-                    query_with_context, all_tool_results
+                # Build prompt with tool results
+                system_instructions = build_next_step_prompt(user_message, all_tool_results)
+                tool_selection_response = call_llm(
+                    user_message,
+                    conversation_history=conversation_context,
+                    system_prompt=system_instructions
                 )
 
-            tool_selection_response = call_llm(tool_selection_prompt)
             logger.info(f"Iteration {iteration + 1} - Tool selection response: {tool_selection_response}")
 
             # Step 2: Parse tool calls
@@ -614,8 +667,12 @@ def send_message():
                     break
 
         # Step 4: Ask LLM to generate answer from all results
-        answer_prompt = build_answer_prompt(query_with_context, all_tool_results)
-        final_answer = call_llm(answer_prompt)
+        answer_system_prompt = build_answer_prompt(user_message, all_tool_results)
+        final_answer = call_llm(
+            user_message,
+            conversation_history=conversation_context,
+            system_prompt=answer_system_prompt
+        )
 
         logger.info(f"Final answer: {final_answer}")
 
