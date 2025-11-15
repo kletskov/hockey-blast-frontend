@@ -366,6 +366,14 @@ Leaderboards:
 Game Data:
 - get_skaters_games(human_ids, limit) - Games played as skater (batch capable)
 - get_goalies_games(human_ids, limit) - Games played as goalie (batch capable)
+- get_games_details(game_ids) - Get game info (teams, scores, date, time, status) for specific games
+- get_games_goals(game_ids) - Get all goals scored in specific games (who scored, assists, period)
+- get_games_rosters(game_ids, team_id) - Get all players who played in specific games
+- get_player_game_performance(human_id, game_id) - **CRITICAL: USE THIS to get what a specific player did in a specific game!**
+  * Returns goals, assists, penalties, role, team, game context for ONE player in ONE game
+  * REQUIRED when you know both player ID and game ID and want performance details
+  * Example: "what did Pavel do in his last game" → get last game ID, then use this tool
+  * Provides rich narrative detail instead of just "Last game" link
 
 Comparisons:
 - compare_two_skaters(human_id_1, human_id_2) - Head-to-head comparison
@@ -596,8 +604,8 @@ def send_message():
         all_tool_results = []
         completed_iterations = 0
 
-        # Multi-step agentic loop (max 3 iterations, MINIMUM 2)
-        for iteration in range(3):
+        # Multi-step agentic loop (max 5 iterations, MINIMUM 2)
+        for iteration in range(5):
             logger.info(f"Iteration {iteration + 1}")
 
             # Step 1: Ask LLM to select next tools
