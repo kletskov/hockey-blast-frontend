@@ -9,6 +9,7 @@ import asyncio
 import json
 import logging
 import os
+import time
 from datetime import datetime
 from flask import Blueprint, render_template, request, jsonify, session
 from hockey_blast_mcp.tools import get_all_tools
@@ -98,7 +99,7 @@ def format_conversation_for_llm(conversation: list, current_query: str) -> str:
     return history_text
 
 
-def call_llm(prompt: str, conversation_history: list = None, system_prompt: str = None) -> str:
+def call_llm(prompt: str, conversation_history: list = None, system_prompt: str = None) -> tuple:
     """
     Call configured LLM provider (Ollama or AWS Bedrock).
 
@@ -108,17 +109,23 @@ def call_llm(prompt: str, conversation_history: list = None, system_prompt: str 
         system_prompt: Optional system instruction (for Bedrock)
 
     Returns:
-        LLM response as string
+        Tuple of (LLM response as string, elapsed time in seconds)
     """
+    start_time = time.time()
+
     if LLM_PROVIDER == "bedrock":
-        return call_bedrock_claude(prompt, conversation_history, system_prompt)
+        response = call_bedrock_claude(prompt, conversation_history, system_prompt)
     else:
         # Ollama doesn't support message arrays, so format as text
         if conversation_history:
             formatted_history = format_conversation_for_llm(conversation_history, prompt)
             full_prompt = system_prompt + "\n\n" + formatted_history if system_prompt else formatted_history
-            return call_ollama(full_prompt)
-        return call_ollama(system_prompt + "\n\n" + prompt if system_prompt else prompt)
+            response = call_ollama(full_prompt)
+        else:
+            response = call_ollama(system_prompt + "\n\n" + prompt if system_prompt else prompt)
+
+    elapsed = time.time() - start_time
+    return response, elapsed
 
 
 def call_ollama(prompt: str, model: str = "llama3.1:8b") -> str:
@@ -474,25 +481,28 @@ Answer:"""
 
 async def execute_tool(tool_name: str, args: dict) -> dict:
     """
-    Execute a single MCP tool.
+    Execute a single MCP tool with timing.
 
     Args:
         tool_name: Name of tool to execute
         args: Tool arguments
 
     Returns:
-        Tool result dictionary
+        Tool result dictionary with timing info
     """
     if tool_name not in TOOL_REGISTRY:
-        return {"error": f"Unknown tool: {tool_name}"}
+        return {"error": f"Unknown tool: {tool_name}", "elapsed_ms": 0}
 
+    start_time = time.time()
     try:
         tool_func = TOOL_REGISTRY[tool_name]
         result = await tool_func(**args)
-        return {"tool": tool_name, "args": args, "result": result}
+        elapsed_ms = (time.time() - start_time) * 1000
+        return {"tool": tool_name, "args": args, "result": result, "elapsed_ms": round(elapsed_ms, 2)}
     except Exception as e:
+        elapsed_ms = (time.time() - start_time) * 1000
         logger.error(f"Tool execution error: {tool_name} - {e}")
-        return {"tool": tool_name, "args": args, "error": str(e)}
+        return {"tool": tool_name, "args": args, "error": str(e), "elapsed_ms": round(elapsed_ms, 2)}
 
 
 async def execute_tools(tool_calls: list) -> list:
@@ -584,6 +594,7 @@ def send_message():
         return jsonify({"error": "Please provide a message"}), 400
 
     try:
+        request_start_time = time.time()
         print(f"\n====== AI Chat Message: {user_message} ======")
 
         # Add user message to conversation
@@ -603,6 +614,7 @@ def send_message():
         all_tool_calls = []
         all_tool_results = []
         completed_iterations = 0
+        llm_timings = []  # Track LLM call times
 
         # Multi-step agentic loop (max 5 iterations, MINIMUM 2)
         for iteration in range(5):
@@ -615,20 +627,22 @@ def send_message():
                 system_instructions = build_tool_selection_prompt(user_message)
                 # For Bedrock: pass conversation history + current query
                 # The system instructions are separate
-                tool_selection_response = call_llm(
+                tool_selection_response, llm_time = call_llm(
                     user_message,
                     conversation_history=conversation_context,
                     system_prompt=system_instructions
                 )
+                llm_timings.append({"iteration": iteration + 1, "phase": "tool_selection", "time_ms": round(llm_time * 1000, 2)})
             else:
                 # Subsequent iterations: question answering
                 # Build prompt with tool results
                 system_instructions = build_next_step_prompt(user_message, all_tool_results)
-                tool_selection_response = call_llm(
+                tool_selection_response, llm_time = call_llm(
                     user_message,
                     conversation_history=conversation_context,
                     system_prompt=system_instructions
                 )
+                llm_timings.append({"iteration": iteration + 1, "phase": "tool_selection", "time_ms": round(llm_time * 1000, 2)})
 
             logger.info(f"Iteration {iteration + 1} - Tool selection response: {tool_selection_response}")
 
@@ -676,19 +690,31 @@ def send_message():
 
         # Step 4: Ask LLM to generate answer from all results
         answer_system_prompt = build_answer_prompt(user_message, all_tool_results)
-        final_answer = call_llm(
+        final_answer, llm_time = call_llm(
             user_message,
             conversation_history=conversation_context,
             system_prompt=answer_system_prompt
         )
+        llm_timings.append({"iteration": "final", "phase": "answer_generation", "time_ms": round(llm_time * 1000, 2)})
 
         logger.info(f"Final answer: {final_answer}")
+
+        # Calculate total time
+        total_time_ms = round((time.time() - request_start_time) * 1000, 2)
+        total_llm_time_ms = round(sum(t["time_ms"] for t in llm_timings), 2)
+        total_tool_time_ms = round(sum(r.get("elapsed_ms", 0) for r in all_tool_results), 2)
 
         # Add assistant response to conversation
         debug_info = {
             "iterations": iteration + 1,
             "tool_calls": all_tool_calls,
             "tool_results": all_tool_results,
+            "timing": {
+                "total_ms": total_time_ms,
+                "llm_total_ms": total_llm_time_ms,
+                "llm_calls": llm_timings,
+                "tools_total_ms": total_tool_time_ms,
+            }
         }
         add_to_conversation("assistant", final_answer, debug_info)
 

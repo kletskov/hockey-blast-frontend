@@ -94,7 +94,7 @@
             box-shadow: 0 1px 2px rgba(0,0,0,0.08);
             line-height: 1.6;
             color: #333;
-            white-space: pre-wrap;
+            white-space: normal;
             word-wrap: break-word;
         }
         .message.user .message-content {
@@ -242,6 +242,59 @@
             border-left: 4px solid #c62828;
             margin: 16px 0;
         }
+        .profiling-toggle {
+            font-size: 11px;
+            color: #2196F3;
+            cursor: pointer;
+            margin-top: 4px;
+            padding: 4px 8px;
+            background: #f0f8ff;
+            border-radius: 4px;
+            display: inline-block;
+            user-select: none;
+        }
+        .profiling-toggle:hover {
+            background: #e3f2fd;
+        }
+        .profiling-data {
+            display: none;
+            margin-top: 8px;
+            padding: 12px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+            font-size: 12px;
+            font-family: 'Monaco', 'Courier New', monospace;
+        }
+        .profiling-data.show {
+            display: block;
+        }
+        .profiling-summary {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        .profiling-section {
+            margin: 8px 0;
+        }
+        .profiling-section-title {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 4px;
+        }
+        .profiling-item {
+            padding: 4px 0;
+            color: #666;
+        }
+        .profiling-time {
+            color: #2196F3;
+            font-weight: 600;
+        }
+        .tool-item {
+            padding-left: 12px;
+            border-left: 2px solid #e0e0e0;
+            margin: 4px 0;
+        }
     </style>
 </head>
 <body>
@@ -320,7 +373,7 @@
                 if (data.messages && data.messages.length > 0) {
                     welcomeMessage.style.display = 'none';
                     data.messages.forEach(msg => {
-                        addMessageToUI(msg.role, msg.content, msg.timestamp, false);
+                        addMessageToUI(msg.role, msg.content, msg.timestamp, false, msg.debug);
                     });
                     scrollToBottom();
                 }
@@ -371,7 +424,7 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    addMessageToUI('assistant', data.content, data.timestamp, true);
+                    addMessageToUI('assistant', data.content, data.timestamp, true, data.debug);
                 } else {
                     addErrorMessage(data.error || 'An error occurred');
                 }
@@ -384,7 +437,7 @@
             }
         }
 
-        function addMessageToUI(role, content, timestamp, animate) {
+        function addMessageToUI(role, content, timestamp, animate, debugInfo) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${role}`;
             if (!animate) {
@@ -394,16 +447,76 @@
             const avatar = role === 'user' ? '👤' : '🤖';
             const time = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+            const profilingHtml = (role === 'assistant' && debugInfo && debugInfo.timing) ?
+                renderProfiling(debugInfo) : '';
+
             messageDiv.innerHTML = `
                 <div class="message-avatar">${avatar}</div>
                 <div>
-                    <div class="message-content">${escapeHtml(content)}</div>
+                    <div class="message-content">${renderMarkdown(content)}</div>
                     <div class="message-time">${time}</div>
+                    ${profilingHtml}
                 </div>
             `;
 
             chatContainer.appendChild(messageDiv);
             scrollToBottom();
+        }
+
+        function renderProfiling(debugInfo) {
+            const timing = debugInfo.timing;
+            const profileId = 'profile_' + Date.now();
+
+            // Build tool list
+            let toolsHtml = '';
+            if (debugInfo.tool_results && debugInfo.tool_results.length > 0) {
+                debugInfo.tool_results.forEach((result, idx) => {
+                    const toolTime = result.elapsed_ms || 0;
+                    toolsHtml += `
+                        <div class="tool-item">
+                            <strong>${result.tool || 'unknown'}</strong>:
+                            <span class="profiling-time">${toolTime}ms</span>
+                        </div>`;
+                });
+            }
+
+            // Build LLM calls list
+            let llmHtml = '';
+            if (timing.llm_calls && timing.llm_calls.length > 0) {
+                timing.llm_calls.forEach((call, idx) => {
+                    llmHtml += `
+                        <div class="profiling-item">
+                            Iteration ${call.iteration} (${call.phase}):
+                            <span class="profiling-time">${call.time_ms}ms</span>
+                        </div>`;
+                });
+            }
+
+            return `
+                <div class="profiling-toggle" onclick="toggleProfiling('${profileId}')">
+                    📊 Performance: ${timing.total_ms}ms (${debugInfo.iterations} iterations)
+                </div>
+                <div class="profiling-data" id="${profileId}">
+                    <div class="profiling-summary">
+                        Total Time: <span class="profiling-time">${timing.total_ms}ms</span>
+                    </div>
+
+                    <div class="profiling-section">
+                        <div class="profiling-section-title">LLM Calls (${timing.llm_total_ms}ms total)</div>
+                        ${llmHtml}
+                    </div>
+
+                    <div class="profiling-section">
+                        <div class="profiling-section-title">Tool Executions (${timing.tools_total_ms}ms total)</div>
+                        ${toolsHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleProfiling(profileId) {
+            const element = document.getElementById(profileId);
+            element.classList.toggle('show');
         }
 
         function addErrorMessage(error) {
@@ -414,10 +527,26 @@
             scrollToBottom();
         }
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+        function renderMarkdown(text) {
+            // Convert markdown to HTML with rich text support
+            let html = text;
+
+            // Links: [text](url)
+            html = html.replace(
+                /\[([^\]]+)\]\(([^)]+)\)/g,
+                '<a href="$2" target="_blank" rel="noopener noreferrer" style="color: #2196F3; text-decoration: underline;">$1</a>'
+            );
+
+            // Bold: **text**
+            html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+            // Italic: *text*
+            html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+            // Line breaks: preserve newlines as <br>
+            html = html.replace(/\n/g, '<br>');
+
+            return html;
         }
 
         function scrollToBottom() {
