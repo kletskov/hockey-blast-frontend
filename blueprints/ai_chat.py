@@ -382,6 +382,18 @@ Game Data:
   * Example: "what did Pavel do in his last game" → get last game ID, then use this tool
   * Provides rich narrative detail instead of just "Last game" link
 
+Game Search/Statistics (USE THESE for aggregate game queries):
+- get_highest_scoring_games(limit, org_id) - **CRITICAL: USE THIS for "highest scoring game", "most goals in a game", "game with most goals"!**
+  * Returns games sorted by total goal count (descending)
+  * NO NEED to search for entities first - this is a direct statistical query
+  * Example: "what game has most goals ever" → use this with limit=10
+  * Example: "highest scoring game" → use this with limit=1
+- get_recent_games(limit, org_id, status) - Get most recent games by date
+  * Returns games sorted by date (most recent first)
+  * Optional status filter: "Final", "OPEN", "Scheduled"
+  * Example: "recent games" → use this with limit=20
+  * Example: "latest completed games" → use this with status="Final"
+
 Comparisons:
 - compare_two_skaters(human_id_1, human_id_2) - Head-to-head comparison
 
