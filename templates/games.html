@@ -57,11 +57,16 @@
             .then(response => response.json())
             .then(data => {
                 var seasonSelect = document.getElementById('season');
-                seasonSelect.innerHTML = '<option value="">All Seasons</option>';
+                seasonSelect.innerHTML = '';
                 data.forEach(season => {
                     seasonSelect.innerHTML += `<option value="${season.id}">${season.season_name}</option>`;
                 });
                 seasonSelect.disabled = false;
+
+                // Auto-select first season if available
+                if (data.length > 0) {
+                    seasonSelect.value = data[0].id;
+                }
             });
     }
 
