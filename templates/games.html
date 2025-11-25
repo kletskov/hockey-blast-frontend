@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Recent Games{% endblock %}
+{% block title %}Games{% endblock %}
 
 {% block content %}
 <div style="text-align: center;">
@@ -44,14 +44,45 @@
 </div>
 
 <script>
+    // Override fetchSeasons to include game_status parameter for games page
+    function fetchSeasons(orgId, levelId, humanId) {
+        var gameStatus = document.getElementById('game_status').value;
+        return fetch('/dropdowns/filter_seasons', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ org_id: orgId, level_id: levelId, human_id: humanId, game_status: gameStatus })
+        })
+            .then(response => response.json())
+            .then(data => {
+                var seasonSelect = document.getElementById('season');
+                seasonSelect.innerHTML = '<option value="">All Seasons</option>';
+                data.forEach(season => {
+                    seasonSelect.innerHTML += `<option value="${season.id}">${season.season_name}</option>`;
+                });
+                seasonSelect.disabled = false;
+            });
+    }
+
     document.getElementById('game_status').addEventListener('change', function () {
         var orgId = document.getElementById('organization').value;
         var levelId = document.getElementById('level').value;
         var seasonId = document.getElementById('season').value;
         var teamId = document.getElementById('team').value;
         var topN = document.getElementById('top_n').value;
-        updateDropdownsStateAndCGI(orgId, levelId, seasonId, teamId, topN);
-        fetchContent(orgId, levelId, seasonId, teamId, topN);
+
+        // Refresh seasons dropdown when game_status changes
+        if (orgId && orgId != "-1" && levelId) {
+            fetchSeasons(orgId, levelId, null).then(() => {
+                // After refreshing seasons, update the page
+                updateDropdownsStateAndCGI(orgId, levelId, null, null, topN);
+                fetchContent(orgId, levelId, null, null, topN);
+            });
+        } else {
+            updateDropdownsStateAndCGI(orgId, levelId, seasonId, teamId, topN);
+            fetchContent(orgId, levelId, seasonId, teamId, topN);
+        }
     });
 
     function fetchContent(orgId, levelId, seasonId, teamId, topN) {

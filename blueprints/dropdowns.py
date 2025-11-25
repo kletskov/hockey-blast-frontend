@@ -1,3 +1,5 @@
+from datetime import date
+
 from flask import Blueprint, jsonify, request
 from hockey_blast_common_lib.models import (Division, Game, Level,
                                             Organization, Season, Team, db)
@@ -48,6 +50,7 @@ def filter_levels():
 def filter_seasons():
     org_id = request.json.get("org_id")
     level_id = request.json.get("level_id")
+    game_status = request.json.get("game_status")
     try:
         org_id = int(org_id)
     except (ValueError, TypeError):
@@ -62,12 +65,29 @@ def filter_seasons():
         .all()
     )
     season_ids = [division.season_id for division in divisions]
-    seasons = (
-        db.session.query(Season)
-        .filter(Season.id.in_(season_ids))
-        .order_by(Season.season_number.desc())
-        .all()
-    )
+
+    # Build query for seasons
+    seasons_query = db.session.query(Season).filter(Season.id.in_(season_ids))
+
+    # Filter based on game_status
+    today = date.today()
+    if game_status == "scheduled":
+        # For scheduled games: only show seasons where end_date is NOT in the past and NOT null
+        seasons_query = seasons_query.filter(
+            Season.end_date.isnot(None),
+            Season.end_date >= today
+        )
+    elif game_status == "completed":
+        # For completed games: only show seasons where start_date is NOT null and NOT in the future
+        seasons_query = seasons_query.filter(
+            Season.start_date.isnot(None),
+            Season.start_date <= today
+        )
+    # For "all" or no game_status, don't filter by dates
+
+    # Sort by end_date descending (most recent first), with null values last
+    seasons = seasons_query.order_by(Season.end_date.desc().nullslast()).all()
+
     seasons_data = [
         {"id": season.id, "season_name": season.season_name} for season in seasons
     ]
