@@ -308,6 +308,12 @@ Iteration 1 (Entity Extraction):
 []
 → No entities mentioned
 
+Example 5:
+Query: "what game has most goals scored ever"
+Iteration 1 (Entity Extraction):
+[]
+→ No entities mentioned - this is an aggregate statistical query about games, not about specific teams or players
+
 YOUR RESPONSE:
 Return JSON array of entity search tool calls for ALL entities in this query.
 If no entities mentioned, return empty array [].
@@ -627,10 +633,12 @@ def send_message():
         all_tool_results = []
         completed_iterations = 0
         llm_timings = []  # Track LLM call times
+        iteration_details = []  # Track detailed breakdown per iteration
 
-        # Multi-step agentic loop (max 5 iterations, MINIMUM 2)
+        # Multi-step agentic loop (max 5 iterations, MINIMUM 1 with actual work)
         for iteration in range(5):
             logger.info(f"Iteration {iteration + 1}")
+            iteration_start_time = time.time()
 
             # Step 1: Ask LLM to select next tools
             if iteration == 0:
@@ -663,12 +671,20 @@ def send_message():
             logger.info(f"Iteration {iteration + 1} - Parsed tool calls: {tool_calls}")
 
             # Check if LLM says we're done (empty array)
-            # BUT enforce minimum 2 iterations (entity extraction + question answering)
+            # BUT enforce minimum 1 iteration with actual tool execution
             if not tool_calls:
-                if completed_iterations < 2:
-                    # Must complete at least 2 iterations total
-                    logger.info(f"Iteration {iteration + 1}: Empty tool calls but {completed_iterations} iterations completed, need minimum 2. Forcing continuation...")
-                    # Force continuation by repeating the prompt with emphasis
+                # Track iteration even if no tools
+                iteration_details.append({
+                    "iteration": iteration + 1,
+                    "llm_time_ms": round(llm_time * 1000, 2),
+                    "tool_calls": [],
+                    "total_time_ms": round((time.time() - iteration_start_time) * 1000, 2)
+                })
+
+                if completed_iterations < 1:
+                    # Must complete at least 1 iteration with actual work
+                    logger.info(f"Iteration {iteration + 1}: Empty tool calls but {completed_iterations} iterations completed, need minimum 1. Continuing...")
+                    # Continue to next iteration
                     continue
                 else:
                     logger.info(f"Iteration {iteration + 1}: LLM indicated no more tools needed (after {completed_iterations} completed iterations)")
@@ -685,6 +701,14 @@ def send_message():
 
             logger.info(f"Tool results: {tool_results}")
             all_tool_results.extend(tool_results)
+
+            # Track iteration with tools
+            iteration_details.append({
+                "iteration": iteration + 1,
+                "llm_time_ms": round(llm_time * 1000, 2),
+                "tool_calls": tool_results,
+                "total_time_ms": round((time.time() - iteration_start_time) * 1000, 2)
+            })
 
             # Track that we completed an iteration with actual work
             completed_iterations += 1
@@ -719,6 +743,7 @@ def send_message():
         # Add assistant response to conversation
         debug_info = {
             "iterations": iteration + 1,
+            "iteration_details": iteration_details,
             "tool_calls": all_tool_calls,
             "tool_results": all_tool_results,
             "timing": {
@@ -726,6 +751,7 @@ def send_message():
                 "llm_total_ms": total_llm_time_ms,
                 "llm_calls": llm_timings,
                 "tools_total_ms": total_tool_time_ms,
+                "answer_generation_ms": round(llm_time * 1000, 2)
             }
         }
         add_to_conversation("assistant", final_answer, debug_info)

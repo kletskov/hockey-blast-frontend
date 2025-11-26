@@ -249,6 +249,14 @@ def _create_app(db_name):
 
     # Critical session settings for HTTPS production deployment
     app.config["SESSION_TYPE"] = os.getenv("SESSION_TYPE", "filesystem")
+
+    # Session directory - separate for dev vs production to avoid permission conflicts
+    session_dir = os.getenv("SESSION_FILE_DIR", "flask_session")
+    app.config["SESSION_FILE_DIR"] = session_dir
+
+    # Create session directory if it doesn't exist
+    os.makedirs(session_dir, exist_ok=True)
+
     app.config["SESSION_PERMANENT"] = (
         os.getenv("SESSION_PERMANENT", "False").lower() == "true"
     )
@@ -365,8 +373,8 @@ def _create_app(db_name):
         user_agent = request.headers.get("User-Agent")
         client_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
 
-        # Exempt /ai-search from bot detection (testing endpoint)
-        if request.path != "/ai-search" and is_obviously_junk_user_agent(user_agent):
+        # Exempt /ai-search, /ai-chat and /ai-chat/message from bot detection (testing endpoints)
+        if request.path not in ["/ai-search", "/ai-chat", "/ai-chat/message"] and is_obviously_junk_user_agent(user_agent):
             logger.warning(f"JUNK USER-AGENT: {user_agent} from {client_ip}")
             g.skip_logging = True
             return "", 204  # Silently drop or use 403 to block

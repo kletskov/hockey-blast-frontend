@@ -467,30 +467,62 @@
             const timing = debugInfo.timing;
             const profileId = 'profile_' + Date.now();
 
-            // Build tool list
-            let toolsHtml = '';
-            if (debugInfo.tool_results && debugInfo.tool_results.length > 0) {
-                debugInfo.tool_results.forEach((result, idx) => {
-                    const toolTime = result.elapsed_ms || 0;
-                    toolsHtml += `
-                        <div class="tool-item">
-                            <strong>${result.tool || 'unknown'}</strong>:
-                            <span class="profiling-time">${toolTime}ms</span>
+            // Build iteration-by-iteration breakdown
+            let iterationsHtml = '';
+            if (debugInfo.iteration_details && debugInfo.iteration_details.length > 0) {
+                debugInfo.iteration_details.forEach((iter) => {
+                    const toolsCount = iter.tool_calls ? iter.tool_calls.length : 0;
+                    const toolsTime = iter.tool_calls ?
+                        iter.tool_calls.reduce((sum, t) => sum + (t.elapsed_ms || 0), 0) : 0;
+
+                    let iterToolsHtml = '';
+                    let iterPurpose = '';
+
+                    if (toolsCount > 0) {
+                        iter.tool_calls.forEach((tool) => {
+                            const args = tool.args ? JSON.stringify(tool.args) : '{}';
+                            iterToolsHtml += `
+                                <div class="tool-item">
+                                    <strong>${tool.tool || 'unknown'}</strong>(${args}):
+                                    <span class="profiling-time">${tool.elapsed_ms || 0}ms</span>
+                                </div>`;
+                        });
+                    } else {
+                        // Show what the LLM was doing when no tools were called
+                        if (iter.iteration === 1) {
+                            iterPurpose = '🔍 LLM analyzing query to extract entities → decided no entities to extract';
+                        } else {
+                            iterPurpose = '🤔 LLM checking if more tools needed → decided to stop';
+                        }
+                        iterToolsHtml = `<div class="profiling-item" style="color: #666; font-style: italic;">${iterPurpose}</div>`;
+                    }
+
+                    iterationsHtml += `
+                        <div class="profiling-section">
+                            <div class="profiling-section-title">
+                                Iteration ${iter.iteration}
+                                <span style="color: #666; font-weight: normal; font-size: 11px;">
+                                    (${iter.total_time_ms}ms total: ${iter.llm_time_ms}ms LLM + ${toolsTime}ms tools)
+                                </span>
+                            </div>
+                            ${iterToolsHtml}
                         </div>`;
                 });
             }
 
-            // Build LLM calls list
-            let llmHtml = '';
-            if (timing.llm_calls && timing.llm_calls.length > 0) {
-                timing.llm_calls.forEach((call, idx) => {
-                    llmHtml += `
-                        <div class="profiling-item">
-                            Iteration ${call.iteration} (${call.phase}):
-                            <span class="profiling-time">${call.time_ms}ms</span>
-                        </div>`;
-                });
-            }
+            // Add final answer generation
+            const answerGenHtml = `
+                <div class="profiling-section">
+                    <div class="profiling-section-title">
+                        Answer Generation
+                        <span style="color: #666; font-weight: normal; font-size: 11px;">
+                            (${timing.answer_generation_ms}ms LLM)
+                        </span>
+                    </div>
+                    <div class="profiling-item" style="color: #666; font-style: italic;">
+                        💬 LLM reading tool results and generating final answer in natural language
+                    </div>
+                </div>`;
 
             return `
                 <div class="profiling-toggle" onclick="toggleProfiling('${profileId}')">
@@ -499,17 +531,13 @@
                 <div class="profiling-data" id="${profileId}">
                     <div class="profiling-summary">
                         Total Time: <span class="profiling-time">${timing.total_ms}ms</span>
+                        <span style="margin-left: 12px; color: #666; font-weight: normal;">
+                            (${timing.llm_total_ms}ms LLM + ${timing.tools_total_ms}ms tools)
+                        </span>
                     </div>
 
-                    <div class="profiling-section">
-                        <div class="profiling-section-title">LLM Calls (${timing.llm_total_ms}ms total)</div>
-                        ${llmHtml}
-                    </div>
-
-                    <div class="profiling-section">
-                        <div class="profiling-section-title">Tool Executions (${timing.tools_total_ms}ms total)</div>
-                        ${toolsHtml}
-                    </div>
+                    ${iterationsHtml}
+                    ${answerGenHtml}
                 </div>
             `;
         }

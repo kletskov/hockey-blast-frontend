@@ -26,3 +26,4 @@ node_modules/
 .common_lib_for_docker_db_restore
 
 flask_session/**
+flask_session_dev/**
