@@ -1,7 +1,7 @@
 from datetime import date
 
 from flask import Blueprint, jsonify, render_template, request, url_for
-from hockey_blast_common_lib.models import (Division, Game, Organization, Team,
+from hockey_blast_common_lib.models import (Division, Game, Level, Location, Organization, Team,
                                             db)
 from hockey_blast_common_lib.stats_utils import ALL_ORGS_ID
 
@@ -62,7 +62,8 @@ def filter_games():
     if top_n > MAX_TOP_N:
         top_n = MAX_TOP_N
 
-    query = db.session.query(Game)
+    # Use outerjoin to include games with and without location_id
+    query = db.session.query(Game, Location).outerjoin(Location, Game.location_id == Location.id)
 
     try:
         org_id = int(org_id)
@@ -106,13 +107,17 @@ def filter_games():
     if season_id:
         query = query.filter(Division.season_id == season_id)
     if location:
-        query = query.filter(Game.location.ilike(f"%{location}%"))
+        # Search in Location table fields (location_in_game_source or rink_name)
+        query = query.filter(
+            (Location.location_in_game_source.ilike(f"%{location}%")) |
+            (Location.rink_name.ilike(f"%{location}%"))
+        )
     if team_id:
         query = query.filter(
             (Game.home_team_id == team_id) | (Game.visitor_team_id == team_id)
         )
 
-    games = query.limit(top_n).all()
+    results = query.limit(top_n).all()
 
     games_data = []
     team_stats = {"GP": 0, "W": 0, "L": 0, "T": 0, "OTL": 0}
@@ -128,7 +133,7 @@ def filter_games():
         7: "Sun",
     }
 
-    for game in games:
+    for game, location in results:
         if game.home_team_id is None or game.visitor_team_id is None:
             continue
 
@@ -136,6 +141,15 @@ def filter_games():
             db.session.query(Team).filter(Team.id == game.visitor_team_id).first()
         )
         home_team = db.session.query(Team).filter(Team.id == game.home_team_id).first()
+
+        # Fetch division and level information
+        division = db.session.query(Division).filter(Division.id == game.division_id).first()
+        level = None
+        level_short_name = ""
+        if division and division.level_id:
+            level = db.session.query(Level).filter(Level.id == division.level_id).first()
+            if level and level.short_name:
+                level_short_name = level.short_name
 
         if game.status.startswith("Final"):
             home_period_scores = (
@@ -192,6 +206,11 @@ def filter_games():
         day_of_week = day_of_week_map.get(game.day_of_week, "")
         date_time = f"{day_of_week} {game.date.strftime('%m/%d/%y')} {game.time.strftime('%I:%M%p')}"
 
+        # Use location_in_game_source from Location table (always present), or "TBD" if no location
+        location_display = "TBD"
+        if location and location.location_in_game_source:
+            location_display = location.location_in_game_source
+
         games_data.append(
             {
                 "id": game.id,
@@ -199,7 +218,9 @@ def filter_games():
                 "time": game.time.strftime("%I:%M%p"),
                 "final_score": final_score,
                 "team_names": team_names,
-                "location": game.location,
+                "level": level_short_name,
+                "location": location_display,
+                "location_id": location.id if location else None,
                 "status": game.status,
             }
         )

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "macros.html" as macros %}
 
 {% block title %}{{ visitor_team.name }} at {{ home_team.name }}{% endblock %}
 
@@ -8,7 +9,7 @@
                 visitor_team.name }}</a></strong> at <strong><a
                 href="{{ url_for('team_stats.team_stats', team_id=home_team.id) }}">{{ home_team.name }}</a></strong>
         ({{ division.level }})</h1>
-    <h3>{{ day_of_week }} {{ game.date.strftime('%m/%d/%y') }} {{ game.time.strftime('%I:%M%p') }}, {{ game.location }}</h3>
+    <h3>{{ day_of_week }} {{ game.date.strftime('%m/%d/%y') }} {{ game.time.strftime('%I:%M%p') }}, {{ macros.location_display(master_location, link_to_page=True) }}</h3>
     <!-- Basic Game Info Table -->
     <table class="table table-striped">
         <thead>
@@ -31,7 +32,7 @@
     </table>
 
     <!-- Scoring Table -->
-    <h4>Game Results ({{ game.status }})</h4>
+    <h4>Game Results ({% if game.status == "OPEN" and game.live_time %}Live - {{ game.live_time }}{% else %}{{ game.status }}{% endif %})</h4>
     <table class="table table-striped">
         <thead>
             <tr>
@@ -42,7 +43,11 @@
                 {% if visitor_shootout_goals > 0 or home_shootout_goals > 0 %}
                 <th>SO</th>
                 {% endif %}
+                {% if is_live %}
+                <th><strong>Total</strong></th>
+                {% else %}
                 <th><strong>Final</strong></th>
+                {% endif %}
             </tr>
         </thead>
         <tbody>
@@ -55,7 +60,15 @@
                 {% if visitor_shootout_goals > 0 or home_shootout_goals > 0 %}
                 <td>{{ visitor_shootout_goals }}</td>
                 {% endif %}
+                {% if is_live %}
+                    {% if visitor_current_score > home_current_score %}
+                    <td><strong>{{ visitor_current_score }}</strong></td>
+                    {% else %}
+                    <td>{{ visitor_current_score }}</td>
+                    {% endif %}
+                {% else %}
                 <td><strong>{{ game.visitor_final_score }}</strong></td>
+                {% endif %}
             </tr>
             <tr>
                 <td><a href="{{ url_for('team_stats.team_stats', team_id=home_team.id) }}">{{ home_team.name }}</a></td>
@@ -65,7 +78,15 @@
                 {% if visitor_shootout_goals > 0 or home_shootout_goals > 0 %}
                 <td>{{ home_shootout_goals }}</td>
                 {% endif %}
+                {% if is_live %}
+                    {% if home_current_score > visitor_current_score %}
+                    <td><strong>{{ home_current_score }}</strong></td>
+                    {% else %}
+                    <td>{{ home_current_score }}</td>
+                    {% endif %}
+                {% else %}
                 <td><strong>{{ game.home_final_score }}</strong></td>
+                {% endif %}
             </tr>
         </tbody>
     </table>

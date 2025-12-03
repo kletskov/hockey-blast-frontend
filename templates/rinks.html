@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% import "macros.html" as macros %}
+
+{% block title %}Rinks{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">All Rinks</h2>
+
+    <div style="font-size: 1.3rem; font-weight: 500;">
+        {% for location in locations %}
+            <div style="margin-bottom: 0.5rem;">
+                {{ macros.location_display(location, link_to_page=True) }}
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

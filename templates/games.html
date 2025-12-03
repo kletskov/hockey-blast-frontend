@@ -110,6 +110,7 @@
                             <tr>
                                 <th>Date Time</th>
                                 <th>Team Names</th>
+                                <th>Level</th>
                                 <th>${header}</th>
                             </tr>
                         </thead>
@@ -125,17 +126,18 @@
                         if (game.status && game.status.toLowerCase().startsWith('final')) {
                             finalScoreOrLocation = `<a href="/game_card?game_id=${game.id}">${game.final_score}</a>`;
                         } else {
-                            finalScoreOrLocation = `<a href="${window.location.pathname}?org_id=&level_id=&season_id=&game_status=all&location=${encodeURIComponent(game.location)}">${game.location}</a>`;
+                            finalScoreOrLocation = game.location_id ? `<a href="/location?location_id=${game.location_id}">${game.location}</a>` : game.location;
                         }
                     } else if (gameStatus === 'completed') {
                         finalScoreOrLocation = `<a href="/game_card?game_id=${game.id}">${game.final_score}</a>`;
                     } else {
-                        finalScoreOrLocation = `<a href="${window.location.pathname}?org_id=&level_id=&season_id=&game_status=${gameStatus}&location=${encodeURIComponent(game.location)}">${game.location}</a>`;
+                        finalScoreOrLocation = game.location_id ? `<a href="/location?location_id=${game.location_id}">${game.location}</a>` : game.location;
                     }
                     tbody.innerHTML += `
                         <tr>
                             <td><a href="/game_card?game_id=${game.id}">${game.date} ${game.time}</a></td>
                             <td>${game.team_names}</td>
+                            <td>${game.level}</td>
                             <td>${finalScoreOrLocation}</td>
                         </tr>
                     `;

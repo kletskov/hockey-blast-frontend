@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% import "macros.html" as macros %}
+
+{% block title %}Games at {{ location.location_in_game_source if location else "Location" }}{% endblock %}
+
+{% block head %}
+<meta http-equiv="refresh" content="60">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div style="font-size: 1.3rem; font-weight: 500; margin-bottom: 0.5rem;">
+        {{ macros.location_display(location) }}
+    </div>
+
+    {% if other_rinks %}
+    <div style="font-size: 0.9rem; margin-bottom: 1rem;">
+        See Other Rinks:
+        {% for rink in other_rinks %}
+            <a href="{{ url_for('location.location', location_id=rink.id) }}">{{ rink.name }}</a>{% if not loop.last %} {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div id="gamesList">
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const locationId = "{{ location_id }}";
+
+        function fetchGames() {
+            fetch('/location/filter_location_games', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    location_id: locationId
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    displayGames(data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('gamesList').innerHTML = '<div class="alert alert-danger">Error loading games</div>';
+                });
+        }
+
+        function displayGames(data) {
+            var gamesList = document.getElementById('gamesList');
+
+            if (!data.games || data.games.length === 0) {
+                gamesList.innerHTML = '<div class="alert alert-info">No games found for this location from yesterday and today.</div>';
+                return;
+            }
+
+            // Create table
+            gamesList.innerHTML = `
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date Time</th>
+                            <th>Team Names</th>
+                            <th>Final Score / Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            `;
+
+            var tbody = gamesList.querySelector('tbody');
+            data.games.forEach(game => {
+                // Create row with optional orange background for games in progress
+                var rowStyle = game.is_in_progress ? 'style="background-color: orange;"' : '';
+
+                tbody.innerHTML += `
+                    <tr ${rowStyle}>
+                        <td><a href="/game_card?game_id=${game.id}">${game.date}</a></td>
+                        <td>${game.team_names}</td>
+                        <td><a href="/game_card?game_id=${game.id}">${game.final_score}</a></td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Initial load
+        fetchGames();
+
+        // Refresh every 60 seconds to update game status
+        setInterval(fetchGames, 60000);
+    });
+</script>
+{% endblock %}

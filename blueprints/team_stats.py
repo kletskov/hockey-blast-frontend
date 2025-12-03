@@ -62,11 +62,9 @@ def team_stats():
         7: "Sun",
     }
 
-    # Extract recent and upcoming games data from games with the same division ID
+    # Extract recent and upcoming games data from all games (all divisions/leagues/tournaments)
     recent_and_upcoming_games_data = []
     for game in games:
-        if game.division_id != division_id:
-            continue
         visitor_team = (
             db.session.query(Team).filter(Team.id == game.visitor_team_id).first()
         )

@@ -12,7 +12,7 @@ import plotly.graph_objs as go
 import plotly.io as pio
 from hockey_blast_common_lib.h2h_models import SkaterToSkaterStats
 from hockey_blast_common_lib.models import (Division, Game, GameRoster, Goal,
-                                            Human, Penalty, Team, db)
+                                            Human, Level, Penalty, Team, db)
 from hockey_blast_common_lib.stats_models import OrgStatsHuman
 from hockey_blast_common_lib.stats_utils import ALL_ORGS_ID
 
@@ -781,6 +781,16 @@ def human_stats():
             db.session.query(Team).filter(Team.id == game.visitor_team_id).first()
         )
         home_team = db.session.query(Team).filter(Team.id == game.home_team_id).first()
+
+        # Fetch division and level information
+        division = db.session.query(Division).filter(Division.id == game.division_id).first()
+        level = None
+        level_short_name = ""
+        if division and division.level_id:
+            level = db.session.query(Level).filter(Level.id == division.level_id).first()
+            if level and level.short_name:
+                level_short_name = level.short_name
+
         day_of_week = day_of_week_map.get(game.day_of_week, "")
         date_time = f"{day_of_week} {game.date.strftime('%m/%d/%y')} {game.time.strftime('%I:%M%p')}"
         if game.status.startswith("Final"):
@@ -802,8 +812,39 @@ def human_stats():
                 final_score = f"<strong style='color:{color};'>{game.visitor_final_score}</strong> : <span style='color:black;'>{game.home_final_score}</span>"
             else:
                 final_score = f"<span style='color:black;'>{game.visitor_final_score}</span> : <span style='color:black;'>{game.home_final_score}</span>"
+        elif game.status == "OPEN":
+            # Handle live games - calculate current score from period scores
+            visitor_current_score = (
+                (game.visitor_period_1_score or 0) +
+                (game.visitor_period_2_score or 0) +
+                (game.visitor_period_3_score or 0)
+            )
+            home_current_score = (
+                (game.home_period_1_score or 0) +
+                (game.home_period_2_score or 0) +
+                (game.home_period_3_score or 0)
+            )
+
+            if game.home_team_id == row["team_id"]:
+                if home_current_score > visitor_current_score:
+                    color = "#7CFC00"
+                elif home_current_score < visitor_current_score:
+                    color = "red"
+                else:
+                    color = "black"
+                final_score = f"<span style='color:black;'>{visitor_current_score}</span> : <strong style='color:{color};'>{home_current_score}</strong> (live)"
+            elif game.visitor_team_id == row["team_id"]:
+                if visitor_current_score > home_current_score:
+                    color = "#7CFC00"
+                elif visitor_current_score < home_current_score:
+                    color = "red"
+                else:
+                    color = "black"
+                final_score = f"<strong style='color:{color};'>{visitor_current_score}</strong> : <span style='color:black;'>{home_current_score}</span> (live)"
+            else:
+                final_score = f"<span style='color:black;'>{visitor_current_score}</span> : <span style='color:black;'>{home_current_score}</span> (live)"
         else:
-            # Handle cases where the game status is not 'Final'
+            # Handle cases where the game status is not 'Final' or 'OPEN' (e.g., Scheduled, Canceled)
             final_score = "N/A"
 
         # Calculate player stats
@@ -855,6 +896,7 @@ def human_stats():
             {
                 "date_time": f"<a href='{url_for('game_card.game_card', game_id=game.id)}'>{date_time}</a>",
                 "team_names": team_names,
+                "level": level_short_name,
                 "final_score": f"<a href='{url_for('game_card.game_card', game_id=game.id)}'>{final_score}</a>",
                 "player_stats": player_stats_str,
             }

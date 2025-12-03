@@ -59,6 +59,7 @@
         <tr>
             <th>Date Time</th>
             <th>Team Names</th>
+            <th>Level</th>
             <th>Final Score</th>
             <th>Skater Stats</th>
         </tr>
@@ -68,6 +69,7 @@
         <tr>
             <td>{{ game.date_time|safe }}</td>
             <td>{{ game.team_names|safe }}</td>
+            <td>{{ game.level }}</td>
             <td>{{ game.final_score|safe }}</td>
             <td>{{ game.player_stats }}</td>
         </tr>

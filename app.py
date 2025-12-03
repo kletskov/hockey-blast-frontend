@@ -64,6 +64,7 @@ from blueprints.dropdowns import dropdowns_bp
 from blueprints.game_card import game_card_bp
 from blueprints.game_shootout import game_shootout_bp
 from blueprints.games import games_bp
+from blueprints.location import location_bp
 from blueprints.goalie_performance import goalie_performance_bp
 from blueprints.hall_of_fame import hall_of_fame_bp
 from blueprints.human_stats import human_stats_bp
@@ -331,6 +332,7 @@ def _create_app(db_name):
     app.register_blueprint(game_shootout_bp)
     app.register_blueprint(version_bp)
     app.register_blueprint(games_bp, url_prefix="/games")
+    app.register_blueprint(location_bp, url_prefix="/location")
     app.register_blueprint(dropdowns_bp, url_prefix="/dropdowns")
     app.register_blueprint(about_bp)
     app.register_blueprint(ai_search_bp)

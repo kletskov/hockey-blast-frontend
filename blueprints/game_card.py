@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, render_template, request, url_for
 from hockey_blast_common_lib.models import (Division, Game, GameRoster, Goal,
-                                            Human, League, Penalty, Shootout,
+                                            Human, League, Location, Penalty, Shootout,
                                             Team, db)
 
 game_card_bp = Blueprint("game_card", __name__)
@@ -41,6 +41,19 @@ def game_card():
         db.session.query(Team).filter(Team.id == game.visitor_team_id).first()
     )
     home_team = db.session.query(Team).filter(Team.id == game.home_team_id).first()
+
+    # Fetch location and get master location for display
+    location = None
+    master_location = None
+    if game.location_id:
+        location = db.session.query(Location).filter(Location.id == game.location_id).first()
+        if location:
+            # Get the master location for display and linking
+            if location.master_location_id:
+                master_location = db.session.query(Location).filter(Location.id == location.master_location_id).first()
+            else:
+                # If no master location set, use the location itself
+                master_location = location
 
     # Fetch rosters
     home_roster = (
@@ -186,6 +199,23 @@ def game_card():
     }
     day_of_week = day_of_week_map.get(game.day_of_week, "")
 
+    # For live games, calculate current score from period scores
+    is_live = game.status == "OPEN"
+    if is_live:
+        visitor_current_score = (
+            (game.visitor_period_1_score or 0) +
+            (game.visitor_period_2_score or 0) +
+            (game.visitor_period_3_score or 0)
+        )
+        home_current_score = (
+            (game.home_period_1_score or 0) +
+            (game.home_period_2_score or 0) +
+            (game.home_period_3_score or 0)
+        )
+    else:
+        visitor_current_score = None
+        home_current_score = None
+
     return render_template(
         "game_card.html",
         game=game,
@@ -210,4 +240,8 @@ def game_card():
         visitor_shootout_goals=visitor_shootout_goals,
         home_shootout_goals=home_shootout_goals,
         day_of_week=day_of_week,
+        master_location=master_location,
+        is_live=is_live,
+        visitor_current_score=visitor_current_score,
+        home_current_score=home_current_score,
     )
