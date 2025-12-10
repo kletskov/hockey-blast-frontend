@@ -100,6 +100,7 @@ def filter_location_games():
     now = datetime.now()
 
     # First pass: determine end times for each game based on next game starts
+    # This is used for score display logic, not for orange highlighting
     game_end_times = {}
     for i in range(len(results)):
         game, location = results[i]
@@ -133,16 +134,17 @@ def filter_location_games():
         )
         home_team = db.session.query(Team).filter(Team.id == game.home_team_id).first()
 
-        # Determine if game is currently in progress
+        # Determine if game is currently live (for orange highlighting)
+        # Game is live ONLY if BOTH conditions are met:
+        # 1. Game status is "OPEN" (actively being played), AND
+        # 2. Current time is within 75 minutes of game start
         is_in_progress = False
-        if game.id in game_end_times:
+        if game.date and game.time:
             game_datetime = datetime.combine(game.date, game.time)
-            game_end_estimate = game_end_times[game.id]
+            game_live_cutoff = game_datetime + timedelta(minutes=75)
 
-            # Game is in progress if:
-            # 1. Current time is after game start AND before estimated end
-            # 2. OR game status is "OPEN" (actively being played)
-            if (game_datetime <= now <= game_end_estimate) or (game.status and game.status.upper() == "OPEN"):
+            # Check if status indicates live game AND within 75 minutes of start
+            if (game.status and game.status.upper() == "OPEN") and (game_datetime <= now <= game_live_cutoff):
                 is_in_progress = True
 
         # Format final score with bold for winner
