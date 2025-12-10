@@ -372,13 +372,24 @@ Human/Player Data:
   * REQUIRED when query asks "what teams", "which teams", "where did X play", "team history"
   * Example: "what teams did pavel play for" → use this with human_id
 
+Career Summary:
+- get_career_summary(human_id) - **USE THIS FOR GENERAL PLAYER OVERVIEW!**
+  * Returns combined info: basic details, career stats, team history, and best games
+  * REQUIRED when query asks "tell me about X", "career summary", "how long did X play"
+  * Example: "tell me about pavel kletskov" → use this with human_id
+
 Leaderboards:
 - get_top_scorers(org_id, limit, min_games) - Top goal scorers org-wide
 - get_top_by_stat(stat_name, org_id, limit) - Top performers in any stat
 
 Game Data:
-- get_skaters_games(human_ids, limit) - Games played as skater (batch capable)
-- get_goalies_games(human_ids, limit) - Games played as goalie (batch capable)
+- get_skater_game_stats(human_id, sort_by, limit) - **CRITICAL: USE THIS for "best game", "most points in a game" queries!**
+  * Sort options: 'goals', 'assists', 'points', 'penalty_minutes'
+  * Example: "what game did pavel score most points" → sort_by='points', limit=1
+  * Example: "pavel's best game" → sort_by='points', limit=1
+- get_goalie_game_stats(human_id, sort_by, limit) - **CRITICAL: USE THIS for goalie "best game" queries!**
+  * Sort options: 'save_percentage', 'saves', 'goals_allowed'
+  * Example: "goalie's best game" → sort_by='save_percentage', limit=1
 - get_games_details(game_ids) - Get game info (teams, scores, date, time, status) for specific games
 - get_games_goals(game_ids) - Get all goals scored in specific games (who scored, assists, period)
 - get_games_rosters(game_ids, team_id) - Get all players who played in specific games
@@ -488,7 +499,8 @@ IMPORTANT INSTRUCTIONS:
 
    - For players: Copy the ENTIRE "human_link" value exactly
    - For teams: Copy the ENTIRE "team_link" value exactly
-   - For games: Copy the ENTIRE "first_game_link" or "last_game_link" or "game_link" value exactly
+   - For games: Copy the ENTIRE "game_link" (or "first_game_link"/"last_game_link") value exactly.
+     * IF discussing a specific game (best game, most points, etc.), YOU MUST INCLUDE THE LINK.
    - These are pre-formatted markdown links - copy them character-for-character
    - ALWAYS include the link when mentioning the entity name
 
