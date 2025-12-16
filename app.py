@@ -15,8 +15,8 @@ from flask import (Flask, g, jsonify, redirect, render_template, request,
                    send_from_directory, session, url_for)
 from flask_restx import Api
 from hockey_blast_common_lib.db_connection import get_db_params
-from hockey_blast_common_lib.models import (Game, Human, HumanAlias,
-                                            Organization, RequestLog,
+from hockey_blast_common_lib.models import (Division, Game, Human, HumanAlias,
+                                            Level, Location, Organization, RequestLog,
                                             Team, db)
 from hockey_blast_common_lib.stats_models import (OrgStatsDailyGoalie,
                                                   OrgStatsDailyHuman,
@@ -34,6 +34,7 @@ from markupsafe import Markup
 
 from flask_session import Session
 from options import MAX_HUMAN_SEARCH_RESULTS, MAX_TEAM_SEARCH_RESULTS
+from game_utils import is_game_live, parse_live_time
 
 # Load environment variables
 load_dotenv()
@@ -586,6 +587,70 @@ def _create_app(db_name):
                 .all()
             )
 
+            # Fetch live games (status="OPEN" and within 75 minutes of start time)
+            now = datetime.now()
+            live_games_data = []
+
+            # Query games with status OPEN
+            live_games_query = (
+                db.session.query(Game, Division, Location, Team.name.label('visitor_team_name'), Team.id.label('visitor_team_id'))
+                .join(Division, Game.division_id == Division.id)
+                .outerjoin(Location, Game.location_id == Location.id)
+                .join(Team, Game.visitor_team_id == Team.id)
+                .filter(Game.status == "OPEN")
+            )
+
+            live_games_results = live_games_query.all()
+
+            for game, division, location, visitor_team_name, visitor_team_id in live_games_results:
+                # Check if game is currently live using shared utility function
+                if is_game_live(game, now):
+                    # Fetch home team name
+                    home_team = db.session.query(Team).filter(Team.id == game.home_team_id).first()
+
+                    # Calculate current score from period scores
+                    visitor_score = (
+                        (game.visitor_period_1_score or 0) +
+                        (game.visitor_period_2_score or 0) +
+                        (game.visitor_period_3_score or 0) +
+                        (game.visitor_ot_score or 0)
+                    )
+                    home_score = (
+                        (game.home_period_1_score or 0) +
+                        (game.home_period_2_score or 0) +
+                        (game.home_period_3_score or 0) +
+                        (game.home_ot_score or 0)
+                    )
+
+                    # Get master location for linking (if exists)
+                    master_location = location
+                    if location and location.master_location_id:
+                        master_location = db.session.query(Location).filter(Location.id == location.master_location_id).first()
+
+                    # Get short level name
+                    level_short_name = division.level if division else ""
+                    if division and division.level_id:
+                        level_obj = db.session.query(Level).filter(Level.id == division.level_id).first()
+                        if level_obj and level_obj.short_name:
+                            level_short_name = level_obj.short_name
+
+                    # Parse live_time to extract period and time_left using shared utility
+                    period, time_left = parse_live_time(game.live_time)
+
+                    live_games_data.append({
+                        'game_id': game.id,
+                        'visitor_team_name': visitor_team_name,
+                        'visitor_team_id': visitor_team_id,
+                        'home_team_name': home_team.name if home_team else 'Unknown',
+                        'home_team_id': game.home_team_id,
+                        'visitor_score': visitor_score,
+                        'home_score': home_score,
+                        'level': level_short_name,
+                        'period': period,
+                        'time_left': time_left,
+                        'location': master_location,
+                    })
+
             # Fetch top current point streak performers (all-time stats) - only show if last game within 1 month
             one_month_ago = datetime.now() - timedelta(days=30)
             current_point_streak_skaters = (
@@ -731,6 +796,7 @@ def _create_app(db_name):
                     weekly_scorekeeper_games=weekly_scorekeeper_games,
                     current_point_streak_skaters=current_point_streak_skaters,
                     latest_completed_games=latest_completed_games,
+                    live_games=live_games_data,
                 )
             return render_template(
                 "index.html",
@@ -750,6 +816,7 @@ def _create_app(db_name):
                 weekly_scorekeeper_games=weekly_scorekeeper_games,
                 current_point_streak_skaters=current_point_streak_skaters,
                 latest_completed_games=latest_completed_games,
+                live_games=live_games_data,
             )
         except Exception as e:
             error_info = {

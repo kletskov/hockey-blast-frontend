@@ -1,7 +1,14 @@
+import sys
+import os
+
+# Add parent directory to path to import game_utils
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from flask import Blueprint, jsonify, render_template, request, url_for
 from hockey_blast_common_lib.models import (Division, Game, GameRoster, Goal,
                                             Human, League, Location, Penalty, Shootout,
                                             Team, db)
+from game_utils import is_game_live
 
 game_card_bp = Blueprint("game_card", __name__)
 
@@ -200,7 +207,8 @@ def game_card():
     day_of_week = day_of_week_map.get(game.day_of_week, "")
 
     # For live games, calculate current score from period scores
-    is_live = game.status == "OPEN"
+    # Use shared utility function to check if game is live
+    is_live = is_game_live(game)
     if is_live:
         visitor_current_score = (
             (game.visitor_period_1_score or 0) +

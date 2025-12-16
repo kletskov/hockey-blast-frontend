@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "macros.html" as macros %}
 
 {% block title %}Hockey B.L.A.S.T (Beer <h5>Top Skaters - Last Day</h5>
 <table class="table table-striped">
@@ -73,6 +74,50 @@
             {% endif %}
         </div>
         {% endif %}
+
+        <!-- Live Games Section - Only show if there are live games -->
+        {% if live_games %}
+        <h5>Live Games</h5>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Teams</th>
+                    <th>Level</th>
+                    <th>Score</th>
+                    <th>Period</th>
+                    <th>Time left</th>
+                    <th>Rink</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for game in live_games %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('team_stats.team_stats', team_id=game.visitor_team_id) }}">{{ game.visitor_team_name }}</a>
+                        <span style='color:black;'> at </span>
+                        <a href="{{ url_for('team_stats.team_stats', team_id=game.home_team_id) }}">{{ game.home_team_name }}</a>
+                    </td>
+                    <td>{{ game.level }}</td>
+                    <td>
+                        <a href="{{ url_for('game_card.game_card', game_id=game.game_id) }}">
+                        {% if game.visitor_score > game.home_score %}
+                        <strong>{{ game.visitor_score }}</strong> : {{ game.home_score }}
+                        {% elif game.home_score > game.visitor_score %}
+                        {{ game.visitor_score }} : <strong>{{ game.home_score }}</strong>
+                        {% else %}
+                        {{ game.visitor_score }} : {{ game.home_score }}
+                        {% endif %}
+                        </a>
+                    </td>
+                    <td>{{ game.period }}</td>
+                    <td>{{ game.time_left }}</td>
+                    <td>{{ macros.location_display(game.location, link_to_page=True) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
         <h5>Current Point Streak</h5>
         <table class="table table-striped">
             <thead>

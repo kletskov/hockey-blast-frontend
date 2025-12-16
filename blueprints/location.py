@@ -1,8 +1,14 @@
 from datetime import date, datetime, timedelta
+import sys
+import os
+
+# Add parent directory to path to import game_utils
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from flask import Blueprint, jsonify, redirect, render_template, request, url_for
 from hockey_blast_common_lib.models import (Division, Game, Location, Team, db)
 from jinja2 import Environment
+from game_utils import is_game_live
 
 location_bp = Blueprint("location", __name__)
 
@@ -134,18 +140,8 @@ def filter_location_games():
         )
         home_team = db.session.query(Team).filter(Team.id == game.home_team_id).first()
 
-        # Determine if game is currently live (for orange highlighting)
-        # Game is live ONLY if BOTH conditions are met:
-        # 1. Game status is "OPEN" (actively being played), AND
-        # 2. Current time is within 75 minutes of game start
-        is_in_progress = False
-        if game.date and game.time:
-            game_datetime = datetime.combine(game.date, game.time)
-            game_live_cutoff = game_datetime + timedelta(minutes=75)
-
-            # Check if status indicates live game AND within 75 minutes of start
-            if (game.status and game.status.upper() == "OPEN") and (game_datetime <= now <= game_live_cutoff):
-                is_in_progress = True
+        # Determine if game is currently live using shared utility function
+        is_in_progress = is_game_live(game, now)
 
         # Format final score with bold for winner
         if game.status and game.status.lower().startswith("final"):

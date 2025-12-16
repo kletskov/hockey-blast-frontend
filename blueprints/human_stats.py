@@ -1,10 +1,13 @@
 import os
 import sys
+from datetime import datetime, timedelta
 
 from flask import Blueprint, jsonify, render_template, request, url_for
 
 # Add the project root directory to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from game_utils import is_game_live
 
 
 import pandas as pd
@@ -766,6 +769,7 @@ def human_stats():
 
     # Extract recent games data
     recent_games_data = []
+    now = datetime.now()  # Get current time for live game detection
     day_of_week_map = {
         1: "Mon",
         2: "Tue",
@@ -793,6 +797,10 @@ def human_stats():
 
         day_of_week = day_of_week_map.get(game.day_of_week, "")
         date_time = f"{day_of_week} {game.date.strftime('%m/%d/%y')} {game.time.strftime('%I:%M%p')}"
+
+        # Check if game is currently live using shared utility function
+        game_is_live = is_game_live(game, now)
+
         if game.status.startswith("Final"):
             if game.home_team_id == row["team_id"]:
                 if game.home_final_score > game.visitor_final_score:
@@ -812,7 +820,7 @@ def human_stats():
                 final_score = f"<strong style='color:{color};'>{game.visitor_final_score}</strong> : <span style='color:black;'>{game.home_final_score}</span>"
             else:
                 final_score = f"<span style='color:black;'>{game.visitor_final_score}</span> : <span style='color:black;'>{game.home_final_score}</span>"
-        elif game.status == "OPEN":
+        elif game_is_live:
             # Handle live games - calculate current score from period scores
             visitor_current_score = (
                 (game.visitor_period_1_score or 0) +
@@ -843,6 +851,38 @@ def human_stats():
                 final_score = f"<strong style='color:{color};'>{visitor_current_score}</strong> : <span style='color:black;'>{home_current_score}</span> (live)"
             else:
                 final_score = f"<span style='color:black;'>{visitor_current_score}</span> : <span style='color:black;'>{home_current_score}</span> (live)"
+        elif game.status == "OPEN":
+            # Game status is OPEN but outside the 75-minute live window
+            # Show current score from period scores without "(live)" suffix
+            visitor_current_score = (
+                (game.visitor_period_1_score or 0) +
+                (game.visitor_period_2_score or 0) +
+                (game.visitor_period_3_score or 0)
+            )
+            home_current_score = (
+                (game.home_period_1_score or 0) +
+                (game.home_period_2_score or 0) +
+                (game.home_period_3_score or 0)
+            )
+
+            if game.home_team_id == row["team_id"]:
+                if home_current_score > visitor_current_score:
+                    color = "#7CFC00"
+                elif home_current_score < visitor_current_score:
+                    color = "red"
+                else:
+                    color = "black"
+                final_score = f"<span style='color:black;'>{visitor_current_score}</span> : <strong style='color:{color};'>{home_current_score}</strong>"
+            elif game.visitor_team_id == row["team_id"]:
+                if visitor_current_score > home_current_score:
+                    color = "#7CFC00"
+                elif visitor_current_score < home_current_score:
+                    color = "red"
+                else:
+                    color = "black"
+                final_score = f"<strong style='color:{color};'>{visitor_current_score}</strong> : <span style='color:black;'>{home_current_score}</span>"
+            else:
+                final_score = f"<span style='color:black;'>{visitor_current_score}</span> : <span style='color:black;'>{home_current_score}</span>"
         else:
             # Handle cases where the game status is not 'Final' or 'OPEN' (e.g., Scheduled, Canceled)
             final_score = "N/A"
