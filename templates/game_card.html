@@ -32,7 +32,7 @@
     </table>
 
     <!-- Scoring Table -->
-    <h4>Game Results ({% if game.status == "OPEN" and game.live_time %}<span style="color: white;">Live - {{ game.live_time }}</span>{% else %}{{ game.status }}{% endif %})</h4>
+    <h4>Game Results ({% if game.status == "OPEN" and game.live_time %}<span style="color: white;">{{ game.live_time.replace('Period ', 'P') }}</span>{% else %}{{ game.status }}{% endif %})</h4>
     <table class="table table-striped">
         <thead>
             <tr>

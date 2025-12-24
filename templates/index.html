@@ -82,10 +82,8 @@
             <thead>
                 <tr>
                     <th>Teams</th>
-                    <th>Level</th>
                     <th>Score</th>
-                    <th>Period</th>
-                    <th>Time left</th>
+                    <th>Time Left</th>
                     <th>Rink</th>
                 </tr>
             </thead>
@@ -93,11 +91,11 @@
                 {% for game in live_games %}
                 <tr>
                     <td>
-                        <a href="{{ url_for('team_stats.team_stats', team_id=game.visitor_team_id) }}">{{ game.visitor_team_name }}</a>
-                        <span style='color:black;'> at </span>
-                        <a href="{{ url_for('team_stats.team_stats', team_id=game.home_team_id) }}">{{ game.home_team_name }}</a>
+                        <a href="{{ url_for('team_stats.team_stats', team_id=game.visitor_team_id) }}">{{ game.visitor_team_name }}</a><br>
+                        <span style='color:black;'>at</span><br>
+                        <a href="{{ url_for('team_stats.team_stats', team_id=game.home_team_id) }}">{{ game.home_team_name }}</a><br>
+                        ({{ game.level }})
                     </td>
-                    <td>{{ game.level }}</td>
                     <td>
                         <a href="{{ url_for('game_card.game_card', game_id=game.game_id) }}">
                         {% if game.visitor_score > game.home_score %}
@@ -109,8 +107,7 @@
                         {% endif %}
                         </a>
                     </td>
-                    <td>{{ game.period }}</td>
-                    <td>{{ game.time_left }}</td>
+                    <td>P{{ game.period }} {{ game.time_left }}</td>
                     <td>{{ macros.location_display(game.location, link_to_page=True) }}</td>
                 </tr>
                 {% endfor %}

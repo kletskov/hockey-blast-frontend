@@ -342,7 +342,9 @@ ENTITIES FOUND IN ITERATION 1:
 {results_summary}
 
 YOUR TASK:
-Now that we have entity IDs, use them to answer the original question.
+Now that we have entity IDs, use them to answer the original question: "{user_query}"
+
+**CRITICAL: FOCUS ONLY ON THE QUESTION ABOVE ("{user_query}"). DO NOT HALLUCINATE A DIFFERENT QUESTION.**
 
 AVAILABLE DATA RETRIEVAL TOOLS:
 

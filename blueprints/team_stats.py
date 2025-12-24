@@ -90,6 +90,9 @@ def team_stats():
                 final_score = f"<strong style='color:{color};'>{game.visitor_final_score}</strong> : <span style='color:black;'>{game.home_final_score}</span>"
             else:
                 final_score = f"<span style='color:black;'>{game.visitor_final_score}</span> : <span style='color:black;'>{game.home_final_score}</span>"
+        elif game.status == "OPEN":
+            # Show live score for games in progress
+            final_score = f"{game.visitor_final_score} : {game.home_final_score} (live)"
         else:
             final_score = "TBD"
         recent_and_upcoming_games_data.append(
