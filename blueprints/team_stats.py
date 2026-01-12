@@ -71,7 +71,10 @@ def team_stats():
         home_team = db.session.query(Team).filter(Team.id == game.home_team_id).first()
         day_of_week = day_of_week_map.get(game.day_of_week, "")
         date_time = f"{day_of_week} {game.date.strftime('%m/%d/%y')} {game.time.strftime('%I:%M%p')}"
-        if game.status.startswith("Final"):
+        if game.status.startswith("Final") or game.status.upper() == "FORFEIT":
+            # Add forfeit indicator if applicable
+            forfeit_indicator = " (F)" if game.status.upper() == "FORFEIT" else ""
+
             if game.home_team_id == team_id:
                 if game.home_final_score > game.visitor_final_score:
                     color = "#7CFC00"
@@ -79,7 +82,7 @@ def team_stats():
                     color = "red"
                 else:
                     color = "black"
-                final_score = f"<span style='color:black;'>{game.visitor_final_score}</span> : <strong style='color:{color};'>{game.home_final_score}</strong>"
+                final_score = f"<span style='color:black;'>{game.visitor_final_score}</span> : <strong style='color:{color};'>{game.home_final_score}</strong>{forfeit_indicator}"
             elif game.visitor_team_id == team_id:
                 if game.visitor_final_score > game.home_final_score:
                     color = "#7CFC00"
@@ -87,9 +90,9 @@ def team_stats():
                     color = "red"
                 else:
                     color = "black"
-                final_score = f"<strong style='color:{color};'>{game.visitor_final_score}</strong> : <span style='color:black;'>{game.home_final_score}</span>"
+                final_score = f"<strong style='color:{color};'>{game.visitor_final_score}</strong> : <span style='color:black;'>{game.home_final_score}</span>{forfeit_indicator}"
             else:
-                final_score = f"<span style='color:black;'>{game.visitor_final_score}</span> : <span style='color:black;'>{game.home_final_score}</span>"
+                final_score = f"<span style='color:black;'>{game.visitor_final_score}</span> : <span style='color:black;'>{game.home_final_score}</span>{forfeit_indicator}"
         elif game.status == "OPEN":
             # Show live score for games in progress
             final_score = f"{game.visitor_final_score} : {game.home_final_score} (live)"
