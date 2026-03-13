@@ -3,42 +3,40 @@
 {% block title %}Select Two Skaters to Compare{% endblock %}
 
 {% block content %}
-<div style="text-align: center;">
-    <h3>Select Two Skaters to Compare</h3>
+<div class="text-center">
+    <h2 class="text-lg font-bold mt-6 mb-3 text-primary">Select Two Skaters to Compare</h2>
 
     {% if stage == 1 %}
-    <h5>Step 1: Select First Skater</h5>
+    <h3 class="text-base font-semibold mt-4 mb-2 text-primary">Step 1: Select First Skater</h3>
     {% else %}
-    <h5>Step 2: Select Second Skater</h5>
+    <h3 class="text-base font-semibold mt-4 mb-2 text-primary">Step 2: Select Second Skater</h3>
     <p><strong>Selected Skater 1:</strong> {{ selected_skater_1_name }}</p>
     {% endif %}
 
     <form method="post" class="mb-4">
-        <table class="table table-striped">
-            <tr>
-                <td><input type="text" name="first_name" placeholder="First Name" class="form-control" /></td>
-                <td><input type="text" name="last_name" placeholder="Last Name" class="form-control" /></td>
-                <td><button type="submit" name="search" class="btn btn-primary">Search Skaters</button></td>
-            </tr>
-        </table>
+        <div class="flex flex-wrap items-center justify-center gap-2 mb-4">
+            <input type="text" name="first_name" placeholder="First Name" class="input input-bordered input-sm bg-base-200" />
+            <input type="text" name="last_name" placeholder="Last Name" class="input input-bordered input-sm bg-base-200" />
+            <button type="submit" name="search" class="btn btn-primary btn-sm">Search Skaters</button>
+        </div>
     </form>
 
     {% if search_results is not none %}
     <div>
         {% if search_results %}
-        <h6>Search Results: </h6>
-        <ul class="list-group">
+        <h3 class="text-base font-semibold mt-4 mb-2 text-primary">Search Results:</h3>
+        <ul class="menu bg-base-200 rounded-box text-left">
             {% for player in search_results %}
-            <li class="list-group-item">
+            <li class="px-3 py-2 text-sm border-b border-base-content/5">
                 <form method="post" style="display: inline;">
                     <input type="hidden" name="skater_id" value="{{ player.id }}" />
                     <input type="hidden" name="skater_name" value="{{ player.name }}" />
                     {% if stage == 1 %}
-                    <button type="submit" name="select_skater_1" class="btn btn-link" style="text-decoration: none;">
+                    <button type="submit" name="select_skater_1" class="btn btn-link btn-sm text-primary" style="text-decoration: none;">
                         {{ player.display_name }}
                     </button>
                     {% else %}
-                    <button type="submit" name="select_skater_2" class="btn btn-link" style="text-decoration: none;">
+                    <button type="submit" name="select_skater_2" class="btn btn-link btn-sm text-primary" style="text-decoration: none;">
                         {{ player.display_name }}
                     </button>
                     {% endif %}

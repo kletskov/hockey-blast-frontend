@@ -3,19 +3,19 @@
 {% block title %}Search Teams{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Search Teams</h1>
+<h1 class="text-xl font-bold mb-4">Search Teams</h1>
 <form method="post" class="mb-4">
-    <div class="form-group">
-        <input type="text" class="form-control" id="team_name" name="team_name"
+    <div class="form-control mb-2">
+        <input type="text" class="input input-bordered input-sm bg-base-200" id="team_name" name="team_name"
             placeholder="Enter team name (or any portion of it)">
     </div>
-    <button type="submit" class="btn btn-primary">Search</button>
+    <button type="submit" class="btn btn-primary btn-sm">Search</button>
 </form>
 {% if results %}
-<h2>Results (showing up to {{ max_results }} matches):</h2>
-<ul class="list-group">
+<h2 class="text-lg font-bold mt-6 mb-3 text-primary">Results (showing up to {{ max_results }} matches):</h2>
+<ul class="menu bg-base-200 rounded-box">
     {% for link in results %}
-    <li class="list-group-item">{{ link|safe }}</li>
+    <li class="px-3 py-2 text-sm border-b border-base-content/5">{{ link|safe }}</li>
     {% endfor %}
 </ul>
 {% elif no_results %}

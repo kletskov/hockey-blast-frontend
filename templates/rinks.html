@@ -4,15 +4,13 @@
 {% block title %}Rinks{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <h2 class="mb-4">All Rinks</h2>
+<h2 class="text-xl font-bold mb-4">All Rinks</h2>
 
-    <div style="font-size: 1.3rem; font-weight: 500;">
-        {% for location in locations %}
-            <div style="margin-bottom: 0.5rem;">
-                {{ macros.location_display(location, link_to_page=True) }}
-            </div>
-        {% endfor %}
-    </div>
+<div class="text-base font-medium space-y-2">
+    {% for location in locations %}
+        <div>
+            {{ macros.location_display(location, link_to_page=True) }}
+        </div>
+    {% endfor %}
 </div>
 {% endblock %}

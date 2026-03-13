@@ -1,134 +1,93 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="en" data-theme="sharks">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Hockey B.L.A.S.T{% endblock %}</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5/dist/full.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body {
-            background-color: #008080;
-            /* Dark teal */
+        [data-theme="sharks"] {
+            --p: oklch(0.65 0.18 50);
+            --pc: oklch(0.12 0 0);
+            --s: oklch(0.42 0.09 210);
+            --sc: oklch(0.95 0 0);
+            --a: oklch(0.55 0.12 210);
+            --ac: oklch(0.95 0 0);
+            --n: oklch(0.22 0 0);
+            --nc: oklch(0.95 0 0);
+            --b1: oklch(0.12 0 0);
+            --b2: oklch(0.16 0 0);
+            --b3: oklch(0.20 0 0);
+            --bc: oklch(0.93 0 0);
+            --in: oklch(0.60 0.19 250);
+            --su: oklch(0.60 0.19 145);
+            --wa: oklch(0.75 0.18 85);
+            --er: oklch(0.60 0.22 30);
         }
-
-        .container {
-            background-color: #20B2AA;
-            /* Light teal */
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 50px;
+        .table thead tr th {
+            background-color: oklch(0.20 0 0);
+            color: oklch(0.93 0 0);
         }
-
-        a {
-            color: #0000EE;
-            /* Default link color */
+        .table-zebra tbody tr:nth-child(even) {
+            background-color: oklch(0.16 0 0);
         }
-
-        a:hover {
-            color: #551A8B;
-            /* Visited link color */
+        .table a {
+            color: oklch(0.65 0.18 50);
+            text-decoration: none;
         }
-
-        .table {
-            background-color: #20B2AA;
-            /* Light teal */
-            color: white;
-        }
-
-        .list-group-item {
-            background-color: #008080;
-            /* Dark teal */
-            color: white;
-        }
-
-        .form-control {
-            background-color: #008080;
-            /* Dark teal */
-            color: white;
-        }
-
-        .form-control::placeholder {
-            color: #B0C4DE;
-            /* Light Steel Blue */
-        }
-
-        .list-group-item {
-            background-color: #008080;
-            /* Dark teal */
-            color: yellow;
-        }
-
-        nav {
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 1.2rem;
-            /* Increase text size */
-        }
-
-        nav a {
-            color: orange;
-        }
-
-        nav a:hover {
-            color: darkorange;
-        }
-
-        .card {
-            background-color: #20B2AA;
-            /* Light teal */
-            color: white;
-        }
-
-        .card .btn {
-            background-color: #008080;
-            /* Dark teal */
-            color: white;
-        }
-
-        .card .btn:hover {
-            background-color: #006666;
-            /* Darker teal */
-        }
-
-        .facebook-icon {
-            width: 20px;
-            height: 20px;
-            vertical-align: middle;
-        }
+        .table a:hover { text-decoration: underline; }
     </style>
+    {% block extra_head %}{% endblock %}
 </head>
-
-<body>
-    <nav>
-        <br>
-        <a href="{{ url_for('index', top_n=10) }}">Main</a> |
-        <a href="{{ url_for('skater_performance.skater_performance') }}">Skaters</a> |
-        <a href="{{ url_for('goalie_performance.goalie_performance') }}">Goalies</a> |
-        <a href="{{ url_for('referee_performance.referee_performance') }}">Refs</a> |
-        <!-- <a href="{{ url_for('scorekeeper_performance.scorekeeper_performance') }}">Scorekeepers</a> |
-        <a href="{{ url_for('scorekeeper_quality.scorekeeper_quality') }}">Scorekeeper Quality</a> | -->
-        <a
-            href="{{ url_for('games.games', top_n=20, org_id='1', level_id='', season_id='', game_status='completed') }}">Games</a>
-        |
-        <a
-            href="{{ url_for('penalties.penalties', top_n=20, org_id='1', level_id='', season_id='', player_status='active', team_id='') }}">Penalties</a>
-        |
-        <a href="{{ url_for('hall_of_fame.hall_of_fame', top_n=20) }}">Hall Of Fame</a> |
-        <a href="{{ url_for('special_stats') }}">Special</a> |
-        <a href="{{ url_for('about') }}">About</a>
-        <!-- |
-        <a href="https://www.facebook.com/groups/1336941614177211/">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg"
-                alt="Facebook Group" class="facebook-icon">Discuss
-        </a> -->
-    </nav>
-    <div class="container">
+<body class="min-h-screen bg-base-100">
+    <div class="navbar bg-base-200 shadow-lg sticky top-0 z-50 border-b border-base-content/10">
+        <div class="navbar-start">
+            <a href="{{ url_for('index', top_n=10) }}" class="btn btn-ghost text-xl font-bold tracking-tight px-2">
+                🏒 <span class="text-primary">Hockey</span><span class="text-base-content/80"> B.L.A.S.T</span>
+            </a>
+        </div>
+        <div class="navbar-center hidden lg:flex">
+            <ul class="menu menu-horizontal px-1 gap-1 text-sm">
+                <li><a href="{{ url_for('index', top_n=10) }}" class="rounded-lg font-medium">Main</a></li>
+                <li><a href="{{ url_for('skater_performance.skater_performance') }}" class="rounded-lg font-medium">Skaters</a></li>
+                <li><a href="{{ url_for('goalie_performance.goalie_performance') }}" class="rounded-lg font-medium">Goalies</a></li>
+                <li><a href="{{ url_for('referee_performance.referee_performance') }}" class="rounded-lg font-medium">Refs</a></li>
+                <li><a href="{{ url_for('games.games', top_n=20, org_id='1', level_id='', season_id='', game_status='completed') }}" class="rounded-lg font-medium">Games</a></li>
+                <li><a href="{{ url_for('penalties.penalties', top_n=20, org_id='1', level_id='', season_id='', player_status='active', team_id='') }}" class="rounded-lg font-medium">Penalties</a></li>
+                <li><a href="{{ url_for('hall_of_fame.hall_of_fame', top_n=20) }}" class="rounded-lg font-medium">Hall Of Fame</a></li>
+                <li><a href="{{ url_for('special_stats') }}" class="rounded-lg font-medium">Special</a></li>
+                <li><a href="{{ url_for('about') }}" class="rounded-lg font-medium">About</a></li>
+            </ul>
+        </div>
+        <div class="navbar-end lg:hidden">
+            <div class="dropdown dropdown-end">
+                <label tabindex="0" class="btn btn-ghost btn-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </label>
+                <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-200 rounded-box w-52">
+                    <li><a href="{{ url_for('index', top_n=10) }}">Main</a></li>
+                    <li><a href="{{ url_for('skater_performance.skater_performance') }}">Skaters</a></li>
+                    <li><a href="{{ url_for('goalie_performance.goalie_performance') }}">Goalies</a></li>
+                    <li><a href="{{ url_for('referee_performance.referee_performance') }}">Refs</a></li>
+                    <li><a href="{{ url_for('games.games', top_n=20, org_id='1', level_id='', season_id='', game_status='completed') }}">Games</a></li>
+                    <li><a href="{{ url_for('penalties.penalties', top_n=20, org_id='1', level_id='', season_id='', player_status='active', team_id='') }}">Penalties</a></li>
+                    <li><a href="{{ url_for('hall_of_fame.hall_of_fame', top_n=20) }}">Hall Of Fame</a></li>
+                    <li><a href="{{ url_for('special_stats') }}">Special</a></li>
+                    <li><a href="{{ url_for('about') }}">About</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="container mx-auto px-4 py-6 max-w-6xl">
         {% block content %}{% endblock %}
     </div>
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <footer class="footer footer-center p-4 mt-8 bg-base-200 text-base-content/50 text-xs border-t border-base-content/10">
+        <span>🏒 Hockey B.L.A.S.T · Beer League Analytics and Stats</span>
+    </footer>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    {% block extra_scripts %}{% endblock %}
 </body>
-
 </html>

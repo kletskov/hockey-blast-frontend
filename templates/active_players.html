@@ -3,59 +3,45 @@
 {% block title %}Number Of Active Players over time or seasons{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1 class="mb-4">Number of Active Players over time</h1>
-    <div class="form-group">
-        <label for="x-axis">X Axis:</label>
-        <select class="form-control" id="x-axis">
-            <option value="season_name">Seasons</option>
-            <option value="year_month">Year + Month</option>
-            <option value="year_over_year">Year Over Year</option>
-        </select>
-    </div>
-    <div class="form-group">
-        <label for="plot-1">Plot 1:</label>
-        <select class="form-control" id="plot-1">
-            <option value="all">All</option>
-            {% for level in levels %}
-            <option value="{{ level }}">{{ level }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="form-group" id="plot-2-container">
-        <label for="plot-2">Plot 2:</label>
-        <select class="form-control" id="plot-2">
-            <option value="all">All</option>
-            {% for level in levels %}
-            <option value="{{ level }}">{{ level }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="form-group">
-        <label for="min-games">Minimum Games Played:</label>
-        <select class="form-control" id="min-games">
-            {% for i in range(1, 11) %}
-            <option value="{{ i }}">{{ i }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <button class="btn btn-primary" id="update-plot">Update Plot</button>
-    <div class="plot-container">
-        <div id="plot"></div>
-    </div>
+<h1 class="mb-4 text-xl font-bold">Number of Active Players over time</h1>
+<div class="form-control mb-2">
+    <label for="x-axis" class="label"><span class="label-text">X Axis:</span></label>
+    <select class="select select-bordered select-sm bg-base-200" id="x-axis">
+        <option value="season_name">Seasons</option>
+        <option value="year_month">Year + Month</option>
+        <option value="year_over_year">Year Over Year</option>
+    </select>
 </div>
-
-<style>
-    .plot-container {
-        width: 100%;
-        overflow-x: auto;
-    }
-
-    #plot {
-        width: 100%;
-        height: 600px;
-    }
-</style>
+<div class="form-control mb-2">
+    <label for="plot-1" class="label"><span class="label-text">Plot 1:</span></label>
+    <select class="select select-bordered select-sm bg-base-200" id="plot-1">
+        <option value="all">All</option>
+        {% for level in levels %}
+        <option value="{{ level }}">{{ level }}</option>
+        {% endfor %}
+    </select>
+</div>
+<div class="form-control mb-2" id="plot-2-container">
+    <label for="plot-2" class="label"><span class="label-text">Plot 2:</span></label>
+    <select class="select select-bordered select-sm bg-base-200" id="plot-2">
+        <option value="all">All</option>
+        {% for level in levels %}
+        <option value="{{ level }}">{{ level }}</option>
+        {% endfor %}
+    </select>
+</div>
+<div class="form-control mb-2">
+    <label for="min-games" class="label"><span class="label-text">Minimum Games Played:</span></label>
+    <select class="select select-bordered select-sm bg-base-200" id="min-games">
+        {% for i in range(1, 11) %}
+        <option value="{{ i }}">{{ i }}</option>
+        {% endfor %}
+    </select>
+</div>
+<button class="btn btn-primary btn-sm mb-4" id="update-plot">Update Plot</button>
+<div class="w-full overflow-x-auto">
+    <div id="plot" style="width: 100%; height: 600px;"></div>
+</div>
 
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
@@ -77,15 +63,8 @@
 
         fetch('/get_plot_data', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                x_axis: x_axis,
-                plot_1: plot_1,
-                plot_2: plot_2,
-                min_games: min_games
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ x_axis: x_axis, plot_1: plot_1, plot_2: plot_2, min_games: min_games })
         })
             .then(response => response.json())
             .then(data => {
@@ -98,27 +77,11 @@
 
                 if (x_axis === 'year_over_year') {
                     for (var year in data.years) {
-                        traces.push({
-                            x: data.months,
-                            y: data.years[year],
-                            mode: 'lines',
-                            name: year
-                        });
+                        traces.push({ x: data.months, y: data.years[year], mode: 'lines', name: year });
                     }
                 } else {
-                    traces.push({
-                        x: data.x,
-                        y: data.y_1,
-                        mode: 'lines',
-                        name: data.plot_1_name
-                    });
-                    traces.push({
-                        x: data.x,
-                        y: data.y_2,
-                        mode: 'lines',
-                        name: data.plot_2_name
-                    });
-
+                    traces.push({ x: data.x, y: data.y_1, mode: 'lines', name: data.plot_1_name });
+                    traces.push({ x: data.x, y: data.y_2, mode: 'lines', name: data.plot_2_name });
                     if (x_axis === 'season_name') {
                         layout.xaxis.tickvals = data.x;
                         layout.xaxis.ticktext = data.season_names;

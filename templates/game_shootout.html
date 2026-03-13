@@ -3,37 +3,35 @@
 {% block title %}Game Shootout Statistics{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1 class="mb-4">Shootouts when tied stats</h1>
-    <form id="filter-form" method="post">
-        <div class="form-group">
-            <label for="league_number">Choose a League:</label>
-            <select class="form-control" id="league_number" name="league_number" required>
-                {% for league in leagues %}
-                <option value="{{ league.league_number }}">{{ league.league_name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="plot_level">Choose a Division:</label>
-            <select class="form-control" id="plot_level" name="plot_level">
-                <option value="all">All Divisions</option>
-                {% for division in divisions %}
-                <option value="{{ division }}">{{ division }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="x_axis">Aggregate by:</label>
-            <select class="form-control" id="x_axis" name="x_axis">
-                <option value="season">Season</option>
-                <option value="year_month">Year+Month</option>
-            </select>
-        </div>
-        <button type="submit" class="btn btn-primary">Submit</button>
-    </form>
-    <div id="plot-div" class="mt-4"></div>
-</div>
+<h1 class="text-xl font-bold mb-4">Shootouts when tied stats</h1>
+<form id="filter-form" method="post">
+    <div class="form-control mb-2">
+        <label for="league_number" class="label"><span class="label-text">Choose a League:</span></label>
+        <select class="select select-bordered select-sm bg-base-200" id="league_number" name="league_number" required>
+            {% for league in leagues %}
+            <option value="{{ league.league_number }}">{{ league.league_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-control mb-2">
+        <label for="plot_level" class="label"><span class="label-text">Choose a Division:</span></label>
+        <select class="select select-bordered select-sm bg-base-200" id="plot_level" name="plot_level">
+            <option value="all">All Divisions</option>
+            {% for division in divisions %}
+            <option value="{{ division }}">{{ division }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-control mb-2">
+        <label for="x_axis" class="label"><span class="label-text">Aggregate by:</span></label>
+        <select class="select select-bordered select-sm bg-base-200" id="x_axis" name="x_axis">
+            <option value="season">Season</option>
+            <option value="year_month">Year+Month</option>
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm mb-4">Submit</button>
+</form>
+<div id="plot-div" class="mt-4"></div>
 
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
@@ -44,9 +42,7 @@
         const league_number = document.getElementById('league_number').value;
         fetch('/get_game_shootout_data', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ x_axis, plot_level, league_number })
         })
             .then(response => response.json())
@@ -55,24 +51,18 @@
                 const y = data.y;
                 const traces = [];
                 for (const [key, values] of Object.entries(y)) {
-                    traces.push({
-                        x: x,
-                        y: values,
-                        mode: 'lines+markers',
-                        name: key
-                    });
+                    traces.push({ x: x, y: values, mode: 'lines+markers', name: key });
                 }
                 const layout = {
                     title: 'Game Shootout Statistics',
                     xaxis: { title: x_axis === 'year_month' ? 'Year/Month' : 'Season' },
-                    yaxis: { title: 'Percentage' }
+                    yaxis: { title: 'Percentage' },
+                    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#f0f0f0' }
                 };
-
                 if (x_axis === 'season') {
                     layout.xaxis.tickvals = data.x;
                     layout.xaxis.ticktext = data.season_names;
                 }
-
                 Plotly.newPlot('plot-div', traces, layout);
             });
     });

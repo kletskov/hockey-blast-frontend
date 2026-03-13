@@ -1,28 +1,28 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div style="text-align: center;">
-    <div>
+<div class="text-center">
+    <div class="mb-3 flex flex-wrap items-center justify-center gap-2 text-sm">
         <label for="penalty_type">Count</label>
-        <select id="penalty_type" name="penalty_type">
+        <select id="penalty_type" name="penalty_type" class="select select-bordered select-sm bg-base-200">
             <option value="all" selected>All</option>
             <option value="gm">Game Misconduct</option>
         </select>
         <label for="penalty_type">penalties for</label>
-        <select id="player_status" name="player_status">
+        <select id="player_status" name="player_status" class="select select-bordered select-sm bg-base-200">
             <option value="all" selected>All</option>
             <option value="active">Active</option>
         </select>
         <label for="player_status">players,</label>
         <label for="display_value">display</label>
-        <select id="display_value" name="display_value">
+        <select id="display_value" name="display_value" class="select select-bordered select-sm bg-base-200">
             <option value="per_game" selected>Per Game</option>
             <option value="sum">Sum</option>
         </select>
     </div>
     {% include "dropdowns.html" %}
-    <div id="penalties-results" class="table-responsive">
-        <table class="table table-striped" id="penalties-table">
+    <div id="penalties-results" class="overflow-x-auto">
+        <table class="table table-zebra table-sm" id="penalties-table">
             <thead>
                 <tr>
                     <th>Rank</th>
@@ -38,14 +38,6 @@
         </table>
     </div>
 </div>
-
-<style>
-    #penalties-table th,
-    #penalties-table td {
-        padding: 0.5rem;
-        font-size: 0.875rem;
-    }
-</style>
 
 <script>
     document.getElementById('penalty_type').addEventListener('change', function () {
@@ -84,9 +76,7 @@
         var displayValue = document.getElementById('display_value').value;
         fetch('/penalties/filter_penalties', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ org_id: orgId, level_id: levelId, season_id: seasonId, team_id: teamId, top_n: topN, penalty_type: penaltyType, player_status: playerStatus, display_value: displayValue })
         })
             .then(response => response.json())

@@ -2,60 +2,45 @@
 
 {% block content %}
 <style>
-    .table-responsive {
-        overflow-x: auto;
-    }
-
     .table th,
     .table td {
         white-space: normal;
         padding: 1px;
-        /* Slightly reduced padding */
         font-size: 0.8rem;
-        /* Slightly reduced font size */
     }
-
-    .table {
-        table-layout: auto;
-        width: 100%;
-    }
-
+    .table { table-layout: auto; width: 100%; }
     .loading-indicator {
         display: none;
         text-align: center;
         font-weight: bold;
-        color: red;
+        color: oklch(0.65 0.18 50);
         animation: blink 1s linear infinite;
     }
-
-    @keyframes blink {
-        50% {
-            opacity: 0;
-        }
-    }
+    @keyframes blink { 50% { opacity: 0; } }
+    .highlight-row { background-color: oklch(0.20 0 0) !important; }
 </style>
 
-<div class="table-responsive">
-    <h4>Stats for {{ human_name }}</h4>
-    <p>Note: Each data point below includes goalie's rank among other goalies in the following format: "<span
-            style="color: rgb(123, 0, 0);">goalie_rank / total_in_rank, Kth <a
+<div class="overflow-x-auto">
+    <h2 class="text-lg font-bold mt-6 mb-3 text-primary">Stats for {{ human_name }}</h2>
+    <p class="text-sm mb-3">Note: Each data point below includes goalie's rank among other goalies in the following format: "<span
+            class="text-error">goalie_rank / total_in_rank, Kth <a
                 href="https://en.wikipedia.org/wiki/Percentile" target="_blank">Percentile</a></span>". Higher percentiles are better (100th percentile = top 1% of all ranked players).<br>Dropdown
         options represent where {{ human_name }} played in net. Click on data header to sort by it!</p>
     {% include "dropdowns.html" %}
     <div class="loading-indicator" id="loading-indicator">Loading data...</div>
-    <div class="table-responsive" id="goalie-performance-results">
+    <div class="overflow-x-auto" id="goalie-performance-results">
         <div id="goalie-performance-section" style="display: none;">
-            <table class="table table-striped text-center" id="goalie-performance-table">
+            <table class="table table-zebra table-sm text-center" id="goalie-performance-table">
                 <thead class="text-center">
                     <tr>
-                        <th style="color: black;"></th>
-                        <th style="color: black;">From</th>
-                        <th style="color: black;">To</th>
-                        <th style="color: black;" onclick="sortTable(3)">GP</th>
-                        <th style="color: black;" onclick="sortTable(4)">GA</th>
-                        <th style="color: black;" onclick="sortTable(5)">GAA</th>
-                        <th style="color: black;" onclick="sortTable(6)">SF</th>
-                        <th style="color: black;" onclick="sortTable(7)">SV%</th>
+                        <th></th>
+                        <th>From</th>
+                        <th>To</th>
+                        <th onclick="sortTable(3)" style="cursor:pointer">GP</th>
+                        <th onclick="sortTable(4)" style="cursor:pointer">GA</th>
+                        <th onclick="sortTable(5)" style="cursor:pointer">GAA</th>
+                        <th onclick="sortTable(6)" style="cursor:pointer">SF</th>
+                        <th onclick="sortTable(7)" style="cursor:pointer">SV%</th>
                     </tr>
                 </thead>
                 <tbody id="goalie-performance-table-body" class="text-center">
@@ -64,89 +49,63 @@
             </table>
         </div>
         <div id="goalies-comparison-section" style="display: none;">
-            <label for="min_games">Min games played:</label>
-            <select id="min_games" name="min_games">
+            <label for="min_games" class="text-sm">Min games played:</label>
+            <select id="min_games" name="min_games" class="select select-bordered select-sm bg-base-200">
                 <option value="1" selected>1</option>
                 <option value="5">5</option>
                 <option value="10">10</option>
                 <option value="20">20</option>
             </select>
             <div id="team-performance-section" style="display: none;">
-                <h4>Goalies performance for the team:</h4>
-                <table class="table table-striped text-center" id="team-performance-table">
+                <h3 class="text-base font-semibold mt-4 mb-2 text-primary">Goalies performance for the team:</h3>
+                <table class="table table-zebra table-sm text-center" id="team-performance-table">
                     <thead class="text-center">
                         <tr>
-                            <th style="color: black;">Player</th>
-                            <th style="color: black;">From</th>
-                            <th style="color: black;">To</th>
-                            <th style="color: black;" onclick="sortTable(3, 'team-performance-table')">GP</th>
-                            <th style="color: black;" onclick="sortTable(4, 'team-performance-table')">GA</th>
-                            <th style="color: black;" onclick="sortTable(5, 'team-performance-table')">GAA</th>
-                            <th style="color: black;" onclick="sortTable(6, 'team-performance-table')">SF</th>
-                            <th style="color: black;" onclick="sortTable(7, 'team-performance-table')">SV%</th>
+                            <th>Player</th>
+                            <th>From</th>
+                            <th>To</th>
+                            <th onclick="sortTable(3, 'team-performance-table')" style="cursor:pointer">GP</th>
+                            <th onclick="sortTable(4, 'team-performance-table')" style="cursor:pointer">GA</th>
+                            <th onclick="sortTable(5, 'team-performance-table')" style="cursor:pointer">GAA</th>
+                            <th onclick="sortTable(6, 'team-performance-table')" style="cursor:pointer">SF</th>
+                            <th onclick="sortTable(7, 'team-performance-table')" style="cursor:pointer">SV%</th>
                         </tr>
                     </thead>
-                    <tbody id="team-performance-table-body" class="text-center">
-                        <!-- Data will be populated here -->
-                    </tbody>
+                    <tbody id="team-performance-table-body" class="text-center"></tbody>
                 </table>
             </div>
             <div id="all-goalies-section" style="display: none;">
-                <h4>Goalies for <span id="level-name"></span> in <span id="season-name"></span> season:</h4>
-                <table class="table table-striped text-center" id="all-goalies-table">
+                <h3 class="text-base font-semibold mt-4 mb-2 text-primary">Goalies for <span id="level-name"></span> in <span id="season-name"></span> season:</h3>
+                <table class="table table-zebra table-sm text-center" id="all-goalies-table">
                     <thead class="text-center">
                         <tr>
-                            <th style="color: black;">Player</th>
-                            <th style="color: black;">From</th>
-                            <th style="color: black;">To</th>
-                            <th style="color: black;" onclick="sortTable(3, 'all-goalies-table')">GP</th>
-                            <th style="color: black;" onclick="sortTable(4, 'all-goalies-table')">GA</th>
-                            <th style="color: black;" onclick="sortTable(5, 'all-goalies-table')">GAA</th>
-                            <th style="color: black;" onclick="sortTable(6, 'all-goalies-table')">SF</th>
-                            <th style="color: black;" onclick="sortTable(7, 'all-goalies-table')">SV%</th>
+                            <th>Player</th>
+                            <th>From</th>
+                            <th>To</th>
+                            <th onclick="sortTable(3, 'all-goalies-table')" style="cursor:pointer">GP</th>
+                            <th onclick="sortTable(4, 'all-goalies-table')" style="cursor:pointer">GA</th>
+                            <th onclick="sortTable(5, 'all-goalies-table')" style="cursor:pointer">GAA</th>
+                            <th onclick="sortTable(6, 'all-goalies-table')" style="cursor:pointer">SF</th>
+                            <th onclick="sortTable(7, 'all-goalies-table')" style="cursor:pointer">SV%</th>
                         </tr>
                     </thead>
-                    <tbody id="all-goalies-table-body" class="text-center">
-                        <!-- Data will be populated here -->
-                    </tbody>
+                    <tbody id="all-goalies-table-body" class="text-center"></tbody>
                 </table>
             </div>
         </div>
     </div>
 </div>
 
-<style>
-    .highlight-row {
-        background-color: white !important;
-    }
-
-    .table th,
-    .table td {
-        white-space: normal;
-        padding: 1px;
-        /* Further reduced padding */
-        font-size: 0.8rem;
-        /* Further reduced font size */
-    }
-
-    .table {
-        table-layout: auto;
-        width: 100%;
-    }
-</style>
-
 <script>
     function fetchContent(orgId, levelId, seasonId, teamId, topN) {
         var humanId = document.getElementById('human_id').value;
         var minGames = document.getElementById('min_games').value;
         var loadingIndicator = document.getElementById('loading-indicator');
-        loadingIndicator.style.display = 'block'; // Show loading indicator
+        loadingIndicator.style.display = 'block';
 
         fetch('/goalie_performance/filter_goalie_performance', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ org_id: orgId, level_id: levelId, season_id: seasonId, team_id: teamId, top_n: topN, human_id: humanId, min_games: minGames })
         })
             .then(response => response.json())
@@ -156,19 +115,17 @@
 
                 if (data.goalie_performance && data.goalie_performance.length > 0) {
                     data.goalie_performance.forEach(item => {
-                        const rowClass = 'font-weight-bold';
-                        goaliePerformanceTableBody.innerHTML += `<tr class="${rowClass}">
-                            <td style="color: black;">${item.context}</td>
+                        goaliePerformanceTableBody.innerHTML += `<tr>
+                            <td>${item.context}</td>
                             <td>${item.first_game}</td>
                             <td>${item.last_game}</td>
-                            <td><strong style="color: black;">${item.games_participated}</strong><br><span style="color: rgb(123, 0, 0);">${item.games_participated_rank}</span></td>
-                            <td><strong style="color: black;">${item.goals_allowed}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_allowed_rank}</span></td>
-                            <td><strong style="color: black;">${item.goals_allowed_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_allowed_per_game_rank}</span></td>
-                            <td><strong style="color: black;">${item.shots_faced}</strong><br><span style="color: rgb(123, 0, 0);">${item.shots_faced_rank}</span></td>
-                            <td><strong style="color: black;">${item.save_percentage}</strong><br><span style="color: rgb(123, 0, 0);">${item.save_percentage_rank}</span></td>
+                            <td><strong>${item.games_participated}</strong><br><span class="text-error text-xs">${item.games_participated_rank}</span></td>
+                            <td><strong>${item.goals_allowed}</strong><br><span class="text-error text-xs">${item.goals_allowed_rank}</span></td>
+                            <td><strong>${item.goals_allowed_per_game}</strong><br><span class="text-error text-xs">${item.goals_allowed_per_game_rank}</span></td>
+                            <td><strong>${item.shots_faced}</strong><br><span class="text-error text-xs">${item.shots_faced_rank}</span></td>
+                            <td><strong>${item.save_percentage}</strong><br><span class="text-error text-xs">${item.save_percentage_rank}</span></td>
                         </tr>`;
                     });
-
                     document.getElementById('goalie-performance-section').style.display = 'block';
                 } else {
                     document.getElementById('goalie-performance-section').style.display = 'none';
@@ -176,26 +133,24 @@
 
                 var teamPerformanceTableBody = document.getElementById('team-performance-table-body');
                 teamPerformanceTableBody.innerHTML = '';
-
                 if (data.team_performance && data.team_performance.length > 0) {
                     document.getElementById('level-name').innerText = data.level_name;
                     document.getElementById('season-name').innerText = data.season_name;
                     data.team_performance.forEach(item => {
                         if (item.games_participated >= minGames) {
-                            const rowClass = String(item.human_id) === String(humanId) ? 'font-weight-bold highlight-row' : 'font-weight-bold';
+                            const rowClass = String(item.human_id) === String(humanId) ? 'highlight-row' : '';
                             teamPerformanceTableBody.innerHTML += `<tr class="${rowClass}">
-                                <td style="color: black;">${item.context}</td>
+                                <td>${item.context}</td>
                                 <td>${item.first_game}</td>
                                 <td>${item.last_game}</td>
-                                <td><strong style="color: black;">${item.games_participated}</strong><br><span style="color: rgb(123, 0, 0);">${item.games_participated_rank}</span></td>
-                                <td><strong style="color: black;">${item.goals_allowed}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_allowed_rank}</span></td>
-                                <td><strong style="color: black;">${item.goals_allowed_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_allowed_per_game_rank}</span></td>
-                                <td><strong style="color: black;">${item.shots_faced}</strong><br><span style="color: rgb(123, 0, 0);">${item.shots_faced_rank}</span></td>
-                                <td><strong style="color: black;">${item.save_percentage}</strong><br><span style="color: rgb(123, 0, 0);">${item.save_percentage_rank}</span></td>
+                                <td><strong>${item.games_participated}</strong><br><span class="text-error text-xs">${item.games_participated_rank}</span></td>
+                                <td><strong>${item.goals_allowed}</strong><br><span class="text-error text-xs">${item.goals_allowed_rank}</span></td>
+                                <td><strong>${item.goals_allowed_per_game}</strong><br><span class="text-error text-xs">${item.goals_allowed_per_game_rank}</span></td>
+                                <td><strong>${item.shots_faced}</strong><br><span class="text-error text-xs">${item.shots_faced_rank}</span></td>
+                                <td><strong>${item.save_percentage}</strong><br><span class="text-error text-xs">${item.save_percentage_rank}</span></td>
                             </tr>`;
                         }
                     });
-
                     document.getElementById('team-performance-section').style.display = 'block';
                 } else {
                     document.getElementById('team-performance-section').style.display = 'none';
@@ -203,105 +158,75 @@
 
                 var allGoaliesTableBody = document.getElementById('all-goalies-table-body');
                 allGoaliesTableBody.innerHTML = '';
-
                 if (data.all_goalies && data.all_goalies.length > 0) {
                     document.getElementById('level-name').innerText = data.level_name;
                     document.getElementById('season-name').innerText = data.season_name;
                     data.all_goalies.forEach(item => {
                         if (item.games_participated >= minGames) {
-                            const rowClass = String(item.human_id) === String(humanId) ? 'font-weight-bold highlight-row' : 'font-weight-bold';
+                            const rowClass = String(item.human_id) === String(humanId) ? 'highlight-row' : '';
                             allGoaliesTableBody.innerHTML += `<tr class="${rowClass}">
-                                <td style="color: black;">${item.context}</td>
+                                <td>${item.context}</td>
                                 <td>${item.first_game}</td>
                                 <td>${item.last_game}</td>
-                                <td><strong style="color: black;">${item.games_participated}</strong><br><span style="color: rgb(123, 0, 0);">${item.games_participated_rank}</span></td>
-                                <td><strong style="color: black;">${item.goals_allowed}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_allowed_rank}</span></td>
-                                <td><strong style="color: black;">${item.goals_allowed_per_game}</strong><br><span style="color: rgb(123, 0, 0);">${item.goals_allowed_per_game_rank}</span></td>
-                                <td><strong style="color: black;">${item.shots_faced}</strong><br><span style="color: rgb(123, 0, 0);">${item.shots_faced_rank}</span></td>
-                                <td><strong style="color: black;">${item.save_percentage}</strong><br><span style="color: rgb(123, 0, 0);">${item.save_percentage_rank}</span></td>
+                                <td><strong>${item.games_participated}</strong><br><span class="text-error text-xs">${item.games_participated_rank}</span></td>
+                                <td><strong>${item.goals_allowed}</strong><br><span class="text-error text-xs">${item.goals_allowed_rank}</span></td>
+                                <td><strong>${item.goals_allowed_per_game}</strong><br><span class="text-error text-xs">${item.goals_allowed_per_game_rank}</span></td>
+                                <td><strong>${item.shots_faced}</strong><br><span class="text-error text-xs">${item.shots_faced_rank}</span></td>
+                                <td><strong>${item.save_percentage}</strong><br><span class="text-error text-xs">${item.save_percentage_rank}</span></td>
                             </tr>`;
                         }
                     });
-
                     document.getElementById('all-goalies-section').style.display = 'block';
                 } else {
                     document.getElementById('all-goalies-section').style.display = 'none';
                 }
 
-                // Show or hide the goalies-comparison-section based on the visibility of inner sections
                 if (document.getElementById('team-performance-section').style.display === 'block' || document.getElementById('all-goalies-section').style.display === 'block') {
                     document.getElementById('goalies-comparison-section').style.display = 'block';
                 } else {
                     document.getElementById('goalies-comparison-section').style.display = 'none';
                 }
 
-                loadingIndicator.style.display = 'none'; // Hide loading indicator
+                loadingIndicator.style.display = 'none';
             })
             .catch(error => {
                 console.error('Error fetching data:', error);
-                loadingIndicator.style.display = 'none'; // Hide loading indicator in case of error
+                loadingIndicator.style.display = 'none';
             });
     }
 
     function sortTable(columnIndex, tableId = 'goalie-performance-table') {
         var table = document.getElementById(tableId);
-        var rows = Array.from(table.rows).slice(1); // Exclude header row
-
-        // Only allow sorting for specific columns
-        if (![3, 4, 5, 6, 7].includes(columnIndex)) {
-            return;
-        }
-
+        var rows = Array.from(table.rows).slice(1);
+        if (![3, 4, 5, 6, 7].includes(columnIndex)) return;
         rows.sort((a, b) => {
-            var aText = a.cells[columnIndex].innerText.trim();
-            var bText = b.cells[columnIndex].innerText.trim();
-
-            // Extract the rank value from the cell content
-            var aRank = extractRank(aText);
-            var bRank = extractRank(bText);
-
-            return aRank - bRank; // Sort by rank (ascending)
+            return extractRank(a.cells[columnIndex].innerText.trim()) - extractRank(b.cells[columnIndex].innerText.trim());
         });
-
-        // Append sorted rows back to the table body
         var tbody = table.getElementsByTagName('tbody')[0];
         rows.forEach(row => tbody.appendChild(row));
     }
 
     function extractRank(text) {
         var match = text.match(/(\d+)\/\d+/);
-        if (match) {
-            return parseInt(match[1]);
-        }
-        return NaN;
+        return match ? parseInt(match[1]) : NaN;
     }
 
-    function updatePageSpecificCGI(url) {
-    }
+    function updatePageSpecificCGI(url) {}
 
     function onWindowLoad() {
         const urlParams = new URLSearchParams(window.location.search);
         const humanId = urlParams.get('human_id');
         const topN = urlParams.get('top_n') || 50;
         const minGames = urlParams.get('min_games') || 1;
-
         document.getElementById('human_id').value = humanId;
         document.getElementById('top_n').value = topN;
         document.getElementById('min_games').value = minGames;
     }
 
     document.getElementById('min_games').addEventListener('change', function () {
-        var orgId = document.getElementById('organization').value;
-        var levelId = document.getElementById('level').value;
-        var seasonId = document.getElementById('season').value;
-        var teamId = document.getElementById('team').value;
-        var topN = document.getElementById('top_n').value;
-        var minGames = this.value;
-
         const url = new URL(window.location);
-        url.searchParams.set('min_games', minGames);
+        url.searchParams.set('min_games', this.value);
         window.history.pushState({}, '', url);
-
         var event = new CustomEvent('dropdownChange', { detail: null });
         document.dispatchEvent(event);
     });
