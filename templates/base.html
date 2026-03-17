@@ -7,80 +7,125 @@
     <link href="https://cdn.jsdelivr.net/npm/daisyui@5/dist/full.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        [data-theme="sharks"] {
-            --p: oklch(0.65 0.18 50);
-            --pc: oklch(0.12 0 0);
-            --s: oklch(0.42 0.09 210);
-            --sc: oklch(0.95 0 0);
-            --a: oklch(0.55 0.12 210);
-            --ac: oklch(0.95 0 0);
-            --n: oklch(0.22 0 0);
-            --nc: oklch(0.95 0 0);
-            --b1: oklch(0.12 0 0);
-            --b2: oklch(0.16 0 0);
-            --b3: oklch(0.20 0 0);
-            --bc: oklch(0.93 0 0);
-            --in: oklch(0.60 0.19 250);
-            --su: oklch(0.60 0.19 145);
-            --wa: oklch(0.75 0.18 85);
-            --er: oklch(0.60 0.22 30);
+        /* ── Base layout: teal background like the original ── */
+        html, body {
+            background-color: #2aada1 !important;
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        /* ── Nav pills in scrollable strip ── */
+        .nav-pill {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #ffffff !important;
+            text-decoration: none;
+            white-space: nowrap;
+            background-color: rgba(0,0,0,0.15);
+            transition: background-color 0.15s, color 0.15s;
+        }
+        .nav-pill:hover, .nav-pill:active {
+            background-color: #E57200 !important;
+            color: #ffffff !important;
+        }
+        /* Hide scrollbar on the nav strip */
+        nav::-webkit-scrollbar { display: none; }
+
+        /* ── Plotly charts: white card so they pop off the teal bg ── */
+        .js-plotly-plot, .plotly-graph-div {
+            background: #ffffff !important;
+            border-radius: 10px;
+            padding: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        /* ── Tables: dark teal header, white rows, dark text ── */
+        .table {
+            background-color: transparent;
         }
         .table thead tr th {
-            background-color: oklch(0.20 0 0);
-            color: oklch(0.93 0 0);
+            background-color: #1a5c55 !important;
+            color: #ffffff !important;
+            font-weight: 700;
+        }
+        .table tbody tr {
+            background-color: #ffffff !important;
+            color: #111111 !important;
         }
         .table-zebra tbody tr:nth-child(even) {
-            background-color: oklch(0.16 0 0);
+            background-color: #d6f0ed !important;
+            color: #111111 !important;
         }
+        .table tbody td, .table tbody th {
+            color: #111111 !important;
+        }
+        /* Links inside tables */
         .table a {
-            color: oklch(0.65 0.18 50);
+            color: #0057b8 !important;
             text-decoration: none;
         }
         .table a:hover { text-decoration: underline; }
+
+        /* ── Headings and general text on teal bg ── */
+        h1, h2, h3, h4, h5, h6, p, label, span:not(.badge) {
+            color: #ffffff;
+        }
+        /* Links inside headings — orange so they're visible on teal */
+        h1 a, h2 a, h3 a, h4 a {
+            color: #E57200 !important;
+            text-decoration: none;
+        }
+        h1 a:hover, h2 a:hover { text-decoration: underline; }
+        /* Form controls */
+        select, input, textarea {
+            background-color: #ffffff !important;
+            color: #111111 !important;
+            border: 1px solid #156b62;
+        }
+        /* Cards/boxes */
+        .card, .bg-base-100, .bg-base-200, .bg-base-300 {
+            background-color: #1d8a7e !important;
+            color: #ffffff;
+        }
+        /* Buttons */
+        .btn-primary {
+            background-color: #E57200 !important;
+            border-color: #E57200 !important;
+            color: #ffffff !important;
+        }
+        .btn-primary:hover {
+            background-color: #c96400 !important;
+        }
     </style>
     {% block extra_head %}{% endblock %}
 </head>
-<body class="min-h-screen bg-base-100">
-    <div class="navbar bg-base-200 shadow-lg sticky top-0 z-50 border-b border-base-content/10">
-        <div class="navbar-start">
-            <a href="{{ url_for('index', top_n=10) }}" class="btn btn-ghost text-xl font-bold tracking-tight px-2">
-                🏒 <span class="text-primary">Hockey</span><span class="text-base-content/80"> B.L.A.S.T</span>
+<body class="min-h-screen">
+    <!-- Sticky header: logo row + scrollable nav strip -->
+    <header style="position:sticky;top:0;z-index:100;background-color:#1d8a7e;box-shadow:0 2px 6px rgba(0,0,0,0.3);">
+        <!-- Logo row -->
+        <div style="display:flex;align-items:center;padding:8px 16px;border-bottom:1px solid #156b62;">
+            <a href="{{ url_for('index', top_n=10) }}" style="color:#ffffff;font-size:1.1rem;font-weight:700;text-decoration:none;letter-spacing:0.02em;">
+                🏒 <span style="color:#E57200;">Hockey</span> B.L.A.S.T
             </a>
         </div>
-        <div class="navbar-center hidden lg:flex">
-            <ul class="menu menu-horizontal px-1 gap-1 text-sm">
-                <li><a href="{{ url_for('index', top_n=10) }}" class="rounded-lg font-medium">Main</a></li>
-                <li><a href="{{ url_for('skater_performance.skater_performance') }}" class="rounded-lg font-medium">Skaters</a></li>
-                <li><a href="{{ url_for('goalie_performance.goalie_performance') }}" class="rounded-lg font-medium">Goalies</a></li>
-                <li><a href="{{ url_for('referee_performance.referee_performance') }}" class="rounded-lg font-medium">Refs</a></li>
-                <li><a href="{{ url_for('games.games', top_n=20, org_id='1', level_id='', season_id='', game_status='completed') }}" class="rounded-lg font-medium">Games</a></li>
-                <li><a href="{{ url_for('penalties.penalties', top_n=20, org_id='1', level_id='', season_id='', player_status='active', team_id='') }}" class="rounded-lg font-medium">Penalties</a></li>
-                <li><a href="{{ url_for('hall_of_fame.hall_of_fame', top_n=20) }}" class="rounded-lg font-medium">Hall Of Fame</a></li>
-                <li><a href="{{ url_for('special_stats') }}" class="rounded-lg font-medium">Special</a></li>
-                <li><a href="{{ url_for('about') }}" class="rounded-lg font-medium">About</a></li>
-            </ul>
-        </div>
-        <div class="navbar-end lg:hidden">
-            <div class="dropdown dropdown-end">
-                <label tabindex="0" class="btn btn-ghost btn-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                </label>
-                <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-200 rounded-box w-52">
-                    <li><a href="{{ url_for('index', top_n=10) }}">Main</a></li>
-                    <li><a href="{{ url_for('skater_performance.skater_performance') }}">Skaters</a></li>
-                    <li><a href="{{ url_for('goalie_performance.goalie_performance') }}">Goalies</a></li>
-                    <li><a href="{{ url_for('referee_performance.referee_performance') }}">Refs</a></li>
-                    <li><a href="{{ url_for('games.games', top_n=20, org_id='1', level_id='', season_id='', game_status='completed') }}">Games</a></li>
-                    <li><a href="{{ url_for('penalties.penalties', top_n=20, org_id='1', level_id='', season_id='', player_status='active', team_id='') }}">Penalties</a></li>
-                    <li><a href="{{ url_for('hall_of_fame.hall_of_fame', top_n=20) }}">Hall Of Fame</a></li>
-                    <li><a href="{{ url_for('special_stats') }}">Special</a></li>
-                    <li><a href="{{ url_for('about') }}">About</a></li>
-                </ul>
+        <!-- Scrollable nav strip — one line, swipe on mobile, no dropdown -->
+        <nav style="overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
+            <div style="display:inline-flex;gap:4px;padding:6px 12px;">
+                <a href="{{ url_for('index', top_n=10) }}" class="nav-pill">Main</a>
+                <a href="{{ url_for('skater_performance.skater_performance') }}" class="nav-pill">Skaters</a>
+                <a href="{{ url_for('goalie_performance.goalie_performance') }}" class="nav-pill">Goalies</a>
+                <a href="{{ url_for('referee_performance.referee_performance') }}" class="nav-pill">Refs</a>
+                <a href="{{ url_for('games.games', top_n=20, org_id='1', level_id='', season_id='', game_status='completed') }}" class="nav-pill">Games</a>
+                <a href="{{ url_for('penalties.penalties', top_n=20, org_id='1', level_id='', season_id='', player_status='active', team_id='') }}" class="nav-pill">Penalties</a>
+                <a href="{{ url_for('hall_of_fame.hall_of_fame', top_n=20) }}" class="nav-pill">Hall of Fame</a>
+                <a href="{{ url_for('special_stats') }}" class="nav-pill">Special</a>
+                <a href="{{ url_for('about') }}" class="nav-pill">About</a>
             </div>
-        </div>
-    </div>
+        </nav>
+    </header>
     <div class="container mx-auto px-4 py-6 max-w-6xl">
         {% block content %}{% endblock %}
     </div>

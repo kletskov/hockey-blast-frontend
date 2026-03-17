@@ -1,10 +1,17 @@
 <div class="flex flex-wrap items-center gap-2 mb-4 text-sm">
+    {% set real_orgs = organizations | rejectattr('id', 'equalto', -1) | list %}
+    {% set single_org = real_orgs | length <= 1 %}
     <label for="organization" class="font-medium">Org:</label>
-    <select id="organization" name="organization" class="select select-bordered select-sm bg-base-200">
+    <select id="organization" name="organization" class="select select-bordered select-sm bg-base-200"
+        {% if single_org %}disabled title="Only one org — pre-selected"{% endif %}
+        style="{% if single_org %}opacity:0.55;cursor:default;pointer-events:none;{% endif %}">
         {% for org in organizations %}
         <option value="{{ org.id }}" {% if org.id==org_id %}selected{% endif %}>{{ org.organization_name }}</option>
         {% endfor %}
     </select>
+    {% if single_org and real_orgs %}
+    <input type="hidden" id="org_hidden" value="{{ real_orgs[0].id }}">
+    {% endif %}
 
     <label for="level" class="font-medium">Level:</label>
     <select id="level" name="level" class="select select-bordered select-sm bg-base-200" disabled>
@@ -207,7 +214,9 @@
 
     window.addEventListener('load', function () {
         const urlParams = new URLSearchParams(window.location.search);
-        const orgId = urlParams.get('org_id') || document.getElementById('organization').value;
+        const orgSelect = document.getElementById('organization');
+        const orgHidden = document.getElementById('org_hidden');
+        const orgId = urlParams.get('org_id') || (orgHidden ? orgHidden.value : orgSelect.value);
         const levelId = urlParams.get('level_id');
         const seasonId = urlParams.get('season_id');
         const teamId = urlParams.get('team_id');
