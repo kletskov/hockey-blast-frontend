@@ -145,6 +145,7 @@
         return;
       }
 
+      data.levels.sort(function(a, b) { return a.name.localeCompare(b.name); });
       data.levels.forEach(function(level) {
         var opt = document.createElement('option');
         opt.value = level.name;
