@@ -12,6 +12,22 @@ logger = logging.getLogger(__name__)
 ai_search_bp = Blueprint("ai_search", __name__)
 
 
+def _get_user_from_token(req):
+    """Extract user identifier from Auth0 JWT if present. Returns None if no/invalid token."""
+    auth_header = req.headers.get('Authorization', '')
+    if not auth_header.startswith('Bearer '):
+        return None
+    token = auth_header[7:]
+    try:
+        import json, base64
+        payload_b64 = token.split('.')[1]
+        payload_b64 += '=' * (4 - len(payload_b64) % 4)
+        payload = json.loads(base64.b64decode(payload_b64))
+        return payload.get('email') or payload.get('name') or payload.get('sub')
+    except Exception:
+        return None
+
+
 @ai_search_bp.route("/api/chat/feedback", methods=["POST"])
 def chat_feedback():
     """Store like/dislike feedback for a chat message."""
@@ -22,6 +38,8 @@ def chat_feedback():
 
     if not message_id or rating not in ("like", "dislike"):
         return jsonify({"error": "message_id and rating required"}), 400
+
+    user_id = _get_user_from_token(request)
 
     try:
         import psycopg2, os
@@ -38,15 +56,16 @@ def chat_feedback():
                 message_id TEXT NOT NULL UNIQUE,
                 rating VARCHAR(10) NOT NULL,
                 comment TEXT DEFAULT '',
+                user_id TEXT DEFAULT NULL,
                 source VARCHAR(20) DEFAULT 'frontend',
                 created_at TIMESTAMP DEFAULT NOW()
             )
         """)
         cur.execute("""
-            INSERT INTO blast_chat_feedback (message_id, rating, comment, source)
-            VALUES (%s, %s, %s, 'frontend')
-            ON CONFLICT (message_id) DO UPDATE SET rating = EXCLUDED.rating, comment = EXCLUDED.comment
-        """, (str(message_id), rating, comment or ""))
+            INSERT INTO blast_chat_feedback (message_id, rating, comment, user_id, source)
+            VALUES (%s, %s, %s, %s, 'frontend')
+            ON CONFLICT (message_id) DO UPDATE SET rating = EXCLUDED.rating, comment = EXCLUDED.comment, user_id = EXCLUDED.user_id
+        """, (str(message_id), rating, comment or "", user_id))
         conn.commit()
         conn.close()
     except Exception as e:
@@ -64,6 +83,9 @@ def chat_api():
 
     if not query:
         return jsonify({"error": "query is required"}), 400
+
+    user_id = _get_user_from_token(request)
+    logger.info(f"Chat query from user={user_id or 'anonymous'}: {query[:80]}")
 
     try:
         from hockey_blast_mcp.bedrock_chat import chat

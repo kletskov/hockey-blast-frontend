@@ -101,6 +101,7 @@
         }
     </style>
     {% block extra_head %}{% endblock %}
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
 </head>
 <body class="min-h-screen">
     <!-- Sticky header: logo row + scrollable nav strip -->
@@ -110,6 +111,10 @@
             <a href="{{ url_for('index', top_n=10) }}" style="color:#ffffff;font-size:1.1rem;font-weight:700;text-decoration:none;letter-spacing:0.02em;">
                 🏒 <span style="color:#E57200;">Hockey</span> B.L.A.S.T
             </a>
+            <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+                <span id="blast-auth-name" style="font-size:12px;color:#ffffffaa;"></span>
+                <button id="blast-auth-btn" style="background:#E57200;color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:13px;cursor:pointer;font-weight:600;">Sign In</button>
+            </div>
         </div>
         <!-- Scrollable nav strip — one line, swipe on mobile, no dropdown -->
         <nav style="overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
@@ -200,6 +205,82 @@
     </div>
 
     <script>
+    // ── Auth0 shared auth ──────────────────────────────────────────────────
+    var BlastAuth = (function() {
+      var auth0Client = null;
+      var currentUser = null;
+      var token = null;
+
+      var AUTH0_DOMAIN = 'dev-tqe4zxubkkg82828.us.auth0.com';
+      var AUTH0_CLIENT_ID = 'qhV0rAn6CywncUVjR3tjOCc45qaeBpj3';
+      var AUTH0_AUDIENCE = 'https://api.hockey-blast-predictions.com';
+
+      async function init() {
+        auth0Client = await window.auth0.createAuth0Client({
+          domain: AUTH0_DOMAIN,
+          clientId: AUTH0_CLIENT_ID,
+          authorizationParams: {
+            audience: AUTH0_AUDIENCE,
+            redirect_uri: window.location.origin + '/auth/callback'
+          },
+          cacheLocation: 'localstorage'
+        });
+
+        // Handle redirect callback
+        if (window.location.search.includes('code=') || window.location.search.includes('error=')) {
+          await auth0Client.handleRedirectCallback();
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        var isAuth = await auth0Client.isAuthenticated();
+        if (isAuth) {
+          currentUser = await auth0Client.getUser();
+          token = await auth0Client.getTokenSilently();
+        }
+        return isAuth;
+      }
+
+      async function login() {
+        await auth0Client.loginWithRedirect();
+      }
+
+      async function logout() {
+        await auth0Client.logout({ logoutParams: { returnTo: window.location.origin } });
+      }
+
+      async function getToken() {
+        if (!auth0Client) return null;
+        try {
+          token = await auth0Client.getTokenSilently();
+          return token;
+        } catch(e) { return null; }
+      }
+
+      function getUser() { return currentUser; }
+      function isAuthenticated() { return !!currentUser; }
+
+      return { init, login, logout, getToken, getUser, isAuthenticated };
+    })();
+
+    // Initialize on page load
+    BlastAuth.init().then(function(isAuth) {
+      var authBtn = document.getElementById('blast-auth-btn');
+      var authName = document.getElementById('blast-auth-name');
+      if (authBtn) {
+        if (isAuth) {
+          var user = BlastAuth.getUser();
+          authBtn.textContent = 'Sign Out';
+          authBtn.onclick = function() { BlastAuth.logout(); };
+          if (authName && user) authName.textContent = user.name || user.email || '';
+        } else {
+          authBtn.textContent = 'Sign In';
+          authBtn.onclick = function() { BlastAuth.login(); };
+        }
+      }
+    });
+    </script>
+
+    <script>
     (function() {
       var fab = document.getElementById('blast-chat-fab');
       var panel = document.getElementById('blast-chat-panel');
@@ -262,14 +343,19 @@
       }
 
       function sendFeedback(messageId, rating, comment) {
-        fetch('/api/chat/feedback', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message_id: messageId, rating: rating, comment: comment })
-        }).catch(function() {});
+        BlastAuth.getToken().then(function(authToken) {
+          fetch('/api/chat/feedback', {
+            method: 'POST',
+            headers: Object.assign(
+              {'Content-Type': 'application/json'},
+              authToken ? {'Authorization': 'Bearer ' + authToken} : {}
+            ),
+            body: JSON.stringify({ message_id: messageId, rating: rating, comment: comment })
+          }).catch(function() {});
+        });
       }
 
-      function send() {
+      async function send() {
         var q = input.value.trim();
         if (!q || loading) return;
         input.value = '';
@@ -289,9 +375,13 @@
           historyToSend.unshift(t);
         }
 
+        var authToken = await BlastAuth.getToken();
         fetch('/api/chat', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: Object.assign(
+            {'Content-Type': 'application/json'},
+            authToken ? {'Authorization': 'Bearer ' + authToken} : {}
+          ),
           body: JSON.stringify({ query: q, history: historyToSend })
         })
         .then(function(r) { return r.json(); })
