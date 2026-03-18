@@ -27,3 +27,4 @@ node_modules/
 
 flask_session/**
 flask_session_dev/**
+.env
