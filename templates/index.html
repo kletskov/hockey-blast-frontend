@@ -9,19 +9,17 @@
         <div class="card bg-base-200 shadow-md mb-6 border border-base-content/5">
             <div class="card-body">
                 <form method="post" class="mb-0">
-                    <div class="flex flex-wrap items-center justify-center gap-3">
-                        <div class="flex flex-col gap-2">
-                            <input type="text" class="input input-bordered input-sm bg-base-300" id="first_name" name="first_name"
+                    <div class="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <input type="text" class="input input-bordered input-sm bg-base-100 flex-1 sm:w-28" id="first_name" name="first_name"
                                 placeholder="First" oninput="clearOtherFields('first_name')">
-                            <input type="text" class="input input-bordered input-sm bg-base-300" id="last_name" name="last_name" placeholder="Last"
+                            <input type="text" class="input input-bordered input-sm bg-base-100 flex-1 sm:w-28" id="last_name" name="last_name" placeholder="Last"
                                 oninput="clearOtherFields('last_name')">
                         </div>
-                        <div class="font-bold text-base-content/60">OR</div>
-                        <div>
-                            <input type="text" class="input input-bordered input-sm bg-base-300" id="team_name" name="team_name" placeholder="Team"
+                        <div class="font-bold text-base-content/50 text-sm">OR</div>
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <input type="text" class="input input-bordered input-sm bg-base-100 flex-1 sm:w-36" id="team_name" name="team_name" placeholder="Team"
                                 oninput="clearOtherFields('team_name')">
-                        </div>
-                        <div>
                             <button type="submit" class="btn btn-primary btn-sm">Search</button>
                         </div>
                     </div>
@@ -108,9 +106,9 @@
                         <tr>
                             <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
                                     human.last_name }}</a></td>
-                            <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
-                            <td>{{ skater.current_point_streak }} games</td>
-                            <td>{{ "%.2f" % skater.current_point_streak_avg_points }} pts/game</td>
+                            <td class="whitespace-nowrap"><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
+                            <td class="whitespace-nowrap">{{ skater.current_point_streak }} games</td>
+                            <td class="whitespace-nowrap">{{ "%.2f" % skater.current_point_streak_avg_points }} pts/g</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -137,7 +135,7 @@
                         <tr>
                             <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
                                     human.last_name }}</a></td>
-                            <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
+                            <td class="whitespace-nowrap"><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
                             <td>{{ skater.games_participated }}</td>
                             <td>
                                 {% if skater.goals > 0 and skater.assists > 0 %}
@@ -176,7 +174,7 @@
                         <tr>
                             <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
                                     human.last_name }}</a></td>
-                            <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
+                            <td class="whitespace-nowrap"><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
                             <td>{{ skater.games_participated }}</td>
                             <td>
                                 {% if skater.goals > 0 and skater.assists > 0 %}
@@ -215,7 +213,7 @@
                         <tr>
                             <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
                                     human.last_name }}</a></td>
-                            <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
+                            <td class="whitespace-nowrap"><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
                             <td>{{ goalie.games_participated }}</td>
                             <td>{{ "%.2f" % goalie.save_percentage }}SV%</td>
                         </tr>
@@ -244,7 +242,7 @@
                         <tr>
                             <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
                                     human.last_name }}</a></td>
-                            <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
+                            <td class="whitespace-nowrap"><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
                             <td>{{ goalie.games_participated }}</td>
                             <td>{{ "%.2f" % goalie.save_percentage }}SV%</td>
                         </tr>
@@ -273,7 +271,7 @@
                         <tr>
                             <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
                                     human.last_name }}</a></td>
-                            <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
+                            <td class="whitespace-nowrap"><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
                             <td>{{ referee.games_participated }}</td>
                             <td>{{ referee.penalties_given }}PIM{% if referee.gm_given > 0 %}, {{ referee.gm_given }}GM{% endif
                                 %}
@@ -304,7 +302,7 @@
                         <tr>
                             <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
                                     human.last_name }}</a></td>
-                            <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
+                            <td class="whitespace-nowrap"><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
                             <td>{{ referee.games_participated }}</td>
                             <td>{{ referee.penalties_given }}PIM{% if referee.gm_given > 0 %}, {{ referee.gm_given }}GM{% endif
                                 %}
@@ -334,7 +332,7 @@
                         <tr>
                             <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
                                     human.last_name }}</a></td>
-                            <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
+                            <td class="whitespace-nowrap"><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
                             <td>{{ scorekeeper.games_scorekeeper }}</td>
                         </tr>
                         {% endfor %}
@@ -361,7 +359,7 @@
                         <tr>
                             <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
                                     human.last_name }}</a></td>
-                            <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
+                            <td class="whitespace-nowrap"><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
                             <td>{{ scorekeeper.games_scorekeeper }}</td>
                         </tr>
                         {% endfor %}
