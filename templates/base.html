@@ -119,6 +119,7 @@
                 <a href="{{ url_for('goalie_performance.goalie_performance') }}" class="nav-pill">Goalies</a>
                 <a href="{{ url_for('referee_performance.referee_performance') }}" class="nav-pill">Refs</a>
                 <a href="{{ url_for('games.games', top_n=20, org_id='1', level_id='', season_id='', game_status='completed') }}" class="nav-pill">Games</a>
+                <a href="/playoffs" class="nav-pill" style="color:#E57200;font-weight:700;">🏆 Playoffs</a>
                 <a href="{{ url_for('penalties.penalties', top_n=20, org_id='1', level_id='', season_id='', player_status='active', team_id='') }}" class="nav-pill">Penalties</a>
                 <a href="{{ url_for('hall_of_fame.hall_of_fame', top_n=20) }}" class="nav-pill">Hall of Fame</a>
                 <a href="{{ url_for('special_stats') }}" class="nav-pill">Special</a>

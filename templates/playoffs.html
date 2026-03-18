@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}Playoffs — Sharks Ice{% endblock %}
+
+{% block extra_head %}
+<style>
+.playoff-page { max-width: 1200px; margin: 0 auto; }
+.playoff-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+.playoff-header h1 { font-size: 1.6rem; font-weight: 700; color: #fff; margin: 0; }
+#level-filter { background: #1a1a1a; color: #eee; border: 1px solid #444; border-radius: 6px; padding: 6px 12px; font-size: 14px; }
+.level-section { margin-bottom: 40px; }
+.level-title { font-size: 1.2rem; font-weight: 700; color: #1d8a7e; border-bottom: 2px solid #1d8a7e; padding-bottom: 6px; margin-bottom: 16px; }
+.bracket-container { display: flex; flex-direction: row; gap: 0; overflow-x: auto; padding-bottom: 8px; }
+.round-col { min-width: 200px; max-width: 220px; flex-shrink: 0; display: flex; flex-direction: column; }
+.round-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #888; padding: 4px 8px; margin-bottom: 8px; border-bottom: 1px solid #333; }
+.round-games { display: flex; flex-direction: column; gap: 8px; flex: 1; justify-content: space-around; }
+.game-card { background: #252525; border: 1px solid #333; border-radius: 8px; padding: 10px 12px; font-size: 13px; }
+.game-card.scheduled { opacity: 0.8; }
+.game-card.final { border-color: #1d8a7e44; }
+.team-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 2px 0; }
+.team-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #ccc; }
+.team-name.winner { color: #E57200; font-weight: 700; }
+.team-score { font-weight: 700; font-size: 14px; color: #fff; min-width: 20px; text-align: right; }
+.vs-divider { color: #555; font-size: 10px; text-align: center; padding: 1px 0; }
+.game-meta { font-size: 11px; color: #666; margin-top: 6px; display: flex; align-items: center; gap: 6px; }
+.status-badge { font-size: 10px; padding: 1px 6px; border-radius: 3px; font-weight: 600; }
+.status-badge.final { background: #1d8a7e33; color: #1d8a7e; }
+.status-badge.final-ot { background: #1d8a7e33; color: #5ec9be; }
+.status-badge.scheduled { background: #E5720033; color: #E57200; }
+.round-arrow { display: flex; align-items: center; justify-content: center; padding: 0 4px; color: #444; font-size: 18px; align-self: center; flex-shrink: 0; }
+.loading { text-align: center; padding: 60px; color: #888; font-size: 15px; }
+.no-data { text-align: center; padding: 40px; color: #666; font-size: 14px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="playoff-page">
+  <div class="playoff-header">
+    <h1>🏆 Playoffs — Sharks Ice</h1>
+    <select id="level-filter"><option value="">All Levels</option></select>
+  </div>
+  <div id="playoff-content">
+    <div class="loading">🏒 Loading brackets...</div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function() {
+  var ROUND_LABELS = {
+    'Round Robin': 'Round Robin', 'Qualifier': 'Qualifier',
+    'Playoff': 'Round 1', 'Quarter-Final': 'Quarter-Finals', 'Quater Final': 'Quarter-Finals',
+    'Semi-Final': 'Semi-Finals', 'Semi Final': 'Semi-Finals',
+    'Consolation': 'Consolation', 'Championship': 'Championship'
+  };
+
+  function fmtDate(dateStr, timeStr) {
+    if (!dateStr) return '';
+    var d = new Date(dateStr + (timeStr ? 'T' + timeStr : ''));
+    return d.toLocaleDateString('en-US', {month:'short',day:'numeric'}) +
+           (timeStr ? ' ' + d.toLocaleTimeString('en-US', {hour:'numeric',minute:'2-digit'}) : '');
+  }
+
+  function statusBadge(status) {
+    if (!status) return '';
+    var cls = 'scheduled', label = status;
+    if (status === 'Final') { cls = 'final'; label = 'Final'; }
+    else if (status === 'Final/OT') { cls = 'final-ot'; label = 'Final/OT'; }
+    else if (status === 'Final/SO') { cls = 'final-ot'; label = 'Final/SO'; }
+    return '<span class="status-badge ' + cls + '">' + label + '</span>';
+  }
+
+  function buildGame(g) {
+    var isFinal = g.status && g.status.startsWith('Final');
+    var homeWin = g.winner === g.home_team;
+    var visWin = g.winner === g.visitor_team;
+    var homeParts = g.score !== 'TBD' ? g.score.split('–') : ['',''];
+    var homeScore = homeParts[0] || '';
+    var visScore = homeParts[1] || '';
+
+    var card = document.createElement('a');
+    card.href = '/game_card?game_id=' + g.game_id;
+    card.style.textDecoration = 'none';
+    card.className = 'game-card ' + (isFinal ? 'final' : 'scheduled');
+    card.innerHTML =
+      '<div class="team-row">' +
+        '<span class="team-name' + (homeWin ? ' winner' : '') + '" title="' + g.home_team + '">' + g.home_team + '</span>' +
+        (g.score !== 'TBD' ? '<span class="team-score' + (homeWin ? '" style="color:#E57200"' : '"') + '>' + homeScore + '</span>' : '') +
+      '</div>' +
+      '<div class="vs-divider">vs</div>' +
+      '<div class="team-row">' +
+        '<span class="team-name' + (visWin ? ' winner' : '') + '" title="' + g.visitor_team + '">' + g.visitor_team + '</span>' +
+        (g.score !== 'TBD' ? '<span class="team-score' + (visWin ? '" style="color:#E57200"' : '"') + '>' + visScore + '</span>' : '') +
+      '</div>' +
+      '<div class="game-meta">' +
+        statusBadge(g.status) +
+        '<span>' + fmtDate(g.date, g.time) + '</span>' +
+      '</div>';
+    return card;
+  }
+
+  function renderLevel(level) {
+    var section = document.createElement('div');
+    section.className = 'level-section';
+    section.setAttribute('data-level', level.name);
+    section.innerHTML = '<div class="level-title">' + level.name + '</div>';
+
+    level.divisions.forEach(function(div) {
+      var bracketWrap = document.createElement('div');
+      bracketWrap.className = 'bracket-container';
+
+      div.rounds.forEach(function(round, ri) {
+        if (ri > 0) {
+          var arrow = document.createElement('div');
+          arrow.className = 'round-arrow';
+          arrow.textContent = '›';
+          bracketWrap.appendChild(arrow);
+        }
+        var col = document.createElement('div');
+        col.className = 'round-col';
+        col.innerHTML = '<div class="round-label">' + (ROUND_LABELS[round.round_name] || round.round_name) + '</div>';
+        var gamesDiv = document.createElement('div');
+        gamesDiv.className = 'round-games';
+        round.games.forEach(function(g) {
+          gamesDiv.appendChild(buildGame(g));
+        });
+        col.appendChild(gamesDiv);
+        bracketWrap.appendChild(col);
+      });
+
+      section.appendChild(bracketWrap);
+    });
+    return section;
+  }
+
+  fetch('/api/playoffs')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var content = document.getElementById('playoff-content');
+      var filter = document.getElementById('level-filter');
+      content.innerHTML = '';
+
+      if (!data.levels || !data.levels.length) {
+        content.innerHTML = '<div class="no-data">No active playoff games found.</div>';
+        return;
+      }
+
+      data.levels.forEach(function(level) {
+        var opt = document.createElement('option');
+        opt.value = level.name;
+        opt.textContent = level.name;
+        filter.appendChild(opt);
+        content.appendChild(renderLevel(level));
+      });
+
+      filter.addEventListener('change', function() {
+        var val = this.value;
+        document.querySelectorAll('.level-section').forEach(function(s) {
+          s.style.display = (!val || s.getAttribute('data-level') === val) ? '' : 'none';
+        });
+      });
+    })
+    .catch(function(e) {
+      document.getElementById('playoff-content').innerHTML =
+        '<div class="no-data">⚠️ Failed to load: ' + e.message + '</div>';
+    });
+})();
+</script>
+{% endblock %}
