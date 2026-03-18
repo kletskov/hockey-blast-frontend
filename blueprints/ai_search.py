@@ -12,6 +12,28 @@ logger = logging.getLogger(__name__)
 ai_search_bp = Blueprint("ai_search", __name__)
 
 
+@ai_search_bp.route("/api/chat", methods=["POST"])
+def chat_api():
+    """Floating chat widget endpoint — POST {query, history[]}"""
+    data = request.get_json(silent=True) or {}
+    query = (data.get("query") or "").strip()
+    history = data.get("history") or []
+
+    if not query:
+        return jsonify({"error": "query is required"}), 400
+
+    try:
+        from hockey_blast_mcp.bedrock_chat import chat
+        result = chat(query, history=history)
+        return jsonify({
+            "answer": result["answer"],
+            "tools_used": result.get("tools_used", []),
+        })
+    except Exception as e:
+        logger.error(f"Chat API error: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+
 @ai_search_bp.route("/ai-search", methods=["GET", "POST"])
 def ai_search():
     if request.method == "GET":
