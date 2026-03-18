@@ -2,7 +2,7 @@
     {% set real_orgs = organizations | rejectattr('id', 'equalto', -1) | list %}
     {% set single_org = real_orgs | length <= 1 %}
     <label for="organization" class="font-medium">Org:</label>
-    <select id="organization" name="organization" class="select select-bordered select-sm bg-base-200"
+    <select id="organization" name="organization" class="select select-bordered select-primary select-sm bg-base-100"
         {% if single_org %}disabled title="Only one org — pre-selected"{% endif %}
         style="{% if single_org %}opacity:0.55;cursor:default;pointer-events:none;{% endif %}">
         {% for org in organizations %}
@@ -14,22 +14,22 @@
     {% endif %}
 
     <label for="level" class="font-medium">Level:</label>
-    <select id="level" name="level" class="select select-bordered select-sm bg-base-200" disabled>
+    <select id="level" name="level" class="select select-bordered select-primary select-sm bg-base-100" disabled>
         <option value="">All Levels</option>
     </select>
 
     <label for="season" class="font-medium">Season:</label>
-    <select id="season" name="season" class="select select-bordered select-sm bg-base-200" disabled>
+    <select id="season" name="season" class="select select-bordered select-primary select-sm bg-base-100" disabled>
         <option value="">All Seasons</option>
     </select>
 
     <label for="team" class="font-medium">Team:</label>
-    <select id="team" name="team" class="select select-bordered select-sm bg-base-200" disabled>
+    <select id="team" name="team" class="select select-bordered select-primary select-sm bg-base-100" disabled>
         <option value="">All Teams</option>
     </select>
 
     <label for="top_n" class="font-medium">Show Top:</label>
-    <select id="top_n" name="top_n" class="select select-bordered select-sm bg-base-200">
+    <select id="top_n" name="top_n" class="select select-bordered select-primary select-sm bg-base-100">
         <option value="50" selected>50</option>
         <option value="100">100</option>
         <option value="500">500</option>

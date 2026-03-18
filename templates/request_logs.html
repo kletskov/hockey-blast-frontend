@@ -6,7 +6,7 @@
 <h1 class="text-xl font-bold mb-4">Request Logs</h1>
 <form method="get" class="mb-4 flex items-center gap-2">
     <label for="interval" class="font-medium text-sm">Select Interval:</label>
-    <select id="interval" name="interval" class="select select-bordered select-sm bg-base-200" onchange="this.form.submit()">
+    <select id="interval" name="interval" class="select select-bordered select-primary select-sm bg-base-100" onchange="this.form.submit()">
         <option value="minutely" {% if interval=='minutely' %}selected{% endif %}>Minutely</option>
         <option value="hourly" {% if interval=='hourly' %}selected{% endif %}>Hourly</option>
         <option value="daily" {% if interval=='daily' %}selected{% endif %}>Daily</option>

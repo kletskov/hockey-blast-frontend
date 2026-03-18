@@ -6,14 +6,14 @@
 <h1 class="text-xl font-bold mb-4">Time of Games</h1>
 <div class="form-control mb-2">
     <label for="plot-type" class="label"><span class="label-text">Comparison Mode:</span></label>
-    <select class="select select-bordered select-sm bg-base-200" id="plot-type">
+    <select class="select select-bordered select-primary select-sm bg-base-100" id="plot-type">
         <option value="compare_teams_by_level">Compare Teams Inside a Division</option>
         <option value="compare_levels_by_season">Compare Divisions</option>
     </select>
 </div>
 <div class="form-control mb-2" id="level-1-container" style="display: none;">
     <label for="level-1" class="label"><span class="label-text">Choose Division 1:</span></label>
-    <select class="select select-bordered select-sm bg-base-200" id="level-1">
+    <select class="select select-bordered select-primary select-sm bg-base-100" id="level-1">
         <option value="all">ALL Divisions</option>
         {% for level in levels %}
         <option value="{{ level }}">{{ level }}</option>
@@ -22,7 +22,7 @@
 </div>
 <div class="form-control mb-2" id="level-2-container" style="display: none;">
     <label for="level-2" class="label"><span class="label-text">Choose Division 2:</span></label>
-    <select class="select select-bordered select-sm bg-base-200" id="level-2">
+    <select class="select select-bordered select-primary select-sm bg-base-100" id="level-2">
         <option value="all">ALL Divisions</option>
         {% for level in levels %}
         <option value="{{ level }}">{{ level }}</option>
@@ -31,7 +31,7 @@
 </div>
 <div class="form-control mb-2" id="plot-level-container">
     <label for="plot-level" class="label"><span class="label-text">Choose a Division:</span></label>
-    <select class="select select-bordered select-sm bg-base-200" id="plot-level">
+    <select class="select select-bordered select-primary select-sm bg-base-100" id="plot-level">
         <option value="all">ALL Divisions</option>
         {% for level in levels %}
         <option value="{{ level }}">{{ level }}</option>

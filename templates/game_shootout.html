@@ -7,7 +7,7 @@
 <form id="filter-form" method="post">
     <div class="form-control mb-2">
         <label for="league_number" class="label"><span class="label-text">Choose a League:</span></label>
-        <select class="select select-bordered select-sm bg-base-200" id="league_number" name="league_number" required>
+        <select class="select select-bordered select-primary select-sm bg-base-100" id="league_number" name="league_number" required>
             {% for league in leagues %}
             <option value="{{ league.league_number }}">{{ league.league_name }}</option>
             {% endfor %}
@@ -15,7 +15,7 @@
     </div>
     <div class="form-control mb-2">
         <label for="plot_level" class="label"><span class="label-text">Choose a Division:</span></label>
-        <select class="select select-bordered select-sm bg-base-200" id="plot_level" name="plot_level">
+        <select class="select select-bordered select-primary select-sm bg-base-100" id="plot_level" name="plot_level">
             <option value="all">All Divisions</option>
             {% for division in divisions %}
             <option value="{{ division }}">{{ division }}</option>
@@ -24,7 +24,7 @@
     </div>
     <div class="form-control mb-2">
         <label for="x_axis" class="label"><span class="label-text">Aggregate by:</span></label>
-        <select class="select select-bordered select-sm bg-base-200" id="x_axis" name="x_axis">
+        <select class="select select-bordered select-primary select-sm bg-base-100" id="x_axis" name="x_axis">
             <option value="season">Season</option>
             <option value="year_month">Year+Month</option>
         </select>

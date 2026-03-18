@@ -30,7 +30,7 @@
 
     <div class="flex flex-wrap items-center gap-2 mb-4 text-sm">
         <label for="top_n" class="font-medium">Top N:</label>
-        <select id="top_n" name="top_n" class="select select-bordered select-sm bg-base-200">
+        <select id="top_n" name="top_n" class="select select-bordered select-primary select-sm bg-base-100">
             <option value="25" {% if top_n == 25 %}selected{% endif %}>25</option>
             <option value="50" {% if top_n == 50 %}selected{% endif %}>50</option>
             <option value="100" {% if top_n == 100 %}selected{% endif %}>100</option>
@@ -38,7 +38,7 @@
         </select>
 
         <label for="min_games" class="font-medium">Min games with quality data:</label>
-        <select id="min_games" name="min_games" class="select select-bordered select-sm bg-base-200">
+        <select id="min_games" name="min_games" class="select select-bordered select-primary select-sm bg-base-100">
             <option value="1">1</option>
             <option value="5">5</option>
             <option value="10" selected>10</option>

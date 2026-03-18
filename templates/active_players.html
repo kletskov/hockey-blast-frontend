@@ -6,7 +6,7 @@
 <h1 class="mb-4 text-xl font-bold">Number of Active Players over time</h1>
 <div class="form-control mb-2">
     <label for="x-axis" class="label"><span class="label-text">X Axis:</span></label>
-    <select class="select select-bordered select-sm bg-base-200" id="x-axis">
+    <select class="select select-bordered select-primary select-sm bg-base-100" id="x-axis">
         <option value="season_name">Seasons</option>
         <option value="year_month">Year + Month</option>
         <option value="year_over_year">Year Over Year</option>
@@ -14,7 +14,7 @@
 </div>
 <div class="form-control mb-2">
     <label for="plot-1" class="label"><span class="label-text">Plot 1:</span></label>
-    <select class="select select-bordered select-sm bg-base-200" id="plot-1">
+    <select class="select select-bordered select-primary select-sm bg-base-100" id="plot-1">
         <option value="all">All</option>
         {% for level in levels %}
         <option value="{{ level }}">{{ level }}</option>
@@ -23,7 +23,7 @@
 </div>
 <div class="form-control mb-2" id="plot-2-container">
     <label for="plot-2" class="label"><span class="label-text">Plot 2:</span></label>
-    <select class="select select-bordered select-sm bg-base-200" id="plot-2">
+    <select class="select select-bordered select-primary select-sm bg-base-100" id="plot-2">
         <option value="all">All</option>
         {% for level in levels %}
         <option value="{{ level }}">{{ level }}</option>
@@ -32,7 +32,7 @@
 </div>
 <div class="form-control mb-2">
     <label for="min-games" class="label"><span class="label-text">Minimum Games Played:</span></label>
-    <select class="select select-bordered select-sm bg-base-200" id="min-games">
+    <select class="select select-bordered select-primary select-sm bg-base-100" id="min-games">
         {% for i in range(1, 11) %}
         <option value="{{ i }}">{{ i }}</option>
         {% endfor %}

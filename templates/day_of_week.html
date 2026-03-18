@@ -6,12 +6,12 @@
 <h2 class="text-lg font-bold mt-4 mb-3 text-primary">Percentage of Games by Day of the Week</h2>
 <div class="form-control mb-2">
     <label for="x-axis" class="label"><span class="label-text">Aggregate by:</span></label>
-    <select class="select select-bordered select-sm bg-base-200" id="x-axis">
+    <select class="select select-bordered select-primary select-sm bg-base-100" id="x-axis">
         <option value="season_name">Seasons</option>
         <option value="year_month">Year + Month</option>
     </select>
     <label for="plot-level" class="label mt-2"><span class="label-text">Choose a Division:</span></label>
-    <select class="select select-bordered select-sm bg-base-200" id="plot-level">
+    <select class="select select-bordered select-primary select-sm bg-base-100" id="plot-level">
         <option value="all">All</option>
         {% for level in levels %}
         <option value="{{ level }}">{{ level }}</option>
