@@ -34,10 +34,6 @@ from flask_session import Session
 from options import MAX_HUMAN_SEARCH_RESULTS, MAX_TEAM_SEARCH_RESULTS
 from game_utils import is_game_live, parse_live_time
 
-# Load environment variables
-load_dotenv()
-print("Loading environment variables from .env")
-
 # Debug: Print the DB_HOST environment variable
 flask_table.table.Markup = Markup
 flask_table.columns.Markup = Markup
