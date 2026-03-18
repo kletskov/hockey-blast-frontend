@@ -12,6 +12,49 @@ logger = logging.getLogger(__name__)
 ai_search_bp = Blueprint("ai_search", __name__)
 
 
+@ai_search_bp.route("/api/chat/feedback", methods=["POST"])
+def chat_feedback():
+    """Store like/dislike feedback for a chat message."""
+    data = request.get_json(silent=True) or {}
+    message_id = data.get("message_id")
+    rating = data.get("rating")  # 'like' or 'dislike'
+    comment = data.get("comment", "")
+
+    if not message_id or rating not in ("like", "dislike"):
+        return jsonify({"error": "message_id and rating required"}), 400
+
+    try:
+        import psycopg2, os
+        conn = psycopg2.connect(
+            host=os.environ.get("PRED_DB_HOST", "localhost"),
+            user=os.environ.get("PRED_DB_USER", "foxyclaw"),
+            password=os.environ.get("PRED_DB_PASSWORD", "foxyhockey2026"),
+            dbname=os.environ.get("PRED_DB_NAME", "hockey_blast_predictions"),
+        )
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS blast_chat_feedback (
+                id SERIAL PRIMARY KEY,
+                message_id TEXT NOT NULL UNIQUE,
+                rating VARCHAR(10) NOT NULL,
+                comment TEXT DEFAULT '',
+                source VARCHAR(20) DEFAULT 'frontend',
+                created_at TIMESTAMP DEFAULT NOW()
+            )
+        """)
+        cur.execute("""
+            INSERT INTO blast_chat_feedback (message_id, rating, comment, source)
+            VALUES (%s, %s, %s, 'frontend')
+            ON CONFLICT (message_id) DO UPDATE SET rating = EXCLUDED.rating, comment = EXCLUDED.comment
+        """, (str(message_id), rating, comment or ""))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        logger.warning(f"Feedback storage failed: {e}")
+        # Fail gracefully
+    return jsonify({"ok": True})
+
+
 @ai_search_bp.route("/api/chat", methods=["POST"])
 def chat_api():
     """Floating chat widget endpoint — POST {query, history[]}"""
@@ -25,7 +68,10 @@ def chat_api():
     try:
         from hockey_blast_mcp.bedrock_chat import chat
         result = chat(query, history=history)
+        import uuid
+        message_id = str(uuid.uuid4())
         return jsonify({
+            "message_id": message_id,
             "answer": result["answer"],
             "tools_used": result.get("tools_used", []),
         })

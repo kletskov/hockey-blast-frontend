@@ -157,6 +157,14 @@
       .bc-msg-ai th { background: #333; }
       .bc-msg-ai hr { border-color: #333; margin: 6px 0; }
       .bc-typing { align-self: flex-start; color: #888; font-size: 12px; padding: 4px 8px; }
+      .bc-feedback { display: flex; gap: 6px; margin-top: 6px; }
+      .bc-fb-btn { background: none; border: 1px solid #444; border-radius: 4px; color: #888; font-size: 11px; padding: 2px 7px; cursor: pointer; transition: all 0.15s; }
+      .bc-fb-btn:hover { border-color: #888; color: #eee; }
+      .bc-fb-btn.liked { border-color: #1d8a7e; color: #1d8a7e; }
+      .bc-fb-btn.disliked { border-color: #E57200; color: #E57200; }
+      .bc-comment-box { margin-top: 6px; display: none; }
+      .bc-comment-box textarea { width: 100%; background: #1a1a1a; border: 1px solid #444; color: #eee; border-radius: 6px; padding: 6px 8px; font-size: 12px; font-family: inherit; resize: none; }
+      .bc-comment-box button { margin-top: 4px; background: #E57200; border: none; color: #fff; border-radius: 4px; padding: 3px 10px; font-size: 11px; cursor: pointer; }
       #blast-chat-input-row { border-top: 1px solid #333; padding: 10px 12px; display: flex; gap: 8px; background: #1a1a1a; }
       #blast-chat-input { flex: 1; background: #252525; border: 1px solid #444; color: #eee; border-radius: 8px; padding: 8px 10px; font-size: 13px; outline: none; resize: none; font-family: inherit; }
       #blast-chat-input:focus { border-color: #1d8a7e; }
@@ -253,6 +261,14 @@
         return div;
       }
 
+      function sendFeedback(messageId, rating, comment) {
+        fetch('/api/chat/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message_id: messageId, rating: rating, comment: comment })
+        }).catch(function() {});
+      }
+
       function send() {
         var q = input.value.trim();
         if (!q || loading) return;
@@ -282,7 +298,50 @@
         .then(function(data) {
           messages.removeChild(typing);
           var answer = data.answer || data.error || 'Something went wrong.';
-          addMessage('bc-msg-ai', renderMarkdown(answer));
+          var msgId = data.message_id || Date.now().toString();
+          var wrapper = document.createElement('div');
+          wrapper.style.cssText = 'display:flex;flex-direction:column;align-self:flex-start;max-width:90%';
+          var bubble = document.createElement('div');
+          bubble.className = 'bc-msg-ai';
+          bubble.innerHTML = renderMarkdown(answer);
+          wrapper.appendChild(bubble);
+
+          // Feedback buttons
+          var fb = document.createElement('div');
+          fb.className = 'bc-feedback';
+          fb.innerHTML = '<button class="bc-fb-btn" data-r="like" data-id="' + msgId + '">👍</button>' +
+                         '<button class="bc-fb-btn" data-r="dislike" data-id="' + msgId + '">👎</button>';
+          var commentBox = document.createElement('div');
+          commentBox.className = 'bc-comment-box';
+          commentBox.innerHTML = '<textarea rows="2" placeholder="What was wrong? (optional)"></textarea>' +
+                                 '<button>Send</button>';
+          fb.querySelectorAll && fb.appendChild && null;
+          wrapper.appendChild(fb);
+          wrapper.appendChild(commentBox);
+          messages.appendChild(wrapper);
+          scrollBottom();
+
+          fb.addEventListener('click', function(e) {
+            var btn = e.target.closest('[data-r]');
+            if (!btn) return;
+            var rating = btn.getAttribute('data-r');
+            var mid = btn.getAttribute('data-id');
+            fb.querySelectorAll('.bc-fb-btn').forEach(function(b) { b.classList.remove('liked','disliked'); });
+            btn.classList.add(rating === 'like' ? 'liked' : 'disliked');
+            if (rating === 'dislike') {
+              commentBox.style.display = 'block';
+            } else {
+              commentBox.style.display = 'none';
+              sendFeedback(mid, rating, '');
+            }
+          });
+          commentBox.querySelector('button').addEventListener('click', function() {
+            var mid = fb.querySelector('[data-r]').getAttribute('data-id');
+            var comment = commentBox.querySelector('textarea').value;
+            sendFeedback(mid, 'dislike', comment);
+            commentBox.style.display = 'none';
+          });
+
           history.push({ role: 'user', content: q });
           history.push({ role: 'assistant', content: answer });
         })
