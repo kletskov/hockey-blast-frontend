@@ -62,7 +62,7 @@
 </div>
 {% endif %}
 
-<h2 class="text-lg font-bold mt-6 mb-3 text-primary">Recent and Upcoming Games for {{ team.name }} in {{ last_division_name }}</h2>
+<h2 class="text-lg font-bold mt-6 mb-3 text-primary">Recent and Upcoming Games for {{ team.name }}</h2>
 <div class="overflow-x-auto mb-6">
 <table class="table table-zebra table-sm">
     <thead>
@@ -74,6 +74,19 @@
     </thead>
     <tbody>
         {% for game in recent_and_upcoming_games_data %}
+            {% if loop.index > 1 and game.season_key != recent_and_upcoming_games_data[loop.index0 - 1].season_key %}
+        <tr class="bg-base-200">
+            <td colspan="3" class="text-center font-bold py-3" style="color: darkorange;">
+                {{ game.season_label }} ({{ game.season_stats }})
+            </td>
+        </tr>
+            {% elif loop.first and game.season_label %}
+        <tr class="bg-base-200">
+            <td colspan="3" class="text-center font-bold py-3" style="color: darkorange;">
+                {{ game.season_label }} ({{ game.season_stats }})
+            </td>
+        </tr>
+            {% endif %}
         <tr>
             <td>{{ game.date_time|safe }}</td>
             <td>{{ game.team_names|safe }}</td>

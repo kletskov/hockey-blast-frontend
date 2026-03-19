@@ -2,7 +2,7 @@ from datetime import datetime
 
 from flask import Blueprint, jsonify, render_template, request, url_for
 from hockey_blast_common_lib.models import (Division, Game, GameRoster, Goal,
-                                            Human, Team, db)
+                                            Human, Level, Season, Team, db)
 
 team_stats_bp = Blueprint("team_stats", __name__)
 
@@ -62,13 +62,64 @@ def team_stats():
         7: "Sun",
     }
 
-    # Extract recent and upcoming games data from all games (all divisions/leagues/tournaments)
+    # Calculate season stats (wins, losses, ties per season) - FIRST PASS
+    season_stats = {}
+    for game in games:
+        division = db.session.query(Division).filter(Division.id == game.division_id).first() if game.division_id else None
+        season = db.session.query(Season).filter(Season.id == division.season_id).first() if division and division.season_id else None
+        level = db.session.query(Level).filter(Level.id == division.level_id).first() if division and division.level_id else None
+
+        season_label = ""
+        if level and season:
+            season_label = f"{level.level_name} - {season.season_name}"
+        elif season:
+            season_label = season.season_name
+        elif division:
+            season_label = division.level
+
+        season_key = season.id if season else f"div_{division.id}" if division else "unknown"
+        if season_key not in season_stats:
+            season_stats[season_key] = {"wins": 0, "losses": 0, "ties": 0, "label": season_label}
+
+        if (game.status.startswith("Final") or game.status.upper() == "FORFEIT") and game.home_final_score is not None and game.visitor_final_score is not None:
+            if game.home_team_id == team_id:
+                if game.home_final_score > game.visitor_final_score:
+                    season_stats[season_key]["wins"] += 1
+                elif game.home_final_score < game.visitor_final_score:
+                    season_stats[season_key]["losses"] += 1
+                else:
+                    season_stats[season_key]["ties"] += 1
+            elif game.visitor_team_id == team_id:
+                if game.visitor_final_score > game.home_final_score:
+                    season_stats[season_key]["wins"] += 1
+                elif game.visitor_final_score < game.home_final_score:
+                    season_stats[season_key]["losses"] += 1
+                else:
+                    season_stats[season_key]["ties"] += 1
+
+    # Extract recent and upcoming games data from all games (all divisions/leagues/tournaments) - SECOND PASS
     recent_and_upcoming_games_data = []
     for game in games:
         visitor_team = (
             db.session.query(Team).filter(Team.id == game.visitor_team_id).first()
         )
         home_team = db.session.query(Team).filter(Team.id == game.home_team_id).first()
+
+        # Get season information through division
+        division = db.session.query(Division).filter(Division.id == game.division_id).first() if game.division_id else None
+        season = db.session.query(Season).filter(Season.id == division.season_id).first() if division and division.season_id else None
+        level = db.session.query(Level).filter(Level.id == division.level_id).first() if division and division.level_id else None
+
+        season_label = ""
+        if level and season:
+            season_label = f"{level.level_name} - {season.season_name}"
+        elif season:
+            season_label = season.season_name
+        elif division:
+            season_label = division.level
+
+        season_key = season.id if season else f"div_{division.id}" if division else "unknown"
+
         day_of_week = day_of_week_map.get(game.day_of_week, "")
         date_time = f"{day_of_week} {game.date.strftime('%m/%d/%y')} {game.time.strftime('%I:%M%p')}"
         if game.status.startswith("Final") or game.status.upper() == "FORFEIT":
@@ -98,11 +149,24 @@ def team_stats():
             final_score = f"{game.visitor_final_score} : {game.home_final_score} (live)"
         else:
             final_score = "TBD"
+        # Build season stats string
+        season_stats_str = ""
+        if season_key in season_stats:
+            stats = season_stats[season_key]
+            season_stats_str = f"{stats['wins']}W-{stats['losses']}L"
+            if stats['ties'] > 0:
+                season_stats_str += f"-{stats['ties']}T"
+
         recent_and_upcoming_games_data.append(
             {
                 "date_time": f"<a href='{url_for('game_card.game_card', game_id=game.id)}'>{date_time}</a>",
                 "team_names": f"<a href='{url_for('team_stats.team_stats', team_id=visitor_team.id)}'>{visitor_team.name}</a> at <a href='{url_for('team_stats.team_stats', team_id=home_team.id)}'>{home_team.name}</a>",
                 "final_score": f"<a href='{url_for('game_card.game_card', game_id=game.id)}'>{final_score}</a>",
+                "season_label": season_label,
+                "season_id": season.id if season else None,
+                "season_key": season_key,
+                "season_stats": season_stats_str,
+                "division_id": game.division_id,
             }
         )
 
@@ -398,6 +462,49 @@ def team_stats():
             }
         )
 
+    # Prepare chart data for team performance over divisions
+    # Collect unique seasons with their stats, ordered from oldest to newest
+    season_chart_data = []
+    seen_seasons = set()
+
+    # Reverse the games list to go from oldest to newest
+    for game in reversed(recent_and_upcoming_games_data):
+        season_key = game['season_key']
+        if season_key not in seen_seasons:
+            seen_seasons.add(season_key)
+
+            # Extract W-L-T from season_stats string like "5W-14L-2T" or "11W-9L"
+            import re
+            stats_str = game['season_stats']
+            wins = 0
+            losses = 0
+            ties = 0
+
+            if stats_str:
+                wins_match = re.search(r'(\d+)W', stats_str)
+                losses_match = re.search(r'(\d+)L', stats_str)
+                ties_match = re.search(r'(\d+)T', stats_str)
+
+                if wins_match:
+                    wins = int(wins_match.group(1))
+                if losses_match:
+                    losses = int(losses_match.group(1))
+                if ties_match:
+                    ties = int(ties_match.group(1))
+
+            total_games = wins + losses + ties
+            if total_games > 0:
+                # Calculate win percentage (ties count as 0.5 wins)
+                win_percentage = ((wins + ties * 0.5) / total_games) * 100
+
+                season_chart_data.append({
+                    'label': game['season_label'],
+                    'wins': wins,
+                    'losses': losses,
+                    'ties': ties,
+                    'win_percentage': round(win_percentage, 1),
+                })
+
     return render_template(
         "team_stats.html",
         team=team,  # Pass the team object to the template
@@ -436,4 +543,5 @@ def team_stats():
         last_division_name=last_division_name,
         recent_and_upcoming_games_data=recent_and_upcoming_games_data,  # Pass recent and upcoming games data to the template
         championship_wins_data=championship_wins_data,  # Pass championship wins data to the template
+        season_chart_data=season_chart_data,  # Pass chart data for performance visualization
     )

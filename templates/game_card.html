@@ -232,26 +232,39 @@
     <!-- Rosters Table -->
     <div class="table-responsive">
         <h4><a href="{{ url_for('team_stats.team_stats', team_id=visitor_team.id) }}">{{ visitor_team.name }}</a>
-            players
+            stats
         </h4>
         <table class="table table-striped" style="padding: 2px;">
             <thead>
                 <tr>
-                    <th></th>
-                    <th></th>
+                    <th>#</th>
+                    <th>Player</th>
                 </tr>
             </thead>
             <tbody>
-                {% for roster, human in visitor_roster %}
+                {% for player in visitor_roster %}
                 <tr>
-                    <td>{{ roster.jersey_number }}</td>
-                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                            human.middle_name }} {{ human.last_name }}
-                            {% if roster.role %}
-                            ({{ roster.role }})
-                            {% endif %}
-
+                    <td>{{ player.roster.jersey_number }}</td>
+                    <td>
+                        <a href="{{ url_for('human_stats.human_stats', human_id=player.human.id) }}">
+                            {{ player.human.first_name }} {{ player.human.middle_name }} {{ player.human.last_name }}
                         </a>
+                        {% if player.roster.role %}
+                            ({{ player.roster.role }})
+                        {% endif %}
+                        {% if player.goals > 0 or player.assists > 0 or player.penalty_count > 0 %}
+                            <span class="font-bold text-base-content">
+                                {%- if player.goals > 0 or player.assists > 0 -%}
+                                    {%- if player.goals > 0 -%}{{ player.goals }}G{%- endif -%}
+                                    {%- if player.goals > 0 and player.assists > 0 -%}+{%- endif -%}
+                                    {%- if player.assists > 0 -%}{{ player.assists }}A{%- endif -%}
+                                {%- endif -%}
+                                {%- if player.penalty_count > 0 -%}
+                                    {%- if player.goals > 0 or player.assists > 0 %}, {% endif -%}
+                                    {{ player.penalty_types|join(', ') }}
+                                {%- endif -%}
+                            </span>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
@@ -259,25 +272,38 @@
         </table>
     </div>
     <div class="table-responsive">
-        <h4><a href="{{ url_for('team_stats.team_stats', team_id=home_team.id) }}">{{ home_team.name }}</a> players</h4>
+        <h4><a href="{{ url_for('team_stats.team_stats', team_id=home_team.id) }}">{{ home_team.name }}</a> stats</h4>
         <table class="table table-striped" style="padding: 2px;">
             <thead>
                 <tr>
-                    <th></th>
-                    <th></th>
+                    <th>#</th>
+                    <th>Player</th>
                 </tr>
             </thead>
             <tbody>
-                {% for roster, human in home_roster %}
+                {% for player in home_roster %}
                 <tr>
-                    <td>{{ roster.jersey_number }}</td>
+                    <td>{{ player.roster.jersey_number }}</td>
                     <td>
-                        <a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">
-                            {{ human.first_name }} {{ human.middle_name }} {{ human.last_name }}
-                            {% if roster.role %}
-                            ({{ roster.role }})
-                            {% endif %}
+                        <a href="{{ url_for('human_stats.human_stats', human_id=player.human.id) }}">
+                            {{ player.human.first_name }} {{ player.human.middle_name }} {{ player.human.last_name }}
                         </a>
+                        {% if player.roster.role %}
+                            ({{ player.roster.role }})
+                        {% endif %}
+                        {% if player.goals > 0 or player.assists > 0 or player.penalty_count > 0 %}
+                            <span class="font-bold text-base-content">
+                                {%- if player.goals > 0 or player.assists > 0 -%}
+                                    {%- if player.goals > 0 -%}{{ player.goals }}G{%- endif -%}
+                                    {%- if player.goals > 0 and player.assists > 0 -%}+{%- endif -%}
+                                    {%- if player.assists > 0 -%}{{ player.assists }}A{%- endif -%}
+                                {%- endif -%}
+                                {%- if player.penalty_count > 0 -%}
+                                    {%- if player.goals > 0 or player.assists > 0 %}, {% endif -%}
+                                    {{ player.penalty_types|join(', ') }}
+                                {%- endif -%}
+                            </span>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}

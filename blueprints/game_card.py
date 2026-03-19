@@ -78,6 +78,59 @@ def game_card():
         .all()
     )
 
+    # Calculate stats for each player in rosters
+    def calculate_player_stats(roster_list, game_id):
+        """Calculate goals, assists, and penalties for each player"""
+        player_stats = []
+
+        for roster, human in roster_list:
+            # Count goals
+            goals = db.session.query(Goal).filter(
+                Goal.game_id == game_id,
+                Goal.goal_scorer_id == human.id
+            ).count()
+
+            # Count assists (both primary and secondary)
+            assists_1 = db.session.query(Goal).filter(
+                Goal.game_id == game_id,
+                Goal.assist_1_id == human.id
+            ).count()
+            assists_2 = db.session.query(Goal).filter(
+                Goal.game_id == game_id,
+                Goal.assist_2_id == human.id
+            ).count()
+            assists = assists_1 + assists_2
+
+            # Get penalty types
+            player_penalties = db.session.query(Penalty).filter(
+                Penalty.game_id == game_id,
+                Penalty.penalized_player_id == human.id
+            ).all()
+            penalty_types = [p.infraction for p in player_penalties if p.infraction]
+
+            # Calculate points and create stats display
+            points = goals + assists
+
+            player_stats.append({
+                'roster': roster,
+                'human': human,
+                'goals': goals,
+                'assists': assists,
+                'points': points,
+                'penalty_types': penalty_types,
+                'penalty_count': len(penalty_types),
+                # Sort key: players with stats first, sorted by points desc, then goals desc, then penalties desc
+                'sort_key': (points > 0 or len(penalty_types) > 0, points, goals, len(penalty_types))
+            })
+
+        # Sort by: has stats (True first), then points descending, then goals descending, then penalty count descending
+        player_stats.sort(key=lambda x: x['sort_key'], reverse=True)
+
+        return player_stats
+
+    home_roster_with_stats = calculate_player_stats(home_roster, game_id)
+    visitor_roster_with_stats = calculate_player_stats(visitor_roster, game_id)
+
     # Fetch goals
     goals = db.session.query(Goal).filter(Goal.game_id == game_id).all()
     for goal in goals:
@@ -232,8 +285,8 @@ def game_card():
         scorekeeper=scorekeeper,
         referee_1=referee_1,
         referee_2=referee_2,
-        home_roster=home_roster,
-        visitor_roster=visitor_roster,
+        home_roster=home_roster_with_stats,
+        visitor_roster=visitor_roster_with_stats,
         goals=goals,
         visitor_goals_per_period=visitor_goals_per_period,
         home_goals_per_period=home_goals_per_period,
