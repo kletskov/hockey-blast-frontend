@@ -1,134 +1,462 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="en" data-theme="sharks">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Hockey B.L.A.S.T{% endblock %}</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5/dist/full.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body {
-            background-color: #008080;
-            /* Dark teal */
+        /* ── Base layout: teal background like the original ── */
+        html, body {
+            background-color: #2aada1 !important;
+            color: #ffffff;
+            min-height: 100vh;
         }
 
-        .container {
-            background-color: #20B2AA;
-            /* Light teal */
-            padding: 20px;
+        /* ── Nav pills in scrollable strip ── */
+        .nav-pill {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #ffffff !important;
+            text-decoration: none;
+            white-space: nowrap;
+            background-color: rgba(0,0,0,0.15);
+            transition: background-color 0.15s, color 0.15s;
+        }
+        .nav-pill:hover, .nav-pill:active {
+            background-color: #E57200 !important;
+            color: #ffffff !important;
+        }
+        /* Hide scrollbar on the nav strip */
+        nav::-webkit-scrollbar { display: none; }
+
+        /* ── Plotly charts: white card so they pop off the teal bg ── */
+        .js-plotly-plot, .plotly-graph-div {
+            background: #ffffff !important;
             border-radius: 10px;
-            margin-top: 50px;
+            padding: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
 
-        a {
-            color: #0000EE;
-            /* Default link color */
-        }
-
-        a:hover {
-            color: #551A8B;
-            /* Visited link color */
-        }
-
+        /* ── Tables: dark teal header, white rows, dark text ── */
         .table {
-            background-color: #20B2AA;
-            /* Light teal */
-            color: white;
+            background-color: transparent;
         }
-
-        .list-group-item {
-            background-color: #008080;
-            /* Dark teal */
-            color: white;
+        .table thead tr th {
+            background-color: #1a5c55 !important;
+            color: #ffffff !important;
+            font-weight: 700;
         }
-
-        .form-control {
-            background-color: #008080;
-            /* Dark teal */
-            color: white;
+        .table tbody tr {
+            background-color: #ffffff !important;
+            color: #111111 !important;
         }
-
-        .form-control::placeholder {
-            color: #B0C4DE;
-            /* Light Steel Blue */
+        .table-zebra tbody tr:nth-child(even) {
+            background-color: #d6f0ed !important;
+            color: #111111 !important;
         }
-
-        .list-group-item {
-            background-color: #008080;
-            /* Dark teal */
-            color: yellow;
+        .table tbody td, .table tbody th {
+            color: #111111 !important;
         }
-
-        nav {
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 1.2rem;
-            /* Increase text size */
+        /* Links inside tables */
+        .table a {
+            color: #0057b8 !important;
+            text-decoration: none;
         }
+        .table a:hover { text-decoration: underline; }
 
-        nav a {
-            color: orange;
+        /* ── Headings and general text on teal bg ── */
+        h1, h2, h3, h4, h5, h6, p, label, span:not(.badge) {
+            color: #ffffff;
         }
-
-        nav a:hover {
-            color: darkorange;
+        /* Links inside headings — orange so they're visible on teal */
+        h1 a, h2 a, h3 a, h4 a {
+            color: #E57200 !important;
+            text-decoration: none;
         }
-
-        .card {
-            background-color: #20B2AA;
-            /* Light teal */
-            color: white;
+        h1 a:hover, h2 a:hover { text-decoration: underline; }
+        /* Form controls */
+        select, input, textarea {
+            background-color: #ffffff !important;
+            color: #111111 !important;
+            border: 1px solid #156b62;
         }
-
-        .card .btn {
-            background-color: #008080;
-            /* Dark teal */
-            color: white;
+        /* Cards/boxes */
+        .card, .bg-base-100, .bg-base-200, .bg-base-300 {
+            background-color: #1d8a7e !important;
+            color: #ffffff;
         }
-
-        .card .btn:hover {
-            background-color: #006666;
-            /* Darker teal */
+        /* Buttons */
+        .btn-primary {
+            background-color: #E57200 !important;
+            border-color: #E57200 !important;
+            color: #ffffff !important;
         }
-
-        .facebook-icon {
-            width: 20px;
-            height: 20px;
-            vertical-align: middle;
+        .btn-primary:hover {
+            background-color: #c96400 !important;
         }
     </style>
+    {% block extra_head %}{% endblock %}
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
 </head>
-
-<body>
-    <nav>
-        <br>
-        <a href="{{ url_for('index', top_n=10) }}">Main</a> |
-        <a href="{{ url_for('skater_performance.skater_performance') }}">Skaters</a> |
-        <a href="{{ url_for('goalie_performance.goalie_performance') }}">Goalies</a> |
-        <a href="{{ url_for('referee_performance.referee_performance') }}">Refs</a> |
-        <!-- <a href="{{ url_for('scorekeeper_performance.scorekeeper_performance') }}">Scorekeepers</a> |
-        <a href="{{ url_for('scorekeeper_quality.scorekeeper_quality') }}">Scorekeeper Quality</a> | -->
-        <a
-            href="{{ url_for('games.games', top_n=20, org_id='1', level_id='', season_id='', game_status='completed') }}">Games</a>
-        |
-        <a
-            href="{{ url_for('penalties.penalties', top_n=20, org_id='1', level_id='', season_id='', player_status='active', team_id='') }}">Penalties</a>
-        |
-        <a href="{{ url_for('hall_of_fame.hall_of_fame', top_n=20) }}">Hall Of Fame</a> |
-        <a href="{{ url_for('special_stats') }}">Special</a> |
-        <a href="{{ url_for('about') }}">About</a>
-        <!-- |
-        <a href="https://www.facebook.com/groups/1336941614177211/">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg"
-                alt="Facebook Group" class="facebook-icon">Discuss
-        </a> -->
-    </nav>
-    <div class="container">
+<body class="min-h-screen">
+    <!-- Sticky header: logo row + scrollable nav strip -->
+    <header style="position:sticky;top:0;z-index:100;background-color:#1d8a7e;box-shadow:0 2px 6px rgba(0,0,0,0.3);">
+        <!-- Logo row -->
+        <div style="display:flex;align-items:center;padding:8px 16px;border-bottom:1px solid #156b62;">
+            <a href="{{ url_for('index', top_n=10) }}" style="color:#ffffff;font-size:1.1rem;font-weight:700;text-decoration:none;letter-spacing:0.02em;">
+                🏒 <span style="color:#E57200;">Hockey</span> B.L.A.S.T
+            </a>
+            <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+                <span id="blast-auth-name" style="font-size:12px;color:#ffffffaa;"></span>
+                <button id="blast-auth-btn" style="background:#E57200;color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:13px;cursor:pointer;font-weight:600;">Sign In</button>
+            </div>
+        </div>
+        <!-- Scrollable nav strip — one line, swipe on mobile, no dropdown -->
+        <nav style="overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
+            <div style="display:inline-flex;gap:4px;padding:6px 12px;">
+                <a href="{{ url_for('index', top_n=10) }}" class="nav-pill">Main</a>
+                <a href="{{ url_for('skater_performance.skater_performance') }}" class="nav-pill">Skaters</a>
+                <a href="{{ url_for('goalie_performance.goalie_performance') }}" class="nav-pill">Goalies</a>
+                <a href="{{ url_for('referee_performance.referee_performance') }}" class="nav-pill">Refs</a>
+                <a href="{{ url_for('games.games', top_n=20, org_id='1', level_id='', season_id='', game_status='completed') }}" class="nav-pill">Games</a>
+                <a href="/playoffs" class="nav-pill" style="color:#E57200;font-weight:700;">🏆 Playoffs</a>
+                <a href="{{ url_for('penalties.penalties', top_n=20, org_id='1', level_id='', season_id='', player_status='active', team_id='') }}" class="nav-pill">Penalties</a>
+                <a href="{{ url_for('hall_of_fame.hall_of_fame', top_n=20) }}" class="nav-pill">Hall of Fame</a>
+                <a href="{{ url_for('special_stats') }}" class="nav-pill">Special</a>
+                <a href="{{ url_for('about') }}" class="nav-pill">About</a>
+            </div>
+        </nav>
+    </header>
+    <div class="container mx-auto px-4 py-6 max-w-6xl">
         {% block content %}{% endblock %}
     </div>
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-</body>
+    <footer class="footer footer-center p-4 mt-8 bg-base-200 text-base-content/50 text-xs border-t border-base-content/10">
+        <span>🏒 Hockey B.L.A.S.T · Beer League Analytics and Stats</span>
+    </footer>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    {% block extra_scripts %}{% endblock %}
 
+    <!-- ── Blast AI Floating Chat Widget ──────────────────────────────── -->
+    <style>
+      #blast-chat-root { position: fixed; bottom: 24px; right: 24px; z-index: 9999; font-family: system-ui, sans-serif; }
+      #blast-chat-fab { width: 56px; height: 56px; border-radius: 50%; background: #E57200; color: #fff; border: none; font-size: 1.4rem; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+      #blast-chat-fab:hover { background: #c96400; }
+      #blast-chat-panel { display: none; position: absolute; bottom: 70px; right: 0; width: 360px; height: 520px; background: #1a1a1a; border: 1px solid #333; border-radius: 1rem; overflow: hidden; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.6); }
+      #blast-chat-panel.open { display: flex; }
+      #blast-chat-header { background: #1d8a7e; color: #fff; padding: 12px 16px; display: flex; align-items: center; gap: 10px; }
+      #blast-chat-header .title { flex: 1; font-weight: 700; font-size: 14px; }
+      #blast-chat-header .subtitle { font-size: 11px; opacity: 0.75; }
+      #blast-chat-maximize { background: none; border: none; color: #fff; cursor: pointer; font-size: 16px; opacity: 0.8; padding: 4px; }
+      #blast-chat-maximize:hover { opacity: 1; }
+      #blast-chat-messages { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+      .bc-msg-user { align-self: flex-end; background: #1d8a7e; color: #fff; padding: 8px 12px; border-radius: 12px 12px 2px 12px; font-size: 13px; max-width: 85%; }
+      .bc-msg-ai { align-self: flex-start; background: #252525; border: 1px solid #333; color: #eee; padding: 8px 12px; border-radius: 12px 12px 12px 2px; font-size: 13px; max-width: 90%; line-height: 1.55; }
+      .bc-msg-ai strong { color: #fff; }
+      .bc-msg-ai table { border-collapse: collapse; width: 100%; margin: 6px 0; font-size: 11px; }
+      .bc-msg-ai th, .bc-msg-ai td { border: 1px solid #444; padding: 3px 6px; }
+      .bc-msg-ai th { background: #333; }
+      .bc-msg-ai hr { border-color: #333; margin: 6px 0; }
+      .bc-typing { align-self: flex-start; color: #888; font-size: 12px; padding: 4px 8px; }
+      .bc-feedback { display: flex; gap: 6px; margin-top: 6px; }
+      .bc-fb-btn { background: none; border: 1px solid #444; border-radius: 4px; color: #888; font-size: 11px; padding: 2px 7px; cursor: pointer; transition: all 0.15s; }
+      .bc-fb-btn:hover { border-color: #888; color: #eee; }
+      .bc-fb-btn.liked { border-color: #1d8a7e; color: #1d8a7e; }
+      .bc-fb-btn.disliked { border-color: #E57200; color: #E57200; }
+      .bc-comment-box { margin-top: 6px; display: none; }
+      .bc-comment-box textarea { width: 100%; background: #1a1a1a; border: 1px solid #444; color: #eee; border-radius: 6px; padding: 6px 8px; font-size: 12px; font-family: inherit; resize: none; }
+      .bc-comment-box button { margin-top: 4px; background: #E57200; border: none; color: #fff; border-radius: 4px; padding: 3px 10px; font-size: 11px; cursor: pointer; }
+      #blast-chat-input-row { border-top: 1px solid #333; padding: 10px 12px; display: flex; gap: 8px; background: #1a1a1a; }
+      #blast-chat-input { flex: 1; background: #252525; border: 1px solid #444; color: #eee; border-radius: 8px; padding: 8px 10px; font-size: 13px; outline: none; resize: none; font-family: inherit; }
+      #blast-chat-input:focus { border-color: #1d8a7e; }
+      #blast-chat-send { background: #E57200; border: none; color: #fff; border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 13px; font-weight: 600; }
+      #blast-chat-send:hover { background: #c96400; }
+      #blast-chat-send:disabled { opacity: 0.5; cursor: not-allowed; }
+      #blast-chat-panel.maximized { position: fixed; bottom: 80px; right: 24px; width: min(860px, calc(100vw - 48px)); height: calc(100vh - 180px); border-radius: 1rem; }
+      @media (max-width: 640px) {
+        #blast-chat-panel { width: calc(100vw - 16px); right: -8px; }
+        #blast-chat-panel.maximized { top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100dvh; border-radius: 0; }
+      }
+    </style>
+
+    <div id="blast-chat-root">
+      <button id="blast-chat-fab" title="Blast AI">🏒</button>
+      <div id="blast-chat-panel">
+        <div id="blast-chat-header">
+          <span>🏒</span>
+          <div class="flex-1">
+            <div class="title">Blast AI</div>
+            <div class="subtitle">Ask anything about players, teams & games</div>
+          </div>
+          <button id="blast-chat-maximize" title="Maximize">⛶</button>
+        </div>
+        <div id="blast-chat-messages">
+          <div class="bc-msg-ai">👋 Ask me anything about Hockey B.L.A.S.T — players, teams, games, stats!</div>
+        </div>
+        <div id="blast-chat-input-row">
+          <textarea id="blast-chat-input" rows="1" placeholder="Ask a hockey question..."></textarea>
+          <button id="blast-chat-send">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    // ── Auth0 shared auth ──────────────────────────────────────────────────
+    var BlastAuth = (function() {
+      var auth0Client = null;
+      var currentUser = null;
+      var token = null;
+
+      var AUTH0_DOMAIN = 'dev-tqe4zxubkkg82828.us.auth0.com';
+      var AUTH0_CLIENT_ID = 'qhV0rAn6CywncUVjR3tjOCc45qaeBpj3';
+      var AUTH0_AUDIENCE = 'https://api.hockey-blast-predictions.com';
+
+      async function init() {
+        auth0Client = await window.auth0.createAuth0Client({
+          domain: AUTH0_DOMAIN,
+          clientId: AUTH0_CLIENT_ID,
+          authorizationParams: {
+            audience: AUTH0_AUDIENCE,
+            redirect_uri: window.location.origin + '/auth/callback'
+          },
+          cacheLocation: 'localstorage'
+        });
+
+        // Handle redirect callback
+        if (window.location.search.includes('code=') || window.location.search.includes('error=')) {
+          await auth0Client.handleRedirectCallback();
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        var isAuth = await auth0Client.isAuthenticated();
+        if (isAuth) {
+          currentUser = await auth0Client.getUser();
+          token = await auth0Client.getTokenSilently();
+        }
+        return isAuth;
+      }
+
+      async function login() {
+        await auth0Client.loginWithRedirect();
+      }
+
+      async function logout() {
+        await auth0Client.logout({ logoutParams: { returnTo: window.location.origin } });
+      }
+
+      async function getToken() {
+        if (!auth0Client) return null;
+        try {
+          token = await auth0Client.getTokenSilently();
+          return token;
+        } catch(e) { return null; }
+      }
+
+      function getUser() { return currentUser; }
+      function isAuthenticated() { return !!currentUser; }
+
+      return { init, login, logout, getToken, getUser, isAuthenticated };
+    })();
+
+    // Initialize on page load
+    BlastAuth.init().then(function(isAuth) {
+      var authBtn = document.getElementById('blast-auth-btn');
+      var authName = document.getElementById('blast-auth-name');
+      if (authBtn) {
+        if (isAuth) {
+          var user = BlastAuth.getUser();
+          authBtn.textContent = 'Sign Out';
+          authBtn.onclick = function() { BlastAuth.logout(); };
+          if (authName && user) authName.textContent = user.name || user.email || '';
+        } else {
+          authBtn.textContent = 'Sign In';
+          authBtn.onclick = function() { BlastAuth.login(); };
+        }
+      }
+    });
+    </script>
+
+    <script>
+    (function() {
+      var fab = document.getElementById('blast-chat-fab');
+      var panel = document.getElementById('blast-chat-panel');
+      var messages = document.getElementById('blast-chat-messages');
+      var input = document.getElementById('blast-chat-input');
+      var sendBtn = document.getElementById('blast-chat-send');
+      var maxBtn = document.getElementById('blast-chat-maximize');
+      var open = false;
+      var maximized = false;
+      var history = [];
+      var loading = false;
+
+      fab.addEventListener('click', function() {
+        open = !open;
+        panel.classList.toggle('open', open);
+        fab.textContent = open ? '✕' : '🏒';
+        if (open) input.focus();
+      });
+
+      maxBtn.addEventListener('click', function() {
+        maximized = !maximized;
+        panel.classList.toggle('maximized', maximized);
+        maxBtn.textContent = maximized ? '⊙' : '⛶';
+      });
+
+      function renderMarkdown(text) {
+        if (!text) return '';
+        return text
+          .replace(/^### (.+)$/gm, '<div style="font-weight:700;margin:8px 0 4px">$1</div>')
+          .replace(/^## (.+)$/gm, '<div style="font-weight:700;font-size:15px;margin:8px 0 4px">$1</div>')
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.*?)\*/g, '<em>$1</em>')
+          .replace(/^---+$/gm, '<hr>')
+          .replace(/`([^`]+)`/g, '<code style="background:#333;padding:1px 4px;border-radius:3px;font-size:11px">$1</code>')
+          .replace(/((\|.+\|\n?)+)/g, function(match) {
+            var rows = match.trim().split('\n');
+            var html = '<table>';
+            rows.forEach(function(row, i) {
+              if (/^\|[-| ]+\|$/.test(row.trim())) return;
+              var cells = row.split('|').filter(function(_, idx, arr) { return idx > 0 && idx < arr.length - 1; });
+              var tag = i === 0 ? 'th' : 'td';
+              html += '<tr>' + cells.map(function(c) { return '<' + tag + '>' + c.trim() + '</' + tag + '>'; }).join('') + '</tr>';
+            });
+            return html + '</table>';
+          })
+          .replace(/\n/g, '<br>');
+      }
+
+      function scrollBottom() {
+        messages.scrollTop = messages.scrollHeight;
+      }
+
+      function addMessage(cls, html) {
+        var div = document.createElement('div');
+        div.className = cls;
+        div.innerHTML = html;
+        messages.appendChild(div);
+        scrollBottom();
+        return div;
+      }
+
+      function sendFeedback(messageId, rating, comment) {
+        BlastAuth.getToken().then(function(authToken) {
+          fetch('/api/chat/feedback', {
+            method: 'POST',
+            headers: Object.assign(
+              {'Content-Type': 'application/json'},
+              authToken ? {'Authorization': 'Bearer ' + authToken} : {}
+            ),
+            body: JSON.stringify({ message_id: messageId, rating: rating, comment: comment })
+          }).catch(function() {});
+        });
+      }
+
+      async function send() {
+        var q = input.value.trim();
+        if (!q || loading) return;
+        input.value = '';
+        loading = true;
+        sendBtn.disabled = true;
+
+        addMessage('bc-msg-user', q);
+        var typing = addMessage('bc-typing', '🏒 thinking...');
+
+        // Build history (last 6 turns, capped ~4000 chars)
+        var historyToSend = [];
+        var budget = 4000;
+        for (var i = history.length - 1; i >= 0; i--) {
+          var t = history[i];
+          budget -= (t.content || '').length;
+          if (budget < 0) break;
+          historyToSend.unshift(t);
+        }
+
+        var authToken = await BlastAuth.getToken();
+        fetch('/api/chat', {
+          method: 'POST',
+          headers: Object.assign(
+            {'Content-Type': 'application/json'},
+            authToken ? {'Authorization': 'Bearer ' + authToken} : {}
+          ),
+          body: JSON.stringify({ query: q, history: historyToSend })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          messages.removeChild(typing);
+          var answer = data.answer || data.error || 'Something went wrong.';
+          var msgId = data.message_id || Date.now().toString();
+          var wrapper = document.createElement('div');
+          wrapper.style.cssText = 'display:flex;flex-direction:column;align-self:flex-start;max-width:90%';
+          var bubble = document.createElement('div');
+          bubble.className = 'bc-msg-ai';
+          bubble.innerHTML = renderMarkdown(answer);
+          wrapper.appendChild(bubble);
+
+          // Feedback buttons
+          var fb = document.createElement('div');
+          fb.className = 'bc-feedback';
+          fb.innerHTML = '<button class="bc-fb-btn" data-r="like" data-id="' + msgId + '">👍</button>' +
+                         '<button class="bc-fb-btn" data-r="dislike" data-id="' + msgId + '">👎</button>';
+          var commentBox = document.createElement('div');
+          commentBox.className = 'bc-comment-box';
+          commentBox.innerHTML = '<textarea rows="2" placeholder="What was wrong? (optional)"></textarea>' +
+                                 '<button>Send</button>';
+          fb.querySelectorAll && fb.appendChild && null;
+          wrapper.appendChild(fb);
+          wrapper.appendChild(commentBox);
+          messages.appendChild(wrapper);
+          scrollBottom();
+
+          fb.addEventListener('click', function(e) {
+            var btn = e.target.closest('[data-r]');
+            if (!btn) return;
+            var rating = btn.getAttribute('data-r');
+            var mid = btn.getAttribute('data-id');
+            fb.querySelectorAll('.bc-fb-btn').forEach(function(b) { b.classList.remove('liked','disliked'); });
+            btn.classList.add(rating === 'like' ? 'liked' : 'disliked');
+            if (rating === 'dislike') {
+              commentBox.style.display = 'block';
+            } else {
+              commentBox.style.display = 'none';
+              sendFeedback(mid, rating, '');
+            }
+          });
+          commentBox.querySelector('button').addEventListener('click', function() {
+            var mid = fb.querySelector('[data-r]').getAttribute('data-id');
+            var comment = commentBox.querySelector('textarea').value;
+            sendFeedback(mid, 'dislike', comment);
+            commentBox.style.display = 'none';
+          });
+
+          history.push({ role: 'user', content: q });
+          history.push({ role: 'assistant', content: answer });
+        })
+        .catch(function(e) {
+          messages.removeChild(typing);
+          addMessage('bc-msg-ai', '⚠️ Error: ' + e.message);
+        })
+        .finally(function() {
+          loading = false;
+          sendBtn.disabled = false;
+          input.focus();
+        });
+      }
+
+      sendBtn.addEventListener('click', send);
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+      });
+      // Auto-resize textarea
+      input.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+      });
+    })();
+    </script>
+    <!-- ── End Blast AI Widget ─────────────────────────────────────────── -->
+</body>
 </html>

@@ -1,6 +1,6 @@
 import subprocess
 
-import pkg_resources
+from importlib.metadata import version, PackageNotFoundError
 from flask import Blueprint, render_template
 
 version_bp = Blueprint("version", __name__)
@@ -8,8 +8,8 @@ version_bp = Blueprint("version", __name__)
 
 def get_installed_version(library_name):
     try:
-        return pkg_resources.get_distribution(library_name).version
-    except pkg_resources.DistributionNotFound:
+        return version(library_name)
+    except PackageNotFoundError:
         return "Version not found"
 
 

@@ -1,28 +1,35 @@
-<div>
-    <label for="organization">Org:</label>
-    <select id="organization" name="organization">
+<div class="flex flex-wrap items-center gap-2 mb-4 text-sm">
+    {% set real_orgs = organizations | rejectattr('id', 'equalto', -1) | list %}
+    {% set single_org = real_orgs | length <= 1 %}
+    <label for="organization" class="font-medium">Org:</label>
+    <select id="organization" name="organization" class="select select-bordered select-primary select-sm bg-base-100"
+        {% if single_org %}disabled title="Only one org — pre-selected"{% endif %}
+        style="{% if single_org %}opacity:0.55;cursor:default;pointer-events:none;{% endif %}">
         {% for org in organizations %}
         <option value="{{ org.id }}" {% if org.id==org_id %}selected{% endif %}>{{ org.organization_name }}</option>
         {% endfor %}
     </select>
+    {% if single_org and real_orgs %}
+    <input type="hidden" id="org_hidden" value="{{ real_orgs[0].id }}">
+    {% endif %}
 
-    <label for="level">Level:</label>
-    <select id="level" name="level" disabled>
+    <label for="level" class="font-medium">Level:</label>
+    <select id="level" name="level" class="select select-bordered select-primary select-sm bg-base-100" disabled>
         <option value="">All Levels</option>
     </select>
 
-    <label for="season">Season:</label>
-    <select id="season" name="season" disabled>
+    <label for="season" class="font-medium">Season:</label>
+    <select id="season" name="season" class="select select-bordered select-primary select-sm bg-base-100" disabled>
         <option value="">All Seasons</option>
     </select>
 
-    <label for="team">Team:</label>
-    <select id="team" name="team" disabled>
+    <label for="team" class="font-medium">Team:</label>
+    <select id="team" name="team" class="select select-bordered select-primary select-sm bg-base-100" disabled>
         <option value="">All Teams</option>
     </select>
 
-    <label for="top_n">Show Top:</label>
-    <select id="top_n" name="top_n">
+    <label for="top_n" class="font-medium">Show Top:</label>
+    <select id="top_n" name="top_n" class="select select-bordered select-primary select-sm bg-base-100">
         <option value="50" selected>50</option>
         <option value="100">100</option>
         <option value="500">500</option>
@@ -85,9 +92,7 @@
 
     document.getElementById('team').addEventListener('change', function () {
         var teamId = this.value;
-        if (teamId) {
-            document.getElementById('top_n').value = 200;
-        }
+        if (teamId) document.getElementById('top_n').value = 200;
         var event = new CustomEvent('dropdownChange', { detail: { teamId: teamId } });
         document.dispatchEvent(event);
     });
@@ -106,21 +111,15 @@
                         '/dropdowns/filter_levels';
         return fetch(endpoint, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ org_id: orgId, human_id: humanId })
         })
             .then(response => response.json())
             .then(data => {
-                // Sort levels alphabetically by level_name
                 data.sort((a, b) => a.level_name.localeCompare(b.level_name));
-
                 var levelSelect = document.getElementById('level');
                 levelSelect.innerHTML = '<option value="">All Levels</option>';
-                data.forEach(level => {
-                    levelSelect.innerHTML += `<option value="${level.id}">${level.level_name}</option>`;
-                });
+                data.forEach(level => { levelSelect.innerHTML += `<option value="${level.id}">${level.level_name}</option>`; });
                 levelSelect.disabled = false;
             });
     }
@@ -132,18 +131,14 @@
                     '/dropdowns/filter_seasons';
         return fetch(endpoint, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ org_id: orgId, level_id: levelId, human_id: humanId })
         })
             .then(response => response.json())
             .then(data => {
                 var seasonSelect = document.getElementById('season');
                 seasonSelect.innerHTML = '<option value="">All Seasons</option>';
-                data.forEach(season => {
-                    seasonSelect.innerHTML += `<option value="${season.id}">${season.season_name}</option>`;
-                });
+                data.forEach(season => { seasonSelect.innerHTML += `<option value="${season.id}">${season.season_name}</option>`; });
                 seasonSelect.disabled = false;
             });
     }
@@ -154,26 +149,21 @@
                 window.location.pathname.includes('/referee_performance') ? null : '/dropdowns/filter_teams';
 
         if (endpoint === null) {
-            // Disable the team dropdown for referee performance page
             document.getElementById('team').innerHTML = '<option value="">Not Applicable</option>';
             document.getElementById('team').disabled = true;
-            return Promise.resolve(); // Return a resolved Promise to avoid runtime errors
+            return Promise.resolve();
         }
 
         return fetch(endpoint, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ org_id: orgId, level_id: levelId, season_id: seasonId, human_id: humanId })
         })
             .then(response => response.json())
             .then(data => {
                 var teamSelect = document.getElementById('team');
                 teamSelect.innerHTML = '<option value="">All Teams</option>';
-                data.forEach(team => {
-                    teamSelect.innerHTML += `<option value="${team.id}">${team.team_name}</option>`;
-                });
+                data.forEach(team => { teamSelect.innerHTML += `<option value="${team.id}">${team.team_name}</option>`; });
                 teamSelect.disabled = false;
             });
     }
@@ -181,12 +171,9 @@
     function updateDropdownsStateAndCGI(orgId, levelId, seasonId, teamId, topN) {
         const url = new URL(window.location);
         url.searchParams.set('org_id', orgId);
-
-        // Convert string "null" to actual null
         if (levelId === 'null') levelId = null;
         if (seasonId === 'null') seasonId = null;
         if (teamId === 'null') teamId = null;
-
         url.searchParams.set('level_id', levelId);
         url.searchParams.set('season_id', seasonId);
         url.searchParams.set('team_id', teamId);
@@ -194,29 +181,13 @@
         updatePageSpecificCGI(url);
         window.history.pushState({}, '', url);
 
-        if (teamId) {
-            document.getElementById('team').disabled = false;
-            document.getElementById('team').value = teamId;
-        } else {
-        }
-
-        if (seasonId) {
-            document.getElementById('season').disabled = false;
-            document.getElementById('season').value = seasonId;
-        } else {
-            document.getElementById('team').disabled = true;
-        }
-
-        if (levelId) {
-            document.getElementById('level').disabled = false;
-            document.getElementById('level').value = levelId;
-        } else {
-            document.getElementById('season').disabled = true;
-        }
+        if (teamId) { document.getElementById('team').disabled = false; document.getElementById('team').value = teamId; }
+        if (seasonId) { document.getElementById('season').disabled = false; document.getElementById('season').value = seasonId; }
+        else { document.getElementById('team').disabled = true; }
+        if (levelId) { document.getElementById('level').disabled = false; document.getElementById('level').value = levelId; }
+        else { document.getElementById('season').disabled = true; }
         document.getElementById('organization').value = orgId;
-        if (orgId == -1) {
-            document.getElementById('level').disabled = true;
-        }
+        if (orgId == -1) document.getElementById('level').disabled = true;
         document.getElementById('top_n').value = topN;
     }
 
@@ -227,46 +198,15 @@
         var teamId = document.getElementById('team').value;
         var topN = document.getElementById('top_n').value;
 
-        // We support 3 cases in events : no detail, all details and single item in detail
-        // Based on that we override CGI parameters
         var valueSet = false;
         if (event.detail != null) {
-            if (event.detail.teamId != null) {
-                teamId = event.detail.teamId;
-                valueSet = true;
-            } else {
-                teamId = null;
-            }
-
-            if (event.detail.seasonId != null) {
-                seasonId = event.detail.seasonId;
-                valueSet = true;
-            } else {
-                if (!valueSet) {
-                    seasonId = null;
-                }
-            }
-
-            if (event.detail.levelId != null) {
-                levelId = event.detail.levelId;
-                valueSet = true;
-            } else {
-                if (!valueSet) {
-                    levelId = null;
-                }
-            }
-
-            if (event.detail.orgId != null) {
-                orgId = event.detail.orgId;
-            }
-
-            if (event.detail.topN != null) {
-                topN = event.detail.topN;
-            }
+            if (event.detail.teamId != null) { teamId = event.detail.teamId; valueSet = true; } else { teamId = null; }
+            if (event.detail.seasonId != null) { seasonId = event.detail.seasonId; valueSet = true; } else { if (!valueSet) seasonId = null; }
+            if (event.detail.levelId != null) { levelId = event.detail.levelId; valueSet = true; } else { if (!valueSet) levelId = null; }
+            if (event.detail.orgId != null) orgId = event.detail.orgId;
+            if (event.detail.topN != null) topN = event.detail.topN;
         }
-        if (orgId == null) {
-            orgId = -1;
-        }
+        if (orgId == null) orgId = -1;
 
         updateDropdownsStateAndCGI(orgId, levelId, seasonId, teamId, topN);
         fetchContent(orgId, levelId, seasonId, teamId, topN);
@@ -274,7 +214,9 @@
 
     window.addEventListener('load', function () {
         const urlParams = new URLSearchParams(window.location.search);
-        const orgId = urlParams.get('org_id') || document.getElementById('organization').value;
+        const orgSelect = document.getElementById('organization');
+        const orgHidden = document.getElementById('org_hidden');
+        const orgId = urlParams.get('org_id') || (orgHidden ? orgHidden.value : orgSelect.value);
         const levelId = urlParams.get('level_id');
         const seasonId = urlParams.get('season_id');
         const teamId = urlParams.get('team_id');
@@ -284,12 +226,8 @@
         onWindowLoad();
 
         if (orgId == null) {
-            // Automatically select the only available organization if there is only one option
             const orgSelect = document.getElementById('organization');
-            if (orgSelect.options.length === 1) {
-                orgSelect.selectedIndex = 0;
-                orgSelect.dispatchEvent(new Event('change'));
-            }
+            if (orgSelect.options.length === 1) { orgSelect.selectedIndex = 0; orgSelect.dispatchEvent(new Event('change')); }
         } else {
             document.getElementById('organization').value = orgId;
         }
@@ -302,29 +240,19 @@
                         if (seasonId) {
                             document.getElementById('season').value = seasonId;
                             fetchTeams(orgId, levelId, seasonId, document.getElementById('human_id') ? document.getElementById('human_id').value : null).then(() => {
-                                if (teamId) {
-                                    document.getElementById('team').value = teamId;
-                                    document.getElementById('top_n').value = 200;
-                                }
-
-                                //fetchContent(orgId, levelId, seasonId, teamId, topN);
+                                if (teamId) { document.getElementById('team').value = teamId; document.getElementById('top_n').value = 200; }
                             });
                         } else {
                             document.getElementById('season').disabled = false;
-                            //fetchContent(orgId, levelId, null, null, topN);
                         }
                     });
                 } else {
                     document.getElementById('level').disabled = false;
-                    //fetchContent(orgId, null, null, null, topN);
                 }
             });
-        } else {
-            //fetchContent(null, null, null, null, topN);
         }
 
         var event = new CustomEvent('dropdownChange', { detail: { orgId: orgId, levelId: levelId, seasonId: seasonId, teamId: teamId, topN: topN } });
         document.dispatchEvent(event);
-
     });
 </script>

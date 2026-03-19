@@ -1,72 +1,39 @@
 {% extends "base.html" %}
 {% import "macros.html" as macros %}
 
-{% block title %}Hockey B.L.A.S.T (Beer <h5>Top Skaters - Last Day</h5>
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Org</th>
-            <th>GP</th>
-            <th>PTS(G+A)</th>
-        </tr>
-    </thead>lytics and Stats){% endblock %}
+{% block title %}Hockey B.L.A.S.T (Beer League Analytics and Stats){% endblock %}
 
     {% block content %}
-    <div style="text-align: center;">
-        <!-- <h1 class="mb-4 outlined-text" style="font-size: 2.5rem; margin-left: 0px;">
-        HOCKEY B.L.A.S.T.
-        <br>
-        <br>
-        Beer League
-        <br>
-        Analytics and Stats
-    </h1>
-    <h5 class="mb-4 outlined-text" style="margin-left: 0px;">
-        Last Game Indexed:
-        <br>
-        Scheduled: <strong>{{ last_scheduled.date }} {{ last_scheduled_time }}</strong>
-        <br>
-        Completed: <strong>{{ last_played.date }} {{ last_played_time }}</strong>
-    </h5> -->
+    <div class="text-center">
 
-        <!-- <h3>Search Teams and People</h3> -->
-        <form method="post" class="mb-4">
-            <table class="table table-striped">
-                <tr>
-                    <td style="vertical-align: middle;">
-                        <div class="form-group">
-                            <input type="text" class="form-control" id="first_name" name="first_name"
+        <div class="card bg-base-200 shadow-md mb-6 border border-base-content/5">
+            <div class="card-body">
+                <form method="post" class="mb-0">
+                    <div class="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <input type="text" class="input input-bordered input-sm bg-base-100 flex-1 sm:w-28" id="first_name" name="first_name"
                                 placeholder="First" oninput="clearOtherFields('first_name')">
-                        </div>
-                        <div class="form-group">
-                            <input type="text" class="form-control" id="last_name" name="last_name" placeholder="Last"
+                            <input type="text" class="input input-bordered input-sm bg-base-100 flex-1 sm:w-28" id="last_name" name="last_name" placeholder="Last"
                                 oninput="clearOtherFields('last_name')">
                         </div>
-                    </td>
-                    <td style="vertical-align: middle; text-align: center;">
-                        <strong>OR</strong>
-                    </td>
-                    <td style="vertical-align: middle;">
-                        <div class="form-group">
-                            <input type="text" class="form-control" id="team_name" name="team_name" placeholder="Team"
+                        <div class="font-bold text-base-content/50 text-sm">OR</div>
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <input type="text" class="input input-bordered input-sm bg-base-100 flex-1 sm:w-36" id="team_name" name="team_name" placeholder="Team"
                                 oninput="clearOtherFields('team_name')">
+                            <button type="submit" class="btn btn-primary btn-sm">Search</button>
                         </div>
-                    </td>
-                    <td style="vertical-align: middle;">
-                        <button type="submit" class="btn btn-primary">Search</button>
-                    </td>
-                </tr>
-            </table>
-        </form>
+                    </div>
+                </form>
+            </div>
+        </div>
 
         {% if search_results is not none %}
-        <div>
+        <div class="mb-6">
             {% if search_results %}
-            <h6>Search Results: </h6>
-            <ul class="list-group">
+            <h2 class="text-lg font-bold mt-4 mb-2 text-primary">Search Results</h2>
+            <ul class="menu bg-base-200 rounded-box text-left">
                 {% for link in search_results %}
-                <li class="list-group-item">{{ link|safe }}</li>
+                <li class="px-3 py-2 text-sm">{{ link|safe }}</li>
                 {% endfor %}
             </ul>
             {% else %}
@@ -77,286 +44,354 @@
 
         <!-- Live Games Section - Only show if there are live games -->
         {% if live_games %}
-        <h5>Live Games</h5>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Teams</th>
-                    <th>Score</th>
-                    <th>Time Left</th>
-                    <th>Rink</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for game in live_games %}
-                <tr>
-                    <td>
-                        <a href="{{ url_for('team_stats.team_stats', team_id=game.visitor_team_id) }}">{{ game.visitor_team_name }}</a><br>
-                        <span style='color:black;'>at</span><br>
-                        <a href="{{ url_for('team_stats.team_stats', team_id=game.home_team_id) }}">{{ game.home_team_name }}</a><br>
-                        ({{ game.level }})
-                    </td>
-                    <td>
-                        <a href="{{ url_for('game_card.game_card', game_id=game.game_id) }}">
-                        {% if game.visitor_score > game.home_score %}
-                        <strong>{{ game.visitor_score }}</strong> : {{ game.home_score }}
-                        {% elif game.home_score > game.visitor_score %}
-                        {{ game.visitor_score }} : <strong>{{ game.home_score }}</strong>
-                        {% else %}
-                        {{ game.visitor_score }} : {{ game.home_score }}
-                        {% endif %}
-                        </a>
-                    </td>
-                    <td>P{{ game.period }} {{ game.time_left }}</td>
-                    <td>{{ macros.location_display(game.location, link_to_page=True) }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="card bg-base-200 shadow-md mb-6 border border-base-content/5">
+            <div class="card-body p-0">
+                <h2 class="text-lg font-bold px-4 pt-4 pb-2 text-primary border-b border-base-content/10">Live Games</h2>
+                <div class="overflow-x-auto">
+                <table class="table table-zebra table-sm w-full">
+                    <thead>
+                        <tr>
+                            <th>Teams</th>
+                            <th>Score</th>
+                            <th>Time Left</th>
+                            <th>Rink</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for game in live_games %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('team_stats.team_stats', team_id=game.visitor_team_id) }}">{{ game.visitor_team_name }}</a><br>
+                                at<br>
+                                <a href="{{ url_for('team_stats.team_stats', team_id=game.home_team_id) }}">{{ game.home_team_name }}</a><br>
+                                ({{ game.level }})
+                            </td>
+                            <td>
+                                <a href="{{ url_for('game_card.game_card', game_id=game.game_id) }}">
+                                {% if game.visitor_score > game.home_score %}
+                                <strong>{{ game.visitor_score }}</strong> : {{ game.home_score }}
+                                {% elif game.home_score > game.visitor_score %}
+                                {{ game.visitor_score }} : <strong>{{ game.home_score }}</strong>
+                                {% else %}
+                                {{ game.visitor_score }} : {{ game.home_score }}
+                                {% endif %}
+                                </a>
+                            </td>
+                            <td>P{{ game.period }} {{ game.time_left }}</td>
+                            <td>{{ macros.location_display(game.location, link_to_page=True) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
         {% endif %}
 
-        <h5>Current Point Streak</h5>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Org</th>
-                    <th>Point Streak</th>
-                    <th>Avg Points</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for skater, human, org in current_point_streak_skaters %}
-                <tr>
-                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                            human.last_name }}</a></td>
-                    <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
-                    <td>{{ skater.current_point_streak }} games</td>
-                    <td>{{ "%.2f" % skater.current_point_streak_avg_points }} pts/game</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <h5>Top Skaters - Last Day</h5>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Org</h>
-                    <th>GP</th>
-                    <th>PTS(G+A)</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for skater, human, org in daily_skater_points %}
-                <tr>
-                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                            human.last_name }}</a></td>
-                    <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
-                    <td>{{ skater.games_participated }}</td>
-                    <td>
-                        {% if skater.goals > 0 and skater.assists > 0 %}
-                        {{ skater.points }}P({{ skater.goals }}G+{{ skater.assists }}A)
-                        {% elif skater.goals > 0 and skater.assists == 0 %}
-                        {{ skater.goals }}G
-                        {% elif skater.goals == 0 and skater.assists > 0 %}
-                        {{ skater.assists }}A
-                        {% else %}
-                        {{ skater.points }}P
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <h5>Top Skaters - Last Week</h5>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Org</th>
-                    <th>GP</th>
-                    <th>PTS(G+A)</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for skater, human, org in weekly_skater_points %}
-                <tr>
-                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                            human.last_name }}</a></td>
-                    <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
-                    <td>{{ skater.games_participated }}</td>
-                    <td>
-                        {% if skater.goals > 0 and skater.assists > 0 %}
-                        {{ skater.points }}P({{ skater.goals }}G+{{ skater.assists }}A)
-                        {% elif skater.goals > 0 and skater.assists == 0 %}
-                        {{ skater.goals }}G
-                        {% elif skater.goals == 0 and skater.assists > 0 %}
-                        {{ skater.assists }}A
-                        {% else %}
-                        {{ skater.points }}P
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="card bg-base-200 shadow-md mb-6 border border-base-content/5">
+            <div class="card-body p-0">
+                <h2 class="text-lg font-bold px-4 pt-4 pb-2 text-primary border-b border-base-content/10">Current Point Streak</h2>
+                <div class="overflow-x-auto">
+                <table class="table table-zebra table-sm w-full">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Org</th>
+                            <th>Point Streak</th>
+                            <th>Avg Points</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for skater, human, org in current_point_streak_skaters %}
+                        <tr>
+                            <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                                    human.last_name }}</a></td>
+                            <td class="whitespace-nowrap"><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
+                            <td class="whitespace-nowrap">{{ skater.current_point_streak }} games</td>
+                            <td class="whitespace-nowrap">{{ "%.2f" % skater.current_point_streak_avg_points }} pts/g</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
 
-        <h5>Top Goalies - Last Day</h5>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Org</th>
-                    <th>GP</th>
-                    <th>SV%</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for goalie, human, org in daily_goalie_games_played %}
-                <tr>
-                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                            human.last_name }}</a></td>
-                    <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
-                    <td>{{ goalie.games_participated }}</td>
-                    <td>{{ "%.2f" % goalie.save_percentage }}SV%</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <h5>Top Goalies - Last Week</h5>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Org</th>
-                    <th>GP</th>
-                    <th>SV%</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for goalie, human, org in weekly_goalie_games_played %}
-                <tr>
-                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                            human.last_name }}</a></td>
-                    <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
-                    <td>{{ goalie.games_participated }}</td>
-                    <td>{{ "%.2f" % goalie.save_percentage }}SV%</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="card bg-base-200 shadow-md mb-6 border border-base-content/5">
+            <div class="card-body p-0">
+                <h2 class="text-lg font-bold px-4 pt-4 pb-2 text-primary border-b border-base-content/10">Top Skaters - Last Day</h2>
+                <div class="overflow-x-auto">
+                <table class="table table-zebra table-sm w-full">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Org</th>
+                            <th>GP</th>
+                            <th>PTS(G+A)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for skater, human, org in daily_skater_points %}
+                        <tr>
+                            <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                                    human.last_name }}</a></td>
+                            <td class="whitespace-nowrap"><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
+                            <td>{{ skater.games_participated }}</td>
+                            <td>
+                                {% if skater.goals > 0 and skater.assists > 0 %}
+                                {{ skater.points }}P({{ skater.goals }}G+{{ skater.assists }}A)
+                                {% elif skater.goals > 0 and skater.assists == 0 %}
+                                {{ skater.goals }}G
+                                {% elif skater.goals == 0 and skater.assists > 0 %}
+                                {{ skater.assists }}A
+                                {% else %}
+                                {{ skater.points }}P
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
 
-        <h5>Top Referees - Last Day</h5>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Org</th>
-                    <th>GM</th>
-                    <th>Whistle</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for referee, human, org in daily_referee_games_reffed %}
-                <tr>
-                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                            human.last_name }}</a></td>
-                    <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
-                    <td>{{ referee.games_participated }}</td>
-                    <td>{{ referee.penalties_given }}PIM{% if referee.gm_given > 0 %}, {{ referee.gm_given }}GM{% endif
-                        %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <h5>Top Referees - Last Week</h5>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Org</th>
-                    <th>GM</th>
-                    <th>Whistle</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for referee, human, org in weekly_referee_games_reffed %}
-                <tr>
-                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                            human.last_name }}</a></td>
-                    <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
-                    <td>{{ referee.games_participated }}</td>
-                    <td>{{ referee.penalties_given }}PIM{% if referee.gm_given > 0 %}, {{ referee.gm_given }}GM{% endif
-                        %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="card bg-base-200 shadow-md mb-6 border border-base-content/5">
+            <div class="card-body p-0">
+                <h2 class="text-lg font-bold px-4 pt-4 pb-2 text-primary border-b border-base-content/10">Top Skaters - Last Week</h2>
+                <div class="overflow-x-auto">
+                <table class="table table-zebra table-sm w-full">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Org</th>
+                            <th>GP</th>
+                            <th>PTS(G+A)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for skater, human, org in weekly_skater_points %}
+                        <tr>
+                            <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                                    human.last_name }}</a></td>
+                            <td class="whitespace-nowrap"><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
+                            <td>{{ skater.games_participated }}</td>
+                            <td>
+                                {% if skater.goals > 0 and skater.assists > 0 %}
+                                {{ skater.points }}P({{ skater.goals }}G+{{ skater.assists }}A)
+                                {% elif skater.goals > 0 and skater.assists == 0 %}
+                                {{ skater.goals }}G
+                                {% elif skater.goals == 0 and skater.assists > 0 %}
+                                {{ skater.assists }}A
+                                {% else %}
+                                {{ skater.points }}P
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
 
-        <h5>Top Scorekeepers - Last Day</h5>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Org</th>
-                    <th>GM</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for scorekeeper, human, org in daily_scorekeeper_games %}
-                <tr>
-                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                            human.last_name }}</a></td>
-                    <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
-                    <td>{{ scorekeeper.games_scorekeeper }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <h5>Top Scorekeepers - Last Week</h5>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Org</th>
-                    <th>GM</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for scorekeeper, human, org in weekly_scorekeeper_games %}
-                <tr>
-                    <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
-                            human.last_name }}</a></td>
-                    <td><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
-                    <td>{{ scorekeeper.games_scorekeeper }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="card bg-base-200 shadow-md mb-6 border border-base-content/5">
+            <div class="card-body p-0">
+                <h2 class="text-lg font-bold px-4 pt-4 pb-2 text-primary border-b border-base-content/10">Top Goalies - Last Day</h2>
+                <div class="overflow-x-auto">
+                <table class="table table-zebra table-sm w-full">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Org</th>
+                            <th>GP</th>
+                            <th>SV%</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for goalie, human, org in daily_goalie_games_played %}
+                        <tr>
+                            <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                                    human.last_name }}</a></td>
+                            <td class="whitespace-nowrap"><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
+                            <td>{{ goalie.games_participated }}</td>
+                            <td>{{ "%.2f" % goalie.save_percentage }}SV%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
 
-        <!-- Latest Completed Games Per Organization -->
+        <div class="card bg-base-200 shadow-md mb-6 border border-base-content/5">
+            <div class="card-body p-0">
+                <h2 class="text-lg font-bold px-4 pt-4 pb-2 text-primary border-b border-base-content/10">Top Goalies - Last Week</h2>
+                <div class="overflow-x-auto">
+                <table class="table table-zebra table-sm w-full">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Org</th>
+                            <th>GP</th>
+                            <th>SV%</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for goalie, human, org in weekly_goalie_games_played %}
+                        <tr>
+                            <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                                    human.last_name }}</a></td>
+                            <td class="whitespace-nowrap"><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
+                            <td>{{ goalie.games_participated }}</td>
+                            <td>{{ "%.2f" % goalie.save_percentage }}SV%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-base-200 shadow-md mb-6 border border-base-content/5">
+            <div class="card-body p-0">
+                <h2 class="text-lg font-bold px-4 pt-4 pb-2 text-primary border-b border-base-content/10">Top Referees - Last Day</h2>
+                <div class="overflow-x-auto">
+                <table class="table table-zebra table-sm w-full">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Org</th>
+                            <th>GM</th>
+                            <th>Whistle</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for referee, human, org in daily_referee_games_reffed %}
+                        <tr>
+                            <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                                    human.last_name }}</a></td>
+                            <td class="whitespace-nowrap"><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
+                            <td>{{ referee.games_participated }}</td>
+                            <td>{{ referee.penalties_given }}PIM{% if referee.gm_given > 0 %}, {{ referee.gm_given }}GM{% endif
+                                %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-base-200 shadow-md mb-6 border border-base-content/5">
+            <div class="card-body p-0">
+                <h2 class="text-lg font-bold px-4 pt-4 pb-2 text-primary border-b border-base-content/10">Top Referees - Last Week</h2>
+                <div class="overflow-x-auto">
+                <table class="table table-zebra table-sm w-full">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Org</th>
+                            <th>GM</th>
+                            <th>Whistle</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for referee, human, org in weekly_referee_games_reffed %}
+                        <tr>
+                            <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                                    human.last_name }}</a></td>
+                            <td class="whitespace-nowrap"><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
+                            <td>{{ referee.games_participated }}</td>
+                            <td>{{ referee.penalties_given }}PIM{% if referee.gm_given > 0 %}, {{ referee.gm_given }}GM{% endif
+                                %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-base-200 shadow-md mb-6 border border-base-content/5">
+            <div class="card-body p-0">
+                <h2 class="text-lg font-bold px-4 pt-4 pb-2 text-primary border-b border-base-content/10">Top Scorekeepers - Last Day</h2>
+                <div class="overflow-x-auto">
+                <table class="table table-zebra table-sm w-full">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Org</th>
+                            <th>GM</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for scorekeeper, human, org in daily_scorekeeper_games %}
+                        <tr>
+                            <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                                    human.last_name }}</a></td>
+                            <td class="whitespace-nowrap"><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
+                            <td>{{ scorekeeper.games_scorekeeper }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-base-200 shadow-md mb-6 border border-base-content/5">
+            <div class="card-body p-0">
+                <h2 class="text-lg font-bold px-4 pt-4 pb-2 text-primary border-b border-base-content/10">Top Scorekeepers - Last Week</h2>
+                <div class="overflow-x-auto">
+                <table class="table table-zebra table-sm w-full">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Org</th>
+                            <th>GM</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for scorekeeper, human, org in weekly_scorekeeper_games %}
+                        <tr>
+                            <td><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }} {{
+                                    human.last_name }}</a></td>
+                            <td class="whitespace-nowrap"><a href="{{ org.website }}" target="_blank">{{ org.organization_name }}</a></td>
+                            <td>{{ scorekeeper.games_scorekeeper }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+
         {% if latest_completed_games %}
-        <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #ddd;">
-            <h5>Latest Completed Games</h5>
-            <table class="table table-striped">
-                <tbody>
-                    <tr>
-                        {% for game_info in latest_completed_games %}
-                        <td style="text-align: center;"><strong>{{ game_info.org_name }}</strong></td>
-                        {% endfor %}
-                    </tr>
-                    <tr>
-                        {% for game_info in latest_completed_games %}
-                        <td style="text-align: center;">
-                            <a href="{{ url_for('game_card.game_card', game_id=game_info.game_id) }}">{{ game_info.date_time }}</a>
-                        </td>
-                        {% endfor %}
-                    </tr>
-                </tbody>
-            </table>
+        <div class="card bg-base-200 shadow-md mb-6 border border-base-content/5">
+            <div class="card-body p-0">
+                <h2 class="text-lg font-bold px-4 pt-4 pb-2 text-primary border-b border-base-content/10">Latest Completed Games</h2>
+                <div class="overflow-x-auto">
+                <table class="table table-zebra table-sm w-full">
+                    <tbody>
+                        <tr>
+                            {% for game_info in latest_completed_games %}
+                            <td class="text-center"><strong>{{ game_info.org_name }}</strong></td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            {% for game_info in latest_completed_games %}
+                            <td class="text-center">
+                                <a href="{{ url_for('game_card.game_card', game_id=game_info.game_id) }}">{{ game_info.date_time }}</a>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+                </div>
+            </div>
         </div>
         {% endif %}
 

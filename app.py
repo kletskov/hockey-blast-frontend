@@ -8,7 +8,6 @@ from threading import Thread
 
 import flask_table.columns
 import flask_table.table
-# Import kinde_flask to register the Flask framework - exactly like their example
 import psycopg2
 from dotenv import load_dotenv
 from flask import (Flask, g, jsonify, redirect, render_template, request,
@@ -29,16 +28,11 @@ from hockey_blast_common_lib.stats_models import (OrgStatsDailyGoalie,
                                                   OrgStatsWeeklySkater)
 from hockey_blast_common_lib.stats_utils import ALL_ORGS_ID
 from hockey_blast_common_lib.utils import get_non_human_ids
-from kinde_sdk.auth.oauth import OAuth
 from markupsafe import Markup
 
 from flask_session import Session
 from options import MAX_HUMAN_SEARCH_RESULTS, MAX_TEAM_SEARCH_RESULTS
 from game_utils import is_game_live, parse_live_time
-
-# Load environment variables
-load_dotenv()
-print("Loading environment variables from .env")
 
 # Debug: Print the DB_HOST environment variable
 flask_table.table.Markup = Markup
@@ -298,28 +292,6 @@ def _create_app(db_name):
     with app.app_context():
         non_human_ids = frozenset(get_non_human_ids(db.session))
 
-    # Initialize Kinde OAuth with Flask framework - exactly like their example
-    kinde_oauth = OAuth(framework="flask", app=app)
-
-    def get_authorized_data():
-        """Get user data if authenticated - following Kinde example exactly"""
-        if not kinde_oauth.is_authenticated():
-            return None
-
-        user = kinde_oauth.get_user_info()
-        if not user:
-            return None
-
-        user_data = {
-            "id": user.get("id"),
-            "user_given_name": user.get("given_name"),
-            "user_family_name": user.get("family_name"),
-            "user_email": user.get("email"),
-            "user_picture": user.get("picture"),
-        }
-
-        return user_data
-
     # Register blueprints
     app.register_blueprint(teams_per_season_bp)
     app.register_blueprint(human_stats_bp, url_prefix="/human_stats")
@@ -441,8 +413,7 @@ def _create_app(db_name):
             if "top_n" not in request.args:
                 return redirect(url_for("index", top_n=top_n))
 
-            # Check if user is authenticated - following Kinde example
-            auth_data = get_authorized_data()
+            auth_data = None  # Auth handled client-side via Auth0
 
             # Fetch the latest date and time
             last_scheduled = (
@@ -831,32 +802,19 @@ def _create_app(db_name):
 
     @app.route("/auth/status")
     def auth_status():
-        """Show authentication status - for testing"""
-        auth_data = get_authorized_data()
-        is_authenticated = kinde_oauth.is_authenticated()
+        """Auth status — Auth0 is handled client-side"""
+        return jsonify({"is_authenticated": False, "message": "Auth0 used client-side"})
 
-        return jsonify(
-            {
-                "is_authenticated": is_authenticated,
-                "auth_data": auth_data,
-                "message": (
-                    "Authentication working!"
-                    if is_authenticated
-                    else "Not authenticated"
-                ),
-            }
-        )
+    @app.route("/auth/callback")
+    def auth_callback():
+        """Auth0 redirect callback — handled client-side by auth0-spa-js"""
+        return render_template("auth_callback.html")
 
     @app.route("/session")
     def session_info():
-        """Show detailed session information"""
-        auth_data = get_authorized_data()
-        is_authenticated = kinde_oauth.is_authenticated()
-
-        # Get Flask session data (be careful not to expose sensitive info)
+        """Show Flask session info (auth is client-side via Auth0)"""
         session_data = {}
         for key in session.keys():
-            # Don't expose sensitive session data
             if key not in ["_permanent", "_fresh"]:
                 session_data[key] = (
                     str(session[key])[:100] + "..."
@@ -866,11 +824,10 @@ def _create_app(db_name):
 
         return jsonify(
             {
-                "is_authenticated": is_authenticated,
-                "auth_data": auth_data,
+                "is_authenticated": False,
+                "message": "Auth0 used client-side; Flask session shown below",
                 "session_keys": list(session.keys()),
                 "session_data": session_data,
-                "message": "Session info retrieved successfully",
             }
         )
 

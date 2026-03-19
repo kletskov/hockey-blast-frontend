@@ -3,39 +3,31 @@
 {% block title %}Percentage of Games by Day of the Week{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h3> Percentage of Games by Day of the Week</h3>
-    <div class="form-group">
-        <label for="x-axis">Aggregate by:</label>
-        <select class="form-control" id="x-axis">
-            <option value="season_name">Seasons</option>
-            <option value="year_month">Year + Month</option>
-        </select>
-        <label for="plot-level">Choose a Division:</label>
-        <select class="form-control" id="plot-level">
-            <option value="all">All</option>
-            {% for level in levels %}
-            <option value="{{ level }}">{{ level }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <button class="btn btn-primary" id="update-plot">Update Plot</button>
-    <div class="plot-container">
-        <div id="plot"></div>
-    </div>
+<h2 class="text-lg font-bold mt-4 mb-3 text-primary">Percentage of Games by Day of the Week</h2>
+<div class="form-control mb-2">
+    <label for="x-axis" class="label"><span class="label-text">Aggregate by:</span></label>
+    <select class="select select-bordered select-primary select-sm bg-base-100" id="x-axis">
+        <option value="season_name">Seasons</option>
+        <option value="year_month">Year + Month</option>
+    </select>
+    <label for="plot-level" class="label mt-2"><span class="label-text">Choose a Division:</span></label>
+    <select class="select select-bordered select-primary select-sm bg-base-100" id="plot-level">
+        <option value="all">All</option>
+        {% for level in levels %}
+        <option value="{{ level }}">{{ level }}</option>
+        {% endfor %}
+    </select>
 </div>
-
-<style>
-    .plot-container {
-        width: 100%;
-        overflow-x: auto;
-    }
-
-    #plot {
-        width: 100%;
-        height: 600px;
-    }
-</style>
+<button class="btn btn-primary btn-sm mb-4" id="update-plot">Update Plot</button>
+<div class="w-full" style="background:#fff;border-radius:10px;padding:12px;margin-bottom:8px;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+    <div id="plot" style="width:100%;height:420px;"></div>
+</div>
+<div class="overflow-x-auto mt-4">
+    <table class="table table-zebra table-sm" id="data-table">
+        <thead></thead>
+        <tbody></tbody>
+    </table>
+</div>
 
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
@@ -45,55 +37,46 @@
 
         fetch('/get_day_of_week_data', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                x_axis: x_axis,
-                plot_level: plot_level
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ x_axis: x_axis, plot_level: plot_level })
         })
             .then(response => response.json())
             .then(data => {
                 var traces = [];
                 var sortedX = data.x;
-
                 for (var day in data.y) {
-                    traces.push({
-                        x: sortedX,
-                        y: data.y[day],
-                        mode: 'lines',
-                        name: day
-                    });
+                    traces.push({ x: sortedX, y: data.y[day], mode: 'lines', name: day });
                 }
                 var layout = {
-                    title: 'Percentage of Games by Day of the Week',
+                    title: { text: 'Percentage of Games by Day of the Week', font: { color: '#111', size: 14 } },
                     xaxis: {
                         title: x_axis === 'year_month' ? 'Year + Month' : 'Season Name',
-                        tickangle: x_axis === 'year_month' ? 90 : -45,
+                        tickangle: -45,
                         tickformat: x_axis === 'year_month' ? '%b %Y' : '',
-                        dtick: x_axis === 'year_month' ? 'M4' : ''
+                        dtick: x_axis === 'year_month' ? 'M4' : '',
+                        color: '#333'
                     },
-                    yaxis: { title: 'Percentage of Games' },
-                    margin: x_axis === 'year_month' ? { b: 90 } : { b: 150 }
+                    yaxis: { title: 'Percentage of Games', color: '#333' },
+                    margin: { t: 50, b: 100, l: 60, r: 20 },
+                    paper_bgcolor: '#ffffff',
+                    plot_bgcolor: '#f8fffe',
+                    font: { color: '#333', size: 12 },
+                    legend: { orientation: 'h', y: -0.25, font: { size: 11 } },
+                    autosize: true
                 };
-                Plotly.newPlot('plot', traces, layout);
+                var config = { responsive: true, displayModeBar: false };
+                Plotly.newPlot('plot', traces, layout, config);
 
-                // Update table
                 var table = document.getElementById('data-table');
                 var thead = table.querySelector('thead');
                 var tbody = table.querySelector('tbody');
-
-                // Clear existing table headers and rows
                 thead.innerHTML = '';
                 tbody.innerHTML = '';
 
-                // Create table headers
                 var headerRow = document.createElement('tr');
                 var th = document.createElement('th');
                 th.innerText = 'Day of the Week';
                 headerRow.appendChild(th);
-
                 data.x.slice(-24).forEach(function (x_value) {
                     var th = document.createElement('th');
                     th.innerText = x_value;
@@ -101,7 +84,6 @@
                 });
                 thead.appendChild(headerRow);
 
-                // Create table rows
                 ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].forEach(function (day) {
                     var row = document.createElement('tr');
                     var td = document.createElement('td');

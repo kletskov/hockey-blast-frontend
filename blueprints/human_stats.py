@@ -199,12 +199,12 @@ def human_stats():
 
     # Prepare links for skater first and last game dates
     skater_first_game_link = (
-        f"<a href='{url_for('game_card.game_card', game_id=skater_first_game_id)}'>{skater_first_game_date.strftime('%m/%d/%y')}</a>"
+        f"<a href='{url_for('game_card.game_card', game_id=skater_first_game_id)}'>{skater_first_game_date.strftime('%m/%d')}<br>{skater_first_game_date.strftime('%Y')}</a>"
         if skater_first_game_date
         else None
     )
     skater_last_game_link = (
-        f"<a href='{url_for('game_card.game_card', game_id=skater_last_game_id)}'>{skater_last_game_date.strftime('%m/%d/%y')}</a>"
+        f"<a href='{url_for('game_card.game_card', game_id=skater_last_game_id)}'>{skater_last_game_date.strftime('%m/%d')}<br>{skater_last_game_date.strftime('%Y')}</a>"
         if skater_last_game_date
         else None
     )
@@ -238,12 +238,12 @@ def human_stats():
 
     # Prepare links for goalie first and last game dates
     goalie_first_game_link = (
-        f"<a href='{url_for('game_card.game_card', game_id=goalie_first_game_id)}'>{goalie_first_game_date.strftime('%m/%d/%y')}</a>"
+        f"<a href='{url_for('game_card.game_card', game_id=goalie_first_game_id)}'>{goalie_first_game_date.strftime('%m/%d')}<br>{goalie_first_game_date.strftime('%Y')}</a>"
         if goalie_first_game_date
         else None
     )
     goalie_last_game_link = (
-        f"<a href='{url_for('game_card.game_card', game_id=goalie_last_game_id)}'>{goalie_last_game_date.strftime('%m/%d/%y')}</a>"
+        f"<a href='{url_for('game_card.game_card', game_id=goalie_last_game_id)}'>{goalie_last_game_date.strftime('%m/%d')}<br>{goalie_last_game_date.strftime('%Y')}</a>"
         if goalie_last_game_date
         else None
     )
@@ -303,12 +303,12 @@ def human_stats():
 
     # Prepare links for first and last game dates
     scorekeeper_first_game_link = (
-        f"<a href='{url_for('game_card.game_card', game_id=scorekeeper_first_game_id)}'>{scorekeeper_first_game_date.strftime('%m/%d/%y')}</a>"
+        f"<a href='{url_for('game_card.game_card', game_id=scorekeeper_first_game_id)}'>{scorekeeper_first_game_date.strftime('%m/%d')}<br>{scorekeeper_first_game_date.strftime('%Y')}</a>"
         if scorekeeper_first_game_date
         else None
     )
     scorekeeper_last_game_link = (
-        f"<a href='{url_for('game_card.game_card', game_id=scorekeeper_last_game_id)}'>{scorekeeper_last_game_date.strftime('%m/%d/%y')}</a>"
+        f"<a href='{url_for('game_card.game_card', game_id=scorekeeper_last_game_id)}'>{scorekeeper_last_game_date.strftime('%m/%d')}<br>{scorekeeper_last_game_date.strftime('%Y')}</a>"
         if scorekeeper_last_game_date
         else None
     )
@@ -341,12 +341,12 @@ def human_stats():
 
     # Prepare links for referee first and last game dates
     referee_first_game_link = (
-        f"<a href='{url_for('game_card.game_card', game_id=referee_first_game_id)}'>{referee_first_game_date.strftime('%m/%d/%y')}</a>"
+        f"<a href='{url_for('game_card.game_card', game_id=referee_first_game_id)}'>{referee_first_game_date.strftime('%m/%d')}<br>{referee_first_game_date.strftime('%Y')}</a>"
         if referee_first_game_date
         else None
     )
     referee_last_game_link = (
-        f"<a href='{url_for('game_card.game_card', game_id=referee_last_game_id)}'>{referee_last_game_date.strftime('%m/%d/%y')}</a>"
+        f"<a href='{url_for('game_card.game_card', game_id=referee_last_game_id)}'>{referee_last_game_date.strftime('%m/%d')}<br>{referee_last_game_date.strftime('%Y')}</a>"
         if referee_last_game_date
         else None
     )
@@ -450,12 +450,12 @@ def human_stats():
 
     # Prepare links for overall first and last game dates
     overall_first_game_link = (
-        f"<a href='{url_for('game_card.game_card', game_id=overall_first_game_id)}'>{overall_first_game_date.strftime('%m/%d/%y')}</a>"
+        f"<a href='{url_for('game_card.game_card', game_id=overall_first_game_id)}'>{overall_first_game_date.strftime('%m/%d/%Y')}</a>"
         if overall_first_game_date
         else None
     )
     overall_last_game_link = (
-        f"<a href='{url_for('game_card.game_card', game_id=overall_last_game_id)}'>{overall_last_game_date.strftime('%m/%d/%y')}</a>"
+        f"<a href='{url_for('game_card.game_card', game_id=overall_last_game_id)}'>{overall_last_game_date.strftime('%m/%d/%Y')}</a>"
         if overall_last_game_date
         else None
     )
@@ -796,7 +796,7 @@ def human_stats():
                 level_short_name = level.short_name
 
         day_of_week = day_of_week_map.get(game.day_of_week, "")
-        date_time = f"{day_of_week} {game.date.strftime('%m/%d/%y')} {game.time.strftime('%I:%M%p')}"
+        date_time = f"{day_of_week} {game.date.strftime('%m/%d/%Y')}<br>{game.time.strftime('%I:%M %p')}"
 
         # Check if game is currently live using shared utility function
         game_is_live = is_game_live(game, now)

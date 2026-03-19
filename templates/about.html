@@ -3,23 +3,24 @@
 {% block title %}About Hockey B.L.A.S.T{% endblock %}
 
 {% block content %}
-<div style="text-align: center;">
-    <h1>About Hockey B.L.A.S.T</h1>
-    <p>This site provides comprehensive information about hockey, including details about players, teams, games,
+<div class="text-center max-w-2xl mx-auto">
+    <h1 class="text-2xl font-bold mb-4 text-primary">About Hockey B.L.A.S.T</h1>
+    <p class="mb-3">This site provides comprehensive information about hockey, including details about players, teams, games,
         leagues, and various analytics and statistics.</p>
-    <p>Author: <a href="https://hockey-blast.com/human_stats/human_stats?human_id=117076&top_n=20">Pavel Kletskov</a>
-        (<a href="mailto:kletskov@gmail.com">kletskov@gmail.com</a>)</p>
+    <p class="mb-3">Author: <a href="https://hockey-blast.com/human_stats/human_stats?human_id=117076&top_n=20" class="link link-primary">Pavel Kletskov</a>
+        (<a href="mailto:kletskov@gmail.com" class="link link-secondary">kletskov@gmail.com</a>)</p>
 
-    <h2>Stay Connected</h2>
-    <p>To stay informed about the latest updates, propose new features, or contribute to the development, join our <a
-            href="https://www.facebook.com/groups/1336941614177211">Facebook group</a>.</p>
+    <h2 class="text-lg font-bold mt-6 mb-3 text-primary">Stay Connected</h2>
+    <p class="mb-3">To stay informed about the latest updates, propose new features, or contribute to the development, join our <a
+            href="https://www.facebook.com/groups/1336941614177211" class="link link-primary">Facebook group</a>.</p>
 
-    <h2>Public GitHub Repositories</h2>
-    <p>
-        <a href="https://github.com/kletskov/hockey-blast-frontend">Frontend code</a>
+    <h2 class="text-lg font-bold mt-6 mb-3 text-primary">Public GitHub Repositories</h2>
+    <p class="mb-2">
+        <a href="https://github.com/kletskov/hockey-blast-frontend" class="link link-primary">Frontend code</a>
     </p>
-    <p>Frontend is utilizing this library:</p>
-    <p><a href="https://github.com/kletskov/hockey-blast-common-lib">Library for DB abstraction and stats
-            aggregation</a></p>
+    <p class="mb-2">Frontend is utilizing this library:</p>
+    <p>
+        <a href="https://github.com/kletskov/hockey-blast-common-lib" class="link link-primary">Library for DB abstraction and stats aggregation</a>
+    </p>
 </div>
 {% endblock %}

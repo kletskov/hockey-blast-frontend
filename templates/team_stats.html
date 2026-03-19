@@ -3,148 +3,156 @@
 {% block title %}Team "{{ team.name }}" ({{ first_game_date }} - {{ last_game_date }}){% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <h1 class="mb-4">Team "{{ team.name }}" (<a href="{{ url_for('game_card.game_card', game_id=first_game_id) }}">{{
-            first_game_date }}</a> - <a href="{{ url_for('game_card.game_card', game_id=last_game_id) }}">{{
-            last_game_date }}</a>)</h1>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>All Time Stats</th>
-                <th>Plus</th>
-                <th>Minus</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>Goals (Scored/Allowed)</td>
-                <td>{{ goals_scored }} ({{ goals_scored_percentage|round(2) }}%)</td>
-                <td>{{ goals_against }} ({{ goals_against_percentage|round(2) }}%)</td>
-            </tr>
-            <tr>
-                <td>Games (Won/Lost)</td>
-                <td>{{ total_wins }} ({{ win_percentage|round(2) }}%)</td>
-                <td>{{ total_losses }} ({{ loss_percentage|round(2) }}%)</td>
-            </tr>
-            <tr>
-                <td>Playoff Goals (Scored/Allowed)</td>
-                <td>{{ playoff_goals_scored }} ({{ playoff_goals_scored_percentage|round(2) }}%)</td>
-                <td>{{ playoff_goals_against }} ({{ playoff_goals_against_percentage|round(2) }}%)</td>
-            </tr>
-            <tr>
-                <td>Playoff Games (Won/Lost)</td>
-                <td>{{ playoff_wins }} ({{ playoff_win_percentage|round(2) }}%)</td>
-                <td>{{ playoff_losses }} ({{ playoff_loss_percentage|round(2) }}%)</td>
-            </tr>
-            <tr>
-                <td>Championship Games (Won/Lost)</td>
-                <td>{{ championship_wins }} ({{ championship_win_percentage|round(2) }}%)</td>
-                <td>{{ championship_losses }} ({{ championship_loss_percentage|round(2) }}%)</td>
-            </tr>
-        </tbody>
-    </table>
+<h1 class="mb-4 text-xl font-bold">Team "{{ team.name }}" (<a href="{{ url_for('game_card.game_card', game_id=first_game_id) }}">{{
+        first_game_date }}</a> - <a href="{{ url_for('game_card.game_card', game_id=last_game_id) }}">{{
+        last_game_date }}</a>)</h1>
 
-    {% if championship_wins_data %}
-    <table class="table table-striped">
-        <tbody>
-            <tr>
-                <td>Championships won:
-                    {% for win in championship_wins_data %}
-                    <a href="{{ url_for('game_card.game_card', game_id=win.game_id) }}">{{ win.year }} ({{ win.level
-                        }})</a>{% if not
-                    loop.last %}, {% endif %}
-                    {% endfor %}
-                </td>
-            </tr>
-        </tbody>
-    </table>
-    {% endif %}
+<div class="overflow-x-auto mb-6">
+<table class="table table-zebra table-sm">
+    <thead>
+        <tr>
+            <th>All Time Stats</th>
+            <th>Plus</th>
+            <th>Minus</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Goals (Scored/Allowed)</td>
+            <td>{{ goals_scored }} ({{ goals_scored_percentage|round(2) }}%)</td>
+            <td>{{ goals_against }} ({{ goals_against_percentage|round(2) }}%)</td>
+        </tr>
+        <tr>
+            <td>Games (Won/Lost)</td>
+            <td>{{ total_wins }} ({{ win_percentage|round(2) }}%)</td>
+            <td>{{ total_losses }} ({{ loss_percentage|round(2) }}%)</td>
+        </tr>
+        <tr>
+            <td>Playoff Goals (Scored/Allowed)</td>
+            <td>{{ playoff_goals_scored }} ({{ playoff_goals_scored_percentage|round(2) }}%)</td>
+            <td>{{ playoff_goals_against }} ({{ playoff_goals_against_percentage|round(2) }}%)</td>
+        </tr>
+        <tr>
+            <td>Playoff Games (Won/Lost)</td>
+            <td>{{ playoff_wins }} ({{ playoff_win_percentage|round(2) }}%)</td>
+            <td>{{ playoff_losses }} ({{ playoff_loss_percentage|round(2) }}%)</td>
+        </tr>
+        <tr>
+            <td>Championship Games (Won/Lost)</td>
+            <td>{{ championship_wins }} ({{ championship_win_percentage|round(2) }}%)</td>
+            <td>{{ championship_losses }} ({{ championship_loss_percentage|round(2) }}%)</td>
+        </tr>
+    </tbody>
+</table>
+</div>
 
-    <h4>Recent and Upcoming Games for {{ team.name }} in {{ last_division_name }}</h4>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Date Time</th>
-                <th>Team Names</th>
-                <th>Final Score</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for game in recent_and_upcoming_games_data %}
-            <tr>
-                <td>{{ game.date_time|safe }}</td>
-                <td>{{ game.team_names|safe }}</td>
-                <td>{{ game.final_score|safe }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+{% if championship_wins_data %}
+<div class="overflow-x-auto mb-6">
+<table class="table table-zebra table-sm">
+    <tbody>
+        <tr>
+            <td>Championships won:
+                {% for win in championship_wins_data %}
+                <a href="{{ url_for('game_card.game_card', game_id=win.game_id) }}">{{ win.year }} ({{ win.level }})</a>{% if not loop.last %}, {% endif %}
+                {% endfor %}
+            </td>
+        </tr>
+    </tbody>
+</table>
+</div>
+{% endif %}
 
-    <h2>Best Goals Diff</h2>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Opponent Team Name</th>
-                <th>Goal Differential</th>
-                <th>Goals Scored</th>
-                <th>Goals Allowed</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for stat in best_performance %}
-            <tr>
-                <td><a href="{{ url_for('team_stats.team_stats', team_id=stat.opponent_team_id) }}">{{
-                        stat.opponent_team_name }}</a></td>
-                <td>{{ '+' if stat.goal_diff > 0 else '' }}{{ stat.goal_diff }}</td>
-                <td>{{ stat.goals_scored }}</td>
-                <td>{{ stat.goals_against }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<h2 class="text-lg font-bold mt-6 mb-3 text-primary">Recent and Upcoming Games for {{ team.name }} in {{ last_division_name }}</h2>
+<div class="overflow-x-auto mb-6">
+<table class="table table-zebra table-sm">
+    <thead>
+        <tr>
+            <th>Date Time</th>
+            <th>Team Names</th>
+            <th>Final Score</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for game in recent_and_upcoming_games_data %}
+        <tr>
+            <td>{{ game.date_time|safe }}</td>
+            <td>{{ game.team_names|safe }}</td>
+            <td>{{ game.final_score|safe }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
 
-    <h2>Worst Goals Diff</h2>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Opponent Team Name</th>
-                <th>Goal Differential</th>
-                <th>Goals Scored</th>
-                <th>Goals Allowed</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for stat in worst_performance %}
-            <tr>
-                <td><a href="{{ url_for('team_stats.team_stats', team_id=stat.opponent_team_id) }}">{{
-                        stat.opponent_team_name }}</a></td>
-                <td>{{ '+' if stat.goal_diff > 0 else '' }}{{ stat.goal_diff }}</td>
-                <td>{{ stat.goals_scored }}</td>
-                <td>{{ stat.goals_against }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<h2 class="text-lg font-bold mt-6 mb-3 text-primary">Best Goals Diff</h2>
+<div class="overflow-x-auto mb-6">
+<table class="table table-zebra table-sm">
+    <thead>
+        <tr>
+            <th>Opponent Team Name</th>
+            <th>Goal Differential</th>
+            <th>Goals Scored</th>
+            <th>Goals Allowed</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for stat in best_performance %}
+        <tr>
+            <td><a href="{{ url_for('team_stats.team_stats', team_id=stat.opponent_team_id) }}">{{
+                    stat.opponent_team_name }}</a></td>
+            <td>{{ '+' if stat.goal_diff > 0 else '' }}{{ stat.goal_diff }}</td>
+            <td>{{ stat.goals_scored }}</td>
+            <td>{{ stat.goals_against }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
 
-    <h2>Long Timers</h2>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Player Name</th>
-                <th>Roles</th>
-                <th>Games Played</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for player in long_timers %}
-            <tr>
-                <td><a href="{{ url_for('human_stats.human_stats', human_id=player.human_id) }}">{{ player.human_name
-                        }}</a></td>
-                <td>{{ player.roles }}</td>
-                <td>{{ player.games_played }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<h2 class="text-lg font-bold mt-6 mb-3 text-primary">Worst Goals Diff</h2>
+<div class="overflow-x-auto mb-6">
+<table class="table table-zebra table-sm">
+    <thead>
+        <tr>
+            <th>Opponent Team Name</th>
+            <th>Goal Differential</th>
+            <th>Goals Scored</th>
+            <th>Goals Allowed</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for stat in worst_performance %}
+        <tr>
+            <td><a href="{{ url_for('team_stats.team_stats', team_id=stat.opponent_team_id) }}">{{
+                    stat.opponent_team_name }}</a></td>
+            <td>{{ '+' if stat.goal_diff > 0 else '' }}{{ stat.goal_diff }}</td>
+            <td>{{ stat.goals_scored }}</td>
+            <td>{{ stat.goals_against }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+
+<h2 class="text-lg font-bold mt-6 mb-3 text-primary">Long Timers</h2>
+<div class="overflow-x-auto mb-6">
+<table class="table table-zebra table-sm">
+    <thead>
+        <tr>
+            <th>Player Name</th>
+            <th>Roles</th>
+            <th>Games Played</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for player in long_timers %}
+        <tr>
+            <td><a href="{{ url_for('human_stats.human_stats', human_id=player.human_id) }}">{{ player.human_name }}</a></td>
+            <td>{{ player.roles }}</td>
+            <td>{{ player.games_played }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 </div>
 {% endblock %}

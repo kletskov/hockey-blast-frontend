@@ -3,32 +3,12 @@
 {% block title %}{{ player_name }} Stats{% endblock %}
 
 {% block content %}
-<style>
-    .table-responsive {
-        overflow-x: auto;
-    }
-
-    .table th,
-    .table td {
-        white-space: normal;
-        padding: 2px;
-        /* Slightly reduced padding */
-        font-size: 0.9rem;
-        /* Slightly reduced font size */
-    }
-
-    .table {
-        table-layout: auto;
-        width: 100%;
-    }
-</style>
-
 <h1 class="mb-4">{{ display_name|safe }}</h1>
 
 {% if roles_data %}
-<div class="table-responsive">
-    <h4>Roles</h4>
-    <table class="table table-striped">
+<div class="overflow-x-auto mb-6">
+    <h2 class="text-lg font-bold mt-6 mb-3 text-primary">Roles</h2>
+    <table class="table table-zebra table-sm">
         <thead>
             <tr>
                 <th>Role</th>
@@ -53,8 +33,9 @@
 </div>
 {% endif %}
 
-<h4>Recent Games Played</h4>
-<table class="table table-striped">
+<h2 class="text-lg font-bold mt-6 mb-3 text-primary">Recent Games Played</h2>
+<div class="overflow-x-auto mb-6">
+<table class="table table-zebra table-sm">
     <thead>
         <tr>
             <th>Date Time</th>
@@ -76,10 +57,12 @@
         {% endfor %}
     </tbody>
 </table>
+</div>
 
 {% if games_against_skaters %}
-<h4>Games Against Skater</h4>
-<table class="table table-striped">
+<h2 class="text-lg font-bold mt-6 mb-3 text-primary">Games Against Skater</h2>
+<div class="overflow-x-auto mb-6">
+<table class="table table-zebra table-sm">
     <thead>
         <tr>
             <th>Skater Name</th>
@@ -97,10 +80,12 @@
         {% endfor %}
     </tbody>
 </table>
+</div>
 {% endif %}
 
-<h4>Games Per Teammate</h4>
-<table class="table table-striped">
+<h2 class="text-lg font-bold mt-6 mb-3 text-primary">Games Per Teammate</h2>
+<div class="overflow-x-auto mb-6">
+<table class="table table-zebra table-sm">
     <thead>
         <tr>
             <th>Teammate Name</th>
@@ -117,9 +102,11 @@
         {% endfor %}
     </tbody>
 </table>
+</div>
 
-<h4>Games Per Team</h4>
-<table class="table table-striped">
+<h2 class="text-lg font-bold mt-6 mb-3 text-primary">Games Per Team</h2>
+<div class="overflow-x-auto mb-6">
+<table class="table table-zebra table-sm">
     <thead>
         <tr>
             <th>Team Name</th>
@@ -135,6 +122,7 @@
         {% endfor %}
     </tbody>
 </table>
+</div>
 
 <div id="plot-div">
     {{ plot_div|safe }}
