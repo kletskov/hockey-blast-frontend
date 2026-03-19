@@ -347,7 +347,7 @@ def _create_app(db_name):
         client_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
 
         # Exempt /ai-search, /ai-chat and /ai-chat/message from bot detection (testing endpoints)
-        if request.path not in ["/ai-search", "/ai-chat", "/ai-chat/message"] and is_obviously_junk_user_agent(user_agent):
+        if request.path not in ["/ai-search", "/ai-chat", "/ai-chat/message", "/api/chat", "/api/chat/feedback"] and is_obviously_junk_user_agent(user_agent):
             logger.warning(f"JUNK USER-AGENT: {user_agent} from {client_ip}")
             g.skip_logging = True
             return "", 204  # Silently drop or use 403 to block
