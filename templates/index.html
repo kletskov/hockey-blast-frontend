@@ -9,19 +9,17 @@
         <div class="card bg-base-200 shadow-md mb-6 border border-base-content/5">
             <div class="card-body">
                 <form method="post" class="mb-0">
-                    <div class="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
-                        <div class="flex gap-2 w-full sm:w-auto">
-                            <input type="text" class="input input-bordered input-sm bg-base-100 flex-1 sm:w-28" id="first_name" name="first_name"
-                                placeholder="First" oninput="clearOtherFields('first_name')">
-                            <input type="text" class="input input-bordered input-sm bg-base-100 flex-1 sm:w-28" id="last_name" name="last_name" placeholder="Last"
+                    <div class="flex flex-col items-stretch gap-2">
+                        <div class="flex gap-2">
+                            <input type="text" class="input input-bordered input-sm bg-base-100 flex-1" id="first_name" name="first_name"
+                                placeholder="First name" oninput="clearOtherFields('first_name')">
+                            <input type="text" class="input input-bordered input-sm bg-base-100 flex-1" id="last_name" name="last_name" placeholder="Last name"
                                 oninput="clearOtherFields('last_name')">
                         </div>
-                        <div class="font-bold text-base-content/50 text-sm">OR</div>
-                        <div class="flex gap-2 w-full sm:w-auto">
-                            <input type="text" class="input input-bordered input-sm bg-base-100 flex-1 sm:w-36" id="team_name" name="team_name" placeholder="Team"
-                                oninput="clearOtherFields('team_name')">
-                            <button type="submit" class="btn btn-primary btn-sm">Search</button>
-                        </div>
+                        <div class="text-center font-bold text-base-content/50 text-xs">— OR —</div>
+                        <input type="text" class="input input-bordered input-sm bg-base-100 w-full" id="team_name" name="team_name" placeholder="Team name"
+                            oninput="clearOtherFields('team_name')">
+                        <button type="submit" class="btn btn-primary btn-sm w-full">Search</button>
                     </div>
                 </form>
             </div>
@@ -96,9 +94,9 @@
                     <thead>
                         <tr>
                             <th>Name</th>
-                            <th>Org</th>
-                            <th>Point Streak</th>
-                            <th>Avg Points</th>
+                            <th class="whitespace-nowrap">Org</th>
+                            <th class="whitespace-nowrap">Streak</th>
+                            <th class="whitespace-nowrap">Avg Pts</th>
                         </tr>
                     </thead>
                     <tbody>
