@@ -245,7 +245,9 @@
         // Handle redirect callback
         if (window.location.search.includes('code=') || window.location.search.includes('error=')) {
           await auth0Client.handleRedirectCallback();
-          window.history.replaceState({}, document.title, window.location.pathname);
+          // Redirect to home after successful callback
+          window.location.replace('/');
+          return false;
         }
 
         var isAuth = await auth0Client.isAuthenticated();
