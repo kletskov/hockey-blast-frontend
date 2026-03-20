@@ -99,7 +99,16 @@ def get_request_logs_data(interval, top_n=20):
     else:
         return None, None, None, None, None, None, None, None, None
 
-    logs = db.session.query(RequestLog).filter(RequestLog.timestamp >= start_time).all()
+    # Cap rows to prevent OOM/timeout on large intervals — sample evenly if over limit
+    MAX_ROWS = 50_000
+    total = db.session.query(RequestLog).filter(RequestLog.timestamp >= start_time).count()
+    q = db.session.query(RequestLog).filter(RequestLog.timestamp >= start_time).order_by(RequestLog.timestamp)
+    if total > MAX_ROWS:
+        # Take every Nth row to get a representative sample
+        step = max(1, total // MAX_ROWS)
+        logs = [row for i, row in enumerate(q.yield_per(1000)) if i % step == 0]
+    else:
+        logs = q.all()
     if not logs:
         return (
             pd.Series([], dtype="int64"),
