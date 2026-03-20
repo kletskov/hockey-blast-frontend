@@ -272,9 +272,9 @@ def request_logs():
         title=f"Request Logs ({interval.capitalize()})",
         xaxis=dict(title="Time"),
         yaxis=dict(title="Count"),
-        plot_bgcolor="#f9f9f9",
-        paper_bgcolor="#ffffff",
-        font=dict(color="#333"),
+        plot_bgcolor="#1a2332",
+        paper_bgcolor="#1e293b",
+        font=dict(color="#94a3b8"),
     )
 
     plot_fig = go.Figure(data=plot_data, layout=plot_layout)
@@ -295,9 +295,9 @@ def request_logs():
         title=f"Unique IP Addresses ({interval.capitalize()})",
         xaxis=dict(title="Time"),
         yaxis=dict(title="Count"),
-        plot_bgcolor="#f9f9f9",
-        paper_bgcolor="#ffffff",
-        font=dict(color="#333"),
+        plot_bgcolor="#1a2332",
+        paper_bgcolor="#1e293b",
+        font=dict(color="#94a3b8"),
     )
 
     unique_ip_plot_fig = go.Figure(
@@ -331,9 +331,9 @@ def request_logs():
         title=f"Hits per Session ({interval.capitalize()})",
         xaxis=dict(title="Time"),
         yaxis=dict(title="Hits"),
-        plot_bgcolor="#f9f9f9",
-        paper_bgcolor="#ffffff",
-        font=dict(color="#333"),
+        plot_bgcolor="#1a2332",
+        paper_bgcolor="#1e293b",
+        font=dict(color="#94a3b8"),
     )
 
     avg_hits_plot_fig = go.Figure(data=avg_hits_plot_data, layout=avg_hits_plot_layout)
@@ -405,9 +405,9 @@ def request_logs():
             title=f"Median Response Times by Endpoint ({interval.capitalize()})",
             xaxis=dict(title="Time"),
             yaxis=dict(title="Response Time (ms)", range=[0, y_axis_max]),
-            plot_bgcolor="#f9f9f9",
-            paper_bgcolor="#ffffff",
-            font=dict(color="#333"),
+            plot_bgcolor="#1a2332",
+            paper_bgcolor="#1e293b",
+            font=dict(color="#94a3b8"),
         )
 
         median_response_time_plot_fig = go.Figure(
@@ -451,9 +451,9 @@ def request_logs():
             title=f"P90 Response Times by Endpoint ({interval.capitalize()})",
             xaxis=dict(title="Time"),
             yaxis=dict(title="Response Time (ms)", range=[0, y_axis_max_p90]),
-            plot_bgcolor="#f9f9f9",
-            paper_bgcolor="#ffffff",
-            font=dict(color="#333"),
+            plot_bgcolor="#1a2332",
+            paper_bgcolor="#1e293b",
+            font=dict(color="#94a3b8"),
         )
 
         p90_response_time_plot_fig = go.Figure(
@@ -487,9 +487,9 @@ def request_logs():
             title=f"Slowest Endpoints - Median Response Time ({interval.capitalize()})",
             xaxis=dict(title="Endpoint", tickangle=45),
             yaxis=dict(title="Response Time (ms)"),
-            plot_bgcolor="#f9f9f9",
-            paper_bgcolor="#ffffff",
-            font=dict(color="#333"),
+            plot_bgcolor="#1a2332",
+            paper_bgcolor="#1e293b",
+            font=dict(color="#94a3b8"),
             margin=dict(b=150),  # Extra margin for rotated labels
         )
 
