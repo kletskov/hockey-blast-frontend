@@ -278,7 +278,7 @@ def request_logs():
     )
 
     plot_fig = go.Figure(data=plot_data, layout=plot_layout)
-    plot_div = pio.to_html(plot_fig, full_html=False)
+    plot_div = pio.to_html(plot_fig, full_html=False, include_plotlyjs='cdn')
 
     # Create a new plot for unique IP counts
     unique_ip_plot_data = [
