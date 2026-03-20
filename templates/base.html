@@ -198,6 +198,8 @@
       @media (max-width: 640px) {
         #blast-chat-panel { position: fixed; width: calc(100vw - 16px); left: 8px; right: 8px; bottom: 90px; }
         #blast-chat-panel.maximized { top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100dvh; border-radius: 0; }
+        /* Prevent iOS Safari auto-zoom on textarea focus (requires font-size >= 16px) */
+        #blast-chat-input { font-size: 16px; }
       }
     </style>
 
