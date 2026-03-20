@@ -27,7 +27,7 @@
     <div class="card bg-base-100 shadow">
       <div class="card-body p-3">
         <h2 class="card-title text-sm font-semibold opacity-70">Requests Over Time</h2>
-        <div class="w-full overflow-x-auto">{{ plot_div|safe }}</div>
+        <div style="width:100%;min-height:350px;">{{ plot_div|safe }}</div>
       </div>
     </div>
     {% endif %}
@@ -37,7 +37,7 @@
       <div class="card bg-base-100 shadow">
         <div class="card-body p-3">
           <h2 class="card-title text-sm font-semibold opacity-70">Unique IPs</h2>
-          <div class="w-full overflow-x-auto">{{ unique_ip_plot_div|safe }}</div>
+          <div style="width:100%;min-height:350px;">{{ unique_ip_plot_div|safe }}</div>
         </div>
       </div>
       {% endif %}
@@ -46,7 +46,7 @@
       <div class="card bg-base-100 shadow">
         <div class="card-body p-3">
           <h2 class="card-title text-sm font-semibold opacity-70">Avg Hits per IP</h2>
-          <div class="w-full overflow-x-auto">{{ avg_hits_plot_div|safe }}</div>
+          <div style="width:100%;min-height:350px;">{{ avg_hits_plot_div|safe }}</div>
         </div>
       </div>
       {% endif %}
@@ -57,7 +57,7 @@
       <div class="card bg-base-100 shadow">
         <div class="card-body p-3">
           <h2 class="card-title text-sm font-semibold opacity-70">Median Response Time</h2>
-          <div class="w-full overflow-x-auto">{{ median_response_time_plot_div|safe }}</div>
+          <div style="width:100%;min-height:350px;">{{ median_response_time_plot_div|safe }}</div>
         </div>
       </div>
       {% endif %}
@@ -66,7 +66,7 @@
       <div class="card bg-base-100 shadow">
         <div class="card-body p-3">
           <h2 class="card-title text-sm font-semibold opacity-70">P90 Response Time</h2>
-          <div class="w-full overflow-x-auto">{{ p90_response_time_plot_div|safe }}</div>
+          <div style="width:100%;min-height:350px;">{{ p90_response_time_plot_div|safe }}</div>
         </div>
       </div>
       {% endif %}
@@ -76,7 +76,7 @@
     <div class="card bg-base-100 shadow">
       <div class="card-body p-3">
         <h2 class="card-title text-sm font-semibold opacity-70">Response Time by Endpoint</h2>
-        <div class="w-full overflow-x-auto">{{ endpoint_response_time_plot_div|safe }}</div>
+        <div style="width:100%;min-height:350px;">{{ endpoint_response_time_plot_div|safe }}</div>
       </div>
     </div>
     {% endif %}
