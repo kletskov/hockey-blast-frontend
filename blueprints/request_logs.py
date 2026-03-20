@@ -269,8 +269,7 @@ def request_logs():
         )
 
     plot_layout = go.Layout(
-        height=350, autosize=True, margin=dict(l=50, r=20, t=50, b=80),
-        title=f"Request Logs ({interval.capitalize()})",
+        height=350, margin=dict(l=50, r=20, t=50, b=80),
         xaxis=dict(title="Time"),
         yaxis=dict(title="Count"),
         plot_bgcolor="#1a2332",
@@ -293,8 +292,7 @@ def request_logs():
     ]
 
     unique_ip_plot_layout = go.Layout(
-        height=350, autosize=True, margin=dict(l=50, r=20, t=50, b=80),
-        title=f"Unique IP Addresses ({interval.capitalize()})",
+        height=350, margin=dict(l=50, r=20, t=50, b=80),
         xaxis=dict(title="Time"),
         yaxis=dict(title="Count"),
         plot_bgcolor="#1a2332",
@@ -330,8 +328,7 @@ def request_logs():
     ]
 
     avg_hits_plot_layout = go.Layout(
-        height=350, autosize=True, margin=dict(l=50, r=20, t=50, b=80),
-        title=f"Hits per Session ({interval.capitalize()})",
+        height=350, margin=dict(l=50, r=20, t=50, b=80),
         xaxis=dict(title="Time"),
         yaxis=dict(title="Hits"),
         plot_bgcolor="#1a2332",
@@ -405,8 +402,7 @@ def request_logs():
         y_axis_max = max_median_value * 1.1
 
         median_plot_layout = go.Layout(
-        height=350, autosize=True, margin=dict(l=50, r=20, t=50, b=80),
-            title=f"Median Response Times by Endpoint ({interval.capitalize()})",
+        height=350, margin=dict(l=50, r=20, t=50, b=80),
             xaxis=dict(title="Time"),
             yaxis=dict(title="Response Time (ms)", range=[0, y_axis_max]),
             plot_bgcolor="#1a2332",
@@ -452,8 +448,7 @@ def request_logs():
         y_axis_max_p90 = max_p90_value * 1.1
 
         p90_plot_layout = go.Layout(
-        height=350, autosize=True, margin=dict(l=50, r=20, t=50, b=80),
-            title=f"P90 Response Times by Endpoint ({interval.capitalize()})",
+        height=350, margin=dict(l=50, r=20, t=50, b=80),
             xaxis=dict(title="Time"),
             yaxis=dict(title="Response Time (ms)", range=[0, y_axis_max_p90]),
             plot_bgcolor="#1a2332",
@@ -489,8 +484,7 @@ def request_logs():
         ]
 
         endpoint_response_time_plot_layout = go.Layout(
-        height=350, autosize=True, margin=dict(l=50, r=20, t=50, b=80),
-            title=f"Slowest Endpoints - Median Response Time ({interval.capitalize()})",
+        height=350, margin=dict(l=50, r=20, t=50, b=80),
             xaxis=dict(title="Endpoint", tickangle=45),
             yaxis=dict(title="Response Time (ms)"),
             plot_bgcolor="#1a2332",
