@@ -765,7 +765,7 @@ def human_stats():
         font=dict(color="white"),
     )
     plot_fig = go.Figure(data=plot_data, layout=plot_layout)
-    plot_div = pio.to_html(plot_fig, full_html=False)
+    plot_div = pio.to_html(plot_fig, full_html=False, include_plotlyjs="cdn")
 
     # Extract recent games data
     recent_games_data = []

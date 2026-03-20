@@ -403,6 +403,12 @@ def _create_app(db_name):
         try:
             top_n = request.args.get("top_n", default=10, type=int)
 
+            # First-visit redirect to Picks — only if no query params and no visited cookie
+            if "top_n" not in request.args and not request.args and not request.cookies.get("hb_visited"):
+                resp = redirect("https://sportsbook.hockey-blast.com", code=302)
+                resp.set_cookie("hb_visited", "1", max_age=60*60*24*365, samesite="Lax")
+                return resp
+
             # Redirect to include top_n in the URL if not present
             if "top_n" not in request.args:
                 return redirect(url_for("index", top_n=top_n))
