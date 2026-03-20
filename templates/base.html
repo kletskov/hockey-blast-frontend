@@ -234,7 +234,8 @@
           authorizationParams: {
             redirect_uri: window.location.origin + '/auth/callback'
           },
-          cacheLocation: 'localstorage'
+          cacheLocation: 'localstorage',
+          useRefreshTokens: true,
         });
 
         // Handle redirect callback
@@ -244,9 +245,16 @@
         }
 
         var isAuth = await auth0Client.isAuthenticated();
+        if (!isAuth) {
+          // Try silent auth — if user is logged in on another site (same Auth0 tenant), auto-login
+          try {
+            token = await auth0Client.getTokenSilently();
+            isAuth = true;
+          } catch(e) { /* no active session */ }
+        }
         if (isAuth) {
           currentUser = await auth0Client.getUser();
-          token = await auth0Client.getTokenSilently();
+          if (!token) token = await auth0Client.getTokenSilently();
         }
         return isAuth;
       }
