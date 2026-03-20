@@ -282,9 +282,12 @@
       async function getToken() {
         if (!auth0Client) return null;
         try {
-          token = await auth0Client.getTokenSilently();
-          return token;
-        } catch(e) { return null; }
+          // Sportsbook API validates ID tokens — use __raw ID token (same as sportsbook Vue app)
+          const claims = await auth0Client.getIdTokenClaims();
+          return claims?.__raw || null;
+        } catch(e) {
+          return null;
+        }
       }
 
       function getUser() { return currentUser; }
