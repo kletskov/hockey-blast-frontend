@@ -63,6 +63,7 @@ from blueprints.goalie_performance import goalie_performance_bp
 from blueprints.hall_of_fame import hall_of_fame_bp
 from blueprints.human_stats import human_stats_bp
 from blueprints.penalties import penalties_bp
+from blueprints.playoffs import playoffs_bp
 from blueprints.players_per_season import players_per_season_bp
 # from blueprints.rest_api import rest_api_bp
 from blueprints.referee_performance import referee_performance_bp
@@ -309,6 +310,7 @@ def _create_app(db_name):
     app.register_blueprint(about_bp)
     app.register_blueprint(ai_search_bp)
     app.register_blueprint(penalties_bp, url_prefix="/penalties")
+    app.register_blueprint(playoffs_bp)
     app.register_blueprint(skater_performance_bp, url_prefix="/skater_performance")
     app.register_blueprint(goalie_performance_bp, url_prefix="/goalie_performance")
     app.register_blueprint(request_logs_bp, url_prefix="/request_logs")
