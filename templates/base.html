@@ -213,6 +213,7 @@
             <div class="subtitle">Ask anything about players, teams & games</div>
           </div>
           <button id="blast-chat-maximize" title="Maximize">⛶</button>
+          <button id="blast-chat-close" title="Close" style="background:none;border:none;color:#fff;cursor:pointer;font-size:20px;opacity:0.8;padding:4px;line-height:1;">✕</button>
         </div>
         <div id="blast-chat-messages">
           <div class="bc-msg-ai">👋 Ask me anything about Hockey B.L.A.S.T — players, teams, games, stats!</div>
@@ -373,6 +374,7 @@
       var input = document.getElementById('blast-chat-input');
       var sendBtn = document.getElementById('blast-chat-send');
       var maxBtn = document.getElementById('blast-chat-maximize');
+      var closeBtn = document.getElementById('blast-chat-close');
       var open = false;
       var maximized = false;
       var history = [];
@@ -432,6 +434,12 @@
         maximized = !maximized;
         panel.classList.toggle('maximized', maximized);
         maxBtn.textContent = maximized ? '⊙' : '⛶';
+      });
+
+      closeBtn.addEventListener('click', function() {
+        open = false;
+        panel.classList.remove('open');
+        fab.textContent = '🏒';
       });
 
       function renderMarkdown(text) {
