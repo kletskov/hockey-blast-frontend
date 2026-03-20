@@ -215,6 +215,11 @@
         <div id="blast-chat-messages">
           <div class="bc-msg-ai">👋 Ask me anything about Hockey B.L.A.S.T — players, teams, games, stats!</div>
         </div>
+        <!-- Sign-in prompt (shown when not logged in) -->
+        <div id="blast-chat-signin-prompt" style="display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:12px;border-top:1px solid #333;">
+          <p style="color:#aaa;font-size:13px;text-align:center;">Sign in to use AI Blast 🏒</p>
+          <button onclick="BlastAuth.login()" style="background:#3b82f6;color:#fff;border:none;border-radius:6px;padding:8px 20px;font-size:13px;font-weight:600;cursor:pointer;">Sign In</button>
+        </div>
         <div id="blast-chat-input-row">
           <textarea id="blast-chat-input" rows="1" placeholder="Ask a hockey question..."></textarea>
           <button id="blast-chat-send">Send</button>
@@ -325,6 +330,24 @@
 
     BlastAuth.init().then(function(isAuth) {
       updateAuthUI(isAuth);
+      updateChatAuth(isAuth);
+    });
+
+    function updateChatAuth(isAuth) {
+      var prompt = document.getElementById('blast-chat-signin-prompt');
+      var inputRow = document.getElementById('blast-chat-input-row');
+      if (prompt) prompt.style.display = isAuth ? 'none' : 'flex';
+      if (inputRow) inputRow.style.display = isAuth ? 'flex' : 'none';
+    }
+
+    // Re-check on tab focus
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden) {
+        BlastAuth.isAuthenticated().then(function(isAuth) {
+          updateAuthUI(isAuth);
+          updateChatAuth(isAuth);
+        }).catch(function() { updateAuthUI(false); updateChatAuth(false); });
+      }
     });
 
     // Re-check auth when user switches back to this tab (catches logout from other site)
@@ -349,12 +372,42 @@
       var maximized = false;
       var history = [];
       var loading = false;
+      var historyLoaded = false;
+
+      function loadChatHistory() {
+        if (historyLoaded) return;
+        historyLoaded = true;
+        var token = BlastAuth.getToken ? null : null;
+        BlastAuth.getToken().then(function(tok) {
+          if (!tok) return;
+          fetch('/api/chat/history', {
+            headers: { 'Authorization': 'Bearer ' + tok }
+          }).then(function(r) { return r.json(); }).then(function(data) {
+            var msgs = data.messages || [];
+            msgs.forEach(function(m) {
+              if (m.query) appendMessage('user', m.query);
+              if (m.answer) appendMessage('bot', m.answer, m.id);
+            });
+            if (messages.scrollTop !== undefined) messages.scrollTop = messages.scrollHeight;
+          }).catch(function() {});
+        }).catch(function() {});
+      }
 
       fab.addEventListener('click', function() {
+        if (!BlastAuth.isAuthenticated || !BlastAuth.isAuthenticated()) {
+          // Show panel with sign-in prompt
+          open = true;
+          panel.classList.add('open');
+          fab.textContent = '✕';
+          return;
+        }
         open = !open;
         panel.classList.toggle('open', open);
         fab.textContent = open ? '✕' : '🏒';
-        if (open) input.focus();
+        if (open) {
+          loadChatHistory();
+          input.focus();
+        }
       });
 
       maxBtn.addEventListener('click', function() {
