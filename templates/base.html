@@ -171,6 +171,7 @@
       #blast-chat-header .subtitle { font-size: 11px; opacity: 0.75; }
       #blast-chat-maximize { background: none; border: none; color: #fff; cursor: pointer; font-size: 16px; opacity: 0.8; padding: 4px; }
       #blast-chat-maximize:hover { opacity: 1; }
+      @media (max-width: 640px) { #blast-chat-maximize { display: none; } }
       #blast-chat-messages { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
       .bc-msg-user { align-self: flex-end; background: #1d8a7e; color: #fff; padding: 8px 12px; border-radius: 12px 12px 2px 12px; font-size: 13px; max-width: 85%; }
       .bc-msg-ai { align-self: flex-start; background: #252525; border: 1px solid #333; color: #eee; padding: 8px 12px; border-radius: 12px 12px 12px 2px; font-size: 13px; max-width: 90%; line-height: 1.55; }
