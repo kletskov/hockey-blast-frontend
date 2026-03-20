@@ -381,13 +381,19 @@
         if (historyLoaded) return;
         historyLoaded = true;
         BlastAuth.getToken().then(function(tok) {
-          if (!tok) return;
+          if (!tok) {
+            // Not logged in — leave welcome message, don't clear
+            return;
+          }
           // History lives on the sportsbook API
           fetch('https://sportsbook.hockey-blast.com/api/chat/history', {
             headers: { 'Authorization': 'Bearer ' + tok }
-          }).then(function(r) { return r.json(); }).then(function(data) {
+          }).then(function(r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+          }).then(function(data) {
             var msgs = data.messages || [];
-            // Clear welcome message first
+            // Only clear welcome message once we have a successful response
             messages.innerHTML = '';
             msgs.forEach(function(m) {
               if (m.query) appendMessage('user', m.query);
@@ -395,7 +401,11 @@
             });
             if (!msgs.length) appendMessage('bot', '👋 Ask me anything about Hockey B.L.A.S.T — players, teams, games, stats!');
             messages.scrollTop = messages.scrollHeight;
-          }).catch(function() {});
+          }).catch(function(err) {
+            // Fetch failed — leave welcome message intact, allow retry
+            console.warn('[chat] History load failed:', err);
+            historyLoaded = false;
+          });
         }).catch(function() {});
       }
 
