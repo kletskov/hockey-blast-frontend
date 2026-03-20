@@ -110,22 +110,27 @@
         <!-- Logo row -->
         <div style="display:flex;align-items:center;padding:8px 16px;border-bottom:1px solid #156b62;">
             <div style="display:flex;align-items:center;gap:8px;">
-                <a href="/" style="color:#ffffff;font-size:1.1rem;font-weight:700;text-decoration:none;letter-spacing:0.02em;">
-                    🏒 <span style="color:#E57200;">HB</span> Stats
+                <!-- Active site: smaller, muted -->
+                <a href="/" style="color:#ffffffaa;font-size:0.9rem;font-weight:700;text-decoration:none;">
+                    🏒 <span style="color:#E57200cc;">HB</span><span style="color:#ffffffaa;"> Stats</span>
                 </a>
-                <span style="color:#ffffff44;font-size:1rem;">|</span>
+                <span style="color:#ffffff33;font-size:0.9rem;">|</span>
+                <!-- Link to other site: full size -->
                 <a href="https://sportsbook.hockey-blast.com" style="color:#ffffff;font-size:1.1rem;font-weight:700;text-decoration:none;letter-spacing:0.02em;">
-                    🏒 <span style="color:#3b82f6;">HB</span> Picks
+                    🏒 <span style="color:#3b82f6;">HB</span><span style="color:#ffffff;"> Picks</span>
                 </a>
             </div>
             <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
                 <!-- Logged out -->
                 <button id="blast-signin-btn" style="background:#3b82f6;color:#fff;border:none;border-radius:6px;padding:4px 14px;font-size:13px;cursor:pointer;font-weight:600;">Sign In</button>
-                <!-- Logged in -->
-                <div id="blast-user-menu" style="display:none;align-items:center;gap:8px;">
-                  <div id="blast-avatar" style="width:32px;height:32px;border-radius:50%;background:#E57200;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;border:2px solid rgba(255,255,255,0.3);">?</div>
-                  <span id="blast-auth-name" style="font-size:13px;color:#ffffffcc;font-weight:500;"></span>
-                  <button id="blast-signout-btn" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.25);border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer;font-weight:600;">Sign Out</button>
+                <!-- Logged in: avatar with dropdown -->
+                <div id="blast-user-menu" style="display:none;align-items:center;gap:8px;position:relative;">
+                  <div id="blast-avatar" tabindex="0" style="width:36px;height:36px;border-radius:50%;background:#E57200;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;border:2px solid #3b82f6;cursor:pointer;overflow:hidden;">?</div>
+                  <!-- Dropdown -->
+                  <div id="blast-dropdown" style="display:none;position:absolute;right:0;top:44px;background:#1d8a7e;border:1px solid #156b62;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.3);min-width:160px;z-index:200;">
+                    <div id="blast-dropdown-name" style="padding:10px 14px;font-size:13px;color:#ffffffaa;border-bottom:1px solid #156b62;"></div>
+                    <button id="blast-signout-btn" style="width:100%;text-align:left;padding:10px 14px;background:none;border:none;color:#ff6b6b;font-size:13px;font-weight:600;cursor:pointer;">Sign Out</button>
+                  </div>
                 </div>
             </div>
         </div>
@@ -285,19 +290,28 @@
       var signinBtn = document.getElementById('blast-signin-btn');
       var signoutBtn = document.getElementById('blast-signout-btn');
       var userMenu = document.getElementById('blast-user-menu');
-      var authName = document.getElementById('blast-auth-name');
       var avatar = document.getElementById('blast-avatar');
+      var dropdown = document.getElementById('blast-dropdown');
+      var dropdownName = document.getElementById('blast-dropdown-name');
       if (isAuth) {
         var user = BlastAuth.getUser();
         if (signinBtn) signinBtn.style.display = 'none';
         if (userMenu) userMenu.style.display = 'flex';
-        if (authName && user) authName.textContent = user.name || user.email || '';
+        if (dropdownName && user) dropdownName.textContent = user.name || user.email || '';
         if (avatar && user) {
           if (user.picture) {
             avatar.innerHTML = '<img src="' + user.picture + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
           } else {
             avatar.textContent = (user.name || user.email || '?')[0].toUpperCase();
           }
+        }
+        // Toggle dropdown on avatar click
+        if (avatar && dropdown) {
+          avatar.onclick = function(e) {
+            e.stopPropagation();
+            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+          };
+          document.addEventListener('click', function() { if (dropdown) dropdown.style.display = 'none'; });
         }
         if (signoutBtn) signoutBtn.onclick = function() { BlastAuth.logout(); };
       } else {
