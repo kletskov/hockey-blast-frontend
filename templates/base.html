@@ -275,13 +275,13 @@
       }
 
       function getUser() { return currentUser; }
-      function isAuthenticated() { return !!currentUser; }
+      async function isAuthenticated() { return auth0Client ? await auth0Client.isAuthenticated() : false; }
 
       return { init, login, logout, getToken, getUser, isAuthenticated };
     })();
 
     // Initialize on page load
-    BlastAuth.init().then(function(isAuth) {
+    function updateAuthUI(isAuth) {
       var signinBtn = document.getElementById('blast-signin-btn');
       var signoutBtn = document.getElementById('blast-signout-btn');
       var userMenu = document.getElementById('blast-user-menu');
@@ -303,6 +303,19 @@
       } else {
         if (signinBtn) { signinBtn.style.display = 'flex'; signinBtn.onclick = function() { BlastAuth.login(); }; }
         if (userMenu) userMenu.style.display = 'none';
+      }
+    }
+
+    BlastAuth.init().then(function(isAuth) {
+      updateAuthUI(isAuth);
+    });
+
+    // Re-check auth when user switches back to this tab (catches logout from other site)
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden) {
+        BlastAuth.isAuthenticated().then(function(isAuth) {
+          updateAuthUI(isAuth);
+        }).catch(function() { updateAuthUI(false); });
       }
     });
     </script>
