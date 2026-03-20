@@ -484,13 +484,12 @@ def request_logs():
         ]
 
         endpoint_response_time_plot_layout = go.Layout(
-        height=350, margin=dict(l=50, r=20, t=50, b=80),
+            height=350, margin=dict(l=50, r=20, t=50, b=150),
             xaxis=dict(title="Endpoint", tickangle=45),
             yaxis=dict(title="Response Time (ms)"),
             plot_bgcolor="#1a2332",
             paper_bgcolor="#1e293b",
             font=dict(color="#94a3b8"),
-            margin=dict(b=150),  # Extra margin for rotated labels
         )
 
         endpoint_response_time_plot_fig = go.Figure(
