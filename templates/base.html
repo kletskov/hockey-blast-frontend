@@ -119,8 +119,14 @@
                 </a>
             </div>
             <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
-                <span id="blast-auth-name" style="font-size:12px;color:#ffffffaa;"></span>
-                <button id="blast-auth-btn" style="background:#E57200;color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:13px;cursor:pointer;font-weight:600;">Sign In</button>
+                <!-- Logged out -->
+                <button id="blast-signin-btn" style="background:#3b82f6;color:#fff;border:none;border-radius:6px;padding:4px 14px;font-size:13px;cursor:pointer;font-weight:600;">Sign In</button>
+                <!-- Logged in -->
+                <div id="blast-user-menu" style="display:none;align-items:center;gap:8px;">
+                  <div id="blast-avatar" style="width:32px;height:32px;border-radius:50%;background:#E57200;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;border:2px solid rgba(255,255,255,0.3);">?</div>
+                  <span id="blast-auth-name" style="font-size:13px;color:#ffffffcc;font-weight:500;"></span>
+                  <button id="blast-signout-btn" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.25);border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer;font-weight:600;">Sign Out</button>
+                </div>
             </div>
         </div>
         <!-- Scrollable nav strip — one line, swipe on mobile, no dropdown -->
@@ -269,18 +275,27 @@
 
     // Initialize on page load
     BlastAuth.init().then(function(isAuth) {
-      var authBtn = document.getElementById('blast-auth-btn');
+      var signinBtn = document.getElementById('blast-signin-btn');
+      var signoutBtn = document.getElementById('blast-signout-btn');
+      var userMenu = document.getElementById('blast-user-menu');
       var authName = document.getElementById('blast-auth-name');
-      if (authBtn) {
-        if (isAuth) {
-          var user = BlastAuth.getUser();
-          authBtn.textContent = 'Sign Out';
-          authBtn.onclick = function() { BlastAuth.logout(); };
-          if (authName && user) authName.textContent = user.name || user.email || '';
-        } else {
-          authBtn.textContent = 'Sign In';
-          authBtn.onclick = function() { BlastAuth.login(); };
+      var avatar = document.getElementById('blast-avatar');
+      if (isAuth) {
+        var user = BlastAuth.getUser();
+        if (signinBtn) signinBtn.style.display = 'none';
+        if (userMenu) userMenu.style.display = 'flex';
+        if (authName && user) authName.textContent = user.name || user.email || '';
+        if (avatar && user) {
+          if (user.picture) {
+            avatar.innerHTML = '<img src="' + user.picture + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
+          } else {
+            avatar.textContent = (user.name || user.email || '?')[0].toUpperCase();
+          }
         }
+        if (signoutBtn) signoutBtn.onclick = function() { BlastAuth.logout(); };
+      } else {
+        if (signinBtn) { signinBtn.style.display = 'flex'; signinBtn.onclick = function() { BlastAuth.login(); }; }
+        if (userMenu) userMenu.style.display = 'none';
       }
     });
     </script>
