@@ -220,7 +220,7 @@
 
       var AUTH0_DOMAIN = 'dev-tqe4zxubkkg82828.us.auth0.com';
       var AUTH0_CLIENT_ID = 'qhV0rAn6CywncUVjR3tjOCc45qaeBpj3';
-      var AUTH0_AUDIENCE = 'https://api.hockey-blast-predictions.com';
+      var AUTH0_AUDIENCE = null; // Stats site doesn't need API audience
 
       async function init() {
         auth0Client = await window.auth0.createAuth0Client({
