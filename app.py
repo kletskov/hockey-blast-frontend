@@ -398,7 +398,12 @@ def _create_app(db_name):
 
         return response
 
-    @app.route("/", methods=["GET", "POST"])
+    @app.route("/", methods=["GET"])
+    def root():
+        return redirect("https://sportsbook.hockey-blast.com", 302)
+
+    @app.route("/stats", methods=["GET", "POST"])
+    @app.route("/stats/", methods=["GET", "POST"])
     def index():
         try:
             top_n = request.args.get("top_n", default=10, type=int)
