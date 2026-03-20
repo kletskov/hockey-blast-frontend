@@ -800,6 +800,7 @@ def _create_app(db_name):
         return jsonify({"is_authenticated": False, "message": "Auth0 used client-side"})
 
     @app.route("/auth/callback")
+    @app.route("/callback")
     def auth_callback():
         """Auth0 redirect callback — handled client-side by auth0-spa-js"""
         return render_template("auth_callback.html")
