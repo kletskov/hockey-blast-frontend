@@ -377,18 +377,21 @@
       function loadChatHistory() {
         if (historyLoaded) return;
         historyLoaded = true;
-        var token = BlastAuth.getToken ? null : null;
         BlastAuth.getToken().then(function(tok) {
           if (!tok) return;
-          fetch('/api/chat/history', {
+          // History lives on the sportsbook API
+          fetch('https://sportsbook.hockey-blast.com/api/chat/history', {
             headers: { 'Authorization': 'Bearer ' + tok }
           }).then(function(r) { return r.json(); }).then(function(data) {
             var msgs = data.messages || [];
+            // Clear welcome message first
+            messages.innerHTML = '';
             msgs.forEach(function(m) {
               if (m.query) appendMessage('user', m.query);
               if (m.answer) appendMessage('bot', m.answer, m.id);
             });
-            if (messages.scrollTop !== undefined) messages.scrollTop = messages.scrollHeight;
+            if (!msgs.length) appendMessage('bot', '👋 Ask me anything about Hockey B.L.A.S.T — players, teams, games, stats!');
+            messages.scrollTop = messages.scrollHeight;
           }).catch(function() {});
         }).catch(function() {});
       }
@@ -454,7 +457,7 @@
 
       function sendFeedback(messageId, rating, comment) {
         BlastAuth.getToken().then(function(authToken) {
-          fetch('/api/chat/feedback', {
+          fetch('https://sportsbook.hockey-blast.com/api/chat/feedback', {
             method: 'POST',
             headers: Object.assign(
               {'Content-Type': 'application/json'},
@@ -486,7 +489,7 @@
         }
 
         var authToken = await BlastAuth.getToken();
-        fetch('/api/chat', {
+        fetch('https://sportsbook.hockey-blast.com/api/chat/message', {
           method: 'POST',
           headers: Object.assign(
             {'Content-Type': 'application/json'},
