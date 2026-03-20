@@ -396,10 +396,10 @@
             // Only clear welcome message once we have a successful response
             messages.innerHTML = '';
             msgs.forEach(function(m) {
-              if (m.query) appendMessage('user', m.query);
-              if (m.answer) appendMessage('bot', m.answer, m.id);
+              if (m.query) addMessage('bc-msg-user', m.query);
+              if (m.answer) addMessage('bc-msg-ai', renderMarkdown(m.answer));
             });
-            if (!msgs.length) appendMessage('bot', '👋 Ask me anything about Hockey B.L.A.S.T — players, teams, games, stats!');
+            if (!msgs.length) addMessage('bc-msg-ai', '👋 Ask me anything about Hockey B.L.A.S.T — players, teams, games, stats!');
             messages.scrollTop = messages.scrollHeight;
           }).catch(function(err) {
             // Fetch failed — leave welcome message intact, allow retry
