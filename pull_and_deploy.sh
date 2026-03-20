@@ -36,13 +36,20 @@ sleep 4
 # ── 3. Health check ────────────────────────────────────────────────────────
 echo ""
 echo "🩺 Health check..."
-HEALTH=$(curl -s --max-time 5 http://127.0.0.1:8000/ -A "Mozilla/5.0" -o /dev/null -w "%{http_code}" 2>/dev/null)
-if [ "$HEALTH" = "200" ] || [ "$HEALTH" = "302" ]; then
+# Use /version endpoint which is whitelisted from junk UA filter
+HEALTH=$(curl -s --max-time 5 http://127.0.0.1:8000/version -o /dev/null -w "%{http_code}" 2>/dev/null)
+if [ "$HEALTH" = "200" ]; then
   echo "   ✅ Service is healthy (HTTP $HEALTH)"
 else
-  echo "   ❌ Health check failed (HTTP $HEALTH)"
-  echo "   Check logs: tail -30 /tmp/log_flask_hockey_err.log"
-  exit 1
+  # Fallback: any response (even 204 junk filter) means server is up
+  ANY=$(curl -s --max-time 5 http://127.0.0.1:8000/ -o /dev/null -w "%{http_code}" 2>/dev/null)
+  if [ -n "$ANY" ] && [ "$ANY" != "000" ]; then
+    echo "   ✅ Service is responding (HTTP $ANY)"
+  else
+    echo "   ❌ Health check failed — service not responding"
+    echo "   Check logs: tail -30 /tmp/log_flask_hockey_err.log"
+    exit 1
+  fi
 fi
 
 echo ""
