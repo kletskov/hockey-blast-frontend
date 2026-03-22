@@ -7,8 +7,8 @@
 
 {% include "days_of_week_dropdowns.html" %}
 
-<div id="weekdays-weekends-chart" style="width: 100%; height: 400px; margin-bottom: 20px;"></div>
-<div id="days-of-week-chart" style="width: 100%; height: 400px; margin-bottom: 20px;"></div>
+<div id="weekdays-weekends-chart" style="width:100%;height:420px;border-radius:8px;overflow:hidden;margin-bottom:20px;"></div>
+<div id="days-of-week-chart" style="width:100%;height:420px;border-radius:8px;overflow:hidden;margin-bottom:20px;"></div>
 
 <div class="loading-indicator text-center" id="loading-indicator" style="display: none;">
     <span class="loading loading-spinner loading-md"></span>
@@ -91,11 +91,15 @@
         ];
         const layout = {
             title: 'Percentage of WeekDays out of Total Games',
-            xaxis: { title: 'Seasons', tickangle: -45 },
-            yaxis: { title: 'Percentage', range: [0, 100] },
-            paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#f0f0f0' }
+            xaxis: { title: 'Seasons', tickangle: -45, color: '#e0f0f0', gridcolor: '#1a6b6b' },
+            yaxis: { title: 'Percentage', range: [0, 100], color: '#e0f0f0', gridcolor: '#1a6b6b' },
+            paper_bgcolor: '#0d5555',
+            plot_bgcolor: '#0a4444',
+            font: { color: '#e0f0f0', size: 12 },
+            legend: { orientation: 'h', y: -0.25, font: { color: '#e0f0f0', size: 11 } },
+            height: 420
         };
-        Plotly.newPlot(chartContainer, traces, layout);
+        Plotly.newPlot(chartContainer, traces, layout, { responsive: true, displayModeBar: false });
     }
 
     function renderDaysOfWeekChart(data) {
@@ -112,11 +116,15 @@
         const layout = {
             title: 'Number of Games by Day of Week',
             barmode: 'stack',
-            xaxis: { title: 'Seasons', tickangle: -45 },
-            yaxis: { title: 'Number of Games' },
-            paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#f0f0f0' }
+            xaxis: { title: 'Seasons', tickangle: -45, color: '#e0f0f0', gridcolor: '#1a6b6b' },
+            yaxis: { title: 'Number of Games', color: '#e0f0f0', gridcolor: '#1a6b6b' },
+            paper_bgcolor: '#0d5555',
+            plot_bgcolor: '#0a4444',
+            font: { color: '#e0f0f0', size: 12 },
+            legend: { orientation: 'h', y: -0.25, font: { color: '#e0f0f0', size: 11 } },
+            height: 420
         };
-        Plotly.newPlot(chartContainer, traces, layout);
+        Plotly.newPlot(chartContainer, traces, layout, { responsive: true, displayModeBar: false });
     }
 
     document.getElementById('level').addEventListener('change', function () {

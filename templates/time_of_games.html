@@ -39,8 +39,8 @@
     </select>
 </div>
 <button class="btn btn-primary btn-sm mb-4" id="update-plot">Update Plot</button>
-<div id="plot-avg-start-time" style="height: 600px;"></div>
-<div id="plot-last-slot" style="height: 600px; margin-top: 20px;"></div>
+<div id="plot-avg-start-time" style="width:100%;height:420px;border-radius:8px;overflow:hidden;"></div>
+<div id="plot-last-slot" style="width:100%;height:420px;border-radius:8px;overflow:hidden;margin-top:20px;"></div>
 
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
@@ -102,18 +102,27 @@
                 var ticktext = tickvals.map(formatTime);
                 var layout_avg = {
                     title: plot_type === 'compare_levels_by_season' ? `Avg Game Start Time for ${level_1} and ${level_2}` : `Avg Game Start Time for teams in ${plot_level}`,
-                    xaxis: { tickangle: -30, tickfont: { size: 10 } },
-                    yaxis: { title: 'Start Time (HH:MM)', tickvals: tickvals, ticktext: ticktext, tickfont: { size: 10 } },
-                    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#f0f0f0' }
+                    xaxis: { tickangle: -30, tickfont: { size: 10 }, color: '#e0f0f0', gridcolor: '#1a6b6b' },
+                    yaxis: { title: 'Start Time (HH:MM)', tickvals: tickvals, ticktext: ticktext, tickfont: { size: 10 }, color: '#e0f0f0', gridcolor: '#1a6b6b' },
+                    paper_bgcolor: '#0d5555',
+                    plot_bgcolor: '#0a4444',
+                    font: { color: '#e0f0f0', size: 12 },
+                    legend: { orientation: 'h', y: -0.25, font: { color: '#e0f0f0', size: 11 } },
+                    height: 420
                 };
                 var layout_last_slot = {
                     title: plot_type === 'compare_levels_by_season' ? `% Last Slot Games for ${level_1} and ${level_2}` : `% Last Slot Games for teams in ${plot_level}`,
-                    xaxis: { tickangle: -30, tickfont: { size: 10 } },
-                    yaxis: { title: 'Percentage (%)', tickfont: { size: 10 } },
-                    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#f0f0f0' }
+                    xaxis: { tickangle: -30, tickfont: { size: 10 }, color: '#e0f0f0', gridcolor: '#1a6b6b' },
+                    yaxis: { title: 'Percentage (%)', tickfont: { size: 10 }, color: '#e0f0f0', gridcolor: '#1a6b6b' },
+                    paper_bgcolor: '#0d5555',
+                    plot_bgcolor: '#0a4444',
+                    font: { color: '#e0f0f0', size: 12 },
+                    legend: { orientation: 'h', y: -0.25, font: { color: '#e0f0f0', size: 11 } },
+                    height: 420
                 };
-                Plotly.newPlot('plot-avg-start-time', traces_avg, layout_avg);
-                Plotly.newPlot('plot-last-slot', traces_last_slot, layout_last_slot);
+                var config = { responsive: true, displayModeBar: false };
+                Plotly.newPlot('plot-avg-start-time', traces_avg, layout_avg, config);
+                Plotly.newPlot('plot-last-slot', traces_last_slot, layout_last_slot, config);
             });
     }
 
@@ -122,6 +131,12 @@
     if (params.level_1) setDropdownValue('level-1', params.level_1);
     if (params.level_2) setDropdownValue('level-2', params.level_2);
     if (params.plot_level) setDropdownValue('plot-level', params.plot_level);
-    if (params.plot_type || params.level_1 || params.level_2 || params.plot_level) updatePlot();
+
+    document.addEventListener('DOMContentLoaded', function () {
+        if (params.plot_type || params.level_1 || params.level_2 || params.plot_level) {
+            // dropdowns already set above, just update
+        }
+        updatePlot();
+    });
 </script>
 {% endblock %}

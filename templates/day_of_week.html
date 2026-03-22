@@ -19,9 +19,7 @@
     </select>
 </div>
 <button class="btn btn-primary btn-sm mb-4" id="update-plot">Update Plot</button>
-<div class="w-full" style="background:#fff;border-radius:10px;padding:12px;margin-bottom:8px;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
-    <div id="plot" style="width:100%;height:420px;"></div>
-</div>
+<div id="plot" style="width:100%;height:420px;border-radius:8px;overflow:hidden;"></div>
 <div class="overflow-x-auto mt-4">
     <table class="table table-zebra table-sm" id="data-table">
         <thead></thead>
@@ -31,9 +29,17 @@
 
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
-    document.getElementById('update-plot').addEventListener('click', function () {
+    function loadPlot() {
         var x_axis = document.getElementById('x-axis').value;
         var plot_level = document.getElementById('plot-level').value;
+        doFetch(x_axis, plot_level);
+    }
+
+    document.getElementById('update-plot').addEventListener('click', loadPlot);
+
+    document.addEventListener('DOMContentLoaded', loadPlot);
+
+    function doFetch(x_axis, plot_level) {
 
         fetch('/get_day_of_week_data', {
             method: 'POST',
@@ -48,21 +54,22 @@
                     traces.push({ x: sortedX, y: data.y[day], mode: 'lines', name: day });
                 }
                 var layout = {
-                    title: { text: 'Percentage of Games by Day of the Week', font: { color: '#111', size: 14 } },
+                    title: { text: 'Percentage of Games by Day of the Week', font: { color: '#e0f0f0', size: 14 } },
                     xaxis: {
                         title: x_axis === 'year_month' ? 'Year + Month' : 'Season Name',
                         tickangle: -45,
                         tickformat: x_axis === 'year_month' ? '%b %Y' : '',
                         dtick: x_axis === 'year_month' ? 'M4' : '',
-                        color: '#333'
+                        color: '#e0f0f0',
+                        gridcolor: '#1a6b6b'
                     },
-                    yaxis: { title: 'Percentage of Games', color: '#333' },
+                    yaxis: { title: 'Percentage of Games', color: '#e0f0f0', gridcolor: '#1a6b6b' },
                     margin: { t: 50, b: 100, l: 60, r: 20 },
-                    paper_bgcolor: '#ffffff',
-                    plot_bgcolor: '#f8fffe',
-                    font: { color: '#333', size: 12 },
-                    legend: { orientation: 'h', y: -0.25, font: { size: 11 } },
-                    autosize: true
+                    paper_bgcolor: '#0d5555',
+                    plot_bgcolor: '#0a4444',
+                    font: { color: '#e0f0f0', size: 12 },
+                    legend: { orientation: 'h', y: -0.25, font: { color: '#e0f0f0', size: 11 } },
+                    height: 420
                 };
                 var config = { responsive: true, displayModeBar: false };
                 Plotly.newPlot('plot', traces, layout, config);
@@ -97,6 +104,6 @@
                     tbody.appendChild(row);
                 });
             });
-    });
+    }
 </script>
 {% endblock %}

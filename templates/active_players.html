@@ -39,9 +39,7 @@
     </select>
 </div>
 <button class="btn btn-primary btn-sm mb-4" id="update-plot">Update Plot</button>
-<div class="w-full overflow-x-auto">
-    <div id="plot" style="width: 100%; height: 600px;"></div>
-</div>
+<div id="plot" style="width:100%;height:420px;border-radius:8px;overflow:hidden;"></div>
 
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
@@ -55,7 +53,7 @@
         }
     });
 
-    document.getElementById('update-plot').addEventListener('click', function () {
+    function loadPlot() {
         var x_axis = document.getElementById('x-axis').value;
         var plot_1 = document.getElementById('plot-1').value;
         var plot_2 = document.getElementById('plot-2').value;
@@ -71,8 +69,17 @@
                 var traces = [];
                 var layout = {
                     title: 'Active Players Over Time',
-                    xaxis: { title: x_axis === 'year_month' ? 'Year + Month' : (x_axis === 'season_name' ? 'Seasons' : 'Month') },
-                    yaxis: { title: 'Active Players' }
+                    xaxis: {
+                        title: x_axis === 'year_month' ? 'Year + Month' : (x_axis === 'season_name' ? 'Seasons' : 'Month'),
+                        color: '#e0f0f0',
+                        gridcolor: '#1a6b6b'
+                    },
+                    yaxis: { title: 'Active Players', color: '#e0f0f0', gridcolor: '#1a6b6b' },
+                    paper_bgcolor: '#0d5555',
+                    plot_bgcolor: '#0a4444',
+                    font: { color: '#e0f0f0', size: 12 },
+                    legend: { orientation: 'h', y: -0.25, font: { color: '#e0f0f0', size: 11 } },
+                    height: 420
                 };
 
                 if (x_axis === 'year_over_year') {
@@ -88,8 +95,12 @@
                     }
                 }
 
-                Plotly.newPlot('plot', traces, layout);
+                Plotly.newPlot('plot', traces, layout, { responsive: true, displayModeBar: false });
             });
-    });
+    }
+
+    document.getElementById('update-plot').addEventListener('click', loadPlot);
+
+    document.addEventListener('DOMContentLoaded', loadPlot);
 </script>
 {% endblock %}
