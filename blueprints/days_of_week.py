@@ -1,5 +1,5 @@
 from flask import Blueprint, current_app, jsonify, render_template, request
-from hockey_blast_common_lib.models import (Division, Game, Level,
+from hockey_blast_common_lib.models import (Division, Game, League, Level,
                                             Organization, Season, db)
 from hockey_blast_common_lib.stats_utils import ALL_ORGS_ID
 from sqlalchemy import func
@@ -38,26 +38,21 @@ def filter_days():
     try:
         data = request.get_json()
         org_id = data.get("org_id")
+        league_id = data.get("league_id")
         level_id = data.get("level_id")
         season_id = data.get("season_id")
 
         # Robust parsing
-        try:
-            org_id = (
-                int(org_id) if org_id and org_id != "null" and org_id != "" else None
-            )
-            level_id = (
-                int(level_id)
-                if level_id and level_id != "null" and level_id != ""
-                else None
-            )
-            season_id = (
-                int(season_id)
-                if season_id and season_id != "null" and season_id != ""
-                else None
-            )
-        except (ValueError, TypeError):
-            return jsonify({"error": "Invalid filter ID"}), 400
+        def _int(v):
+            try:
+                return int(v) if v and v != "null" and v != "" else None
+            except (ValueError, TypeError):
+                return None
+
+        org_id = _int(org_id)
+        league_id = _int(league_id)
+        level_id = _int(level_id)
+        season_id = _int(season_id)
 
         days_map = {
             1: "Monday",
@@ -79,14 +74,12 @@ def filter_days():
         ]
 
         if level_id is not None:
-            # Break down by seasons
+            # Break down by seasons — scoped to league if provided
             rows = []
-            season_query = (
-                db.session.query(Season)
-                .filter(Season.org_id == org_id)
-                .order_by(Season.season_number.desc())
-            )
-            seasons = season_query.all()
+            season_query = db.session.query(Season).filter(Season.org_id == org_id)
+            if league_id:
+                season_query = season_query.filter(Season.league_id == league_id)
+            seasons = season_query.order_by(Season.season_number.desc()).all()
             for season in seasons:
                 season_row = {day: 0 for day in chart_order_days}
                 query = db.session.query(
@@ -111,15 +104,27 @@ def filter_days():
 
             return jsonify({"header": chart_order_days, "rows": rows})
         else:
-            # Filter levels to match dropdowns filtering logic
-            query = (
+            # Show levels for this league/season
+            level_query = (
                 db.session.query(Level)
                 .filter(
                     Level.org_id == org_id, Level.level_name.ilike("Adult Division%")
                 )
                 .order_by(Level.level_name.asc())
             )
-            levels = query.all()
+            # Restrict to levels that appear in divisions for this league/season
+            div_level_query = db.session.query(Division.level_id).distinct()
+            if season_id:
+                div_level_query = div_level_query.filter(Division.season_id == season_id)
+            elif league_id:
+                div_level_query = div_level_query.join(
+                    Season, Division.season_id == Season.id
+                ).filter(Season.league_id == league_id)
+            scoped_level_ids = [r[0] for r in div_level_query.all() if r[0]]
+            if scoped_level_ids:
+                level_query = level_query.filter(Level.id.in_(scoped_level_ids))
+
+            levels = level_query.all()
 
             # Calculate total games row
             total_games_row = {day: 0 for day in chart_order_days}
@@ -132,6 +137,10 @@ def filter_days():
                 query = query.filter(Division.level_id == level.id)
                 if season_id:
                     query = query.filter(Division.season_id == season_id)
+                elif league_id:
+                    query = query.join(
+                        Season, Division.season_id == Season.id
+                    ).filter(Season.league_id == league_id)
                 results = query.group_by(Game.day_of_week).all()
                 row = {day: 0 for day in chart_order_days}
                 for r in results:
