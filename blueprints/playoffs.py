@@ -72,6 +72,7 @@ def playoffs_api():
             score = 'TBD'
             winner = None
 
+        divs[did].setdefault(rname, [])
         divs[did][rname].append({
             'game_id': r.game_id,
             'home_team': r.home_team,
@@ -86,14 +87,41 @@ def playoffs_api():
             'game_type': r.game_type,
         })
 
-    # Convert to sorted list
+    # Convert to sorted list, splitting 'Playoff' games into inferred rounds
     result = []
     for lname, ldata in sorted(levels.items(), key=lambda x: x[1]['skill']):
         level_out = {'name': ldata['name'], 'short': ldata['short'], 'divisions': []}
         for did, rounds in ldata['divisions'].items():
             rounds_out = []
             for rname, games in sorted(rounds.items(), key=lambda x: ROUND_ORDER.get(x[0], 99)):
-                rounds_out.append({'round_name': rname, 'games': games})
+                if rname == 'Playoff':
+                    # Split into sub-rounds by date wave.
+                    # A team appearing again after a previous game = next round.
+                    # We detect rounds greedily: sort by date, assign a new round
+                    # whenever a team appears that already played in the current wave.
+                    sorted_games = sorted(games, key=lambda g: (g['date'] or '', g['time'] or ''))
+                    sub_rounds = []
+                    current_wave = []
+                    seen_teams = set()
+                    for g in sorted_games:
+                        teams = {g['home_team_id'], g['visitor_team_id']}
+                        if teams & seen_teams:
+                            # One of these teams already played — start new round
+                            if current_wave:
+                                sub_rounds.append(current_wave)
+                            current_wave = [g]
+                            seen_teams = teams
+                        else:
+                            current_wave.append(g)
+                            seen_teams |= teams
+                    if current_wave:
+                        sub_rounds.append(current_wave)
+
+                    for i, wave in enumerate(sub_rounds):
+                        label = f'Round {i + 1}'
+                        rounds_out.append({'round_name': label, 'games': wave})
+                else:
+                    rounds_out.append({'round_name': rname, 'games': games})
             level_out['divisions'].append({'division_id': did, 'rounds': rounds_out})
         result.append(level_out)
 
