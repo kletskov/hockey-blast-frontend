@@ -5,6 +5,10 @@
 {% block content %}
 <h1 class="mb-4">{{ display_name|safe }}</h1>
 
+<div id="plot-div" class="mb-6">
+    {{ plot_div|safe }}
+</div>
+
 {% if roles_data %}
 <div class="overflow-x-auto mb-6">
     <h2 class="text-lg font-bold mt-6 mb-3 text-primary">Roles</h2>
@@ -124,10 +128,6 @@
 </table>
 </div>
 
-<div id="plot-div">
-    {{ plot_div|safe }}
-</div>
-
 {% if goals_by_team_season %}
 <h2 class="text-lg font-bold mt-6 mb-3 text-primary">Goals &amp; Assists by Team &amp; Season</h2>
 <div class="overflow-x-auto">
@@ -136,6 +136,7 @@
             <tr>
                 <th>Season</th>
                 <th>Team</th>
+                <th class="text-center">GP</th>
                 <th class="text-center">G</th>
                 <th class="text-center">A</th>
                 <th class="text-center">PTS</th>
@@ -146,6 +147,7 @@
             <tr>
                 <td>{{ row.season_name }}</td>
                 <td><a href="{{ url_for('team_stats.team_stats', team_id=row.team_id) }}" class="link link-primary">{{ row.team_name }}</a></td>
+                <td class="text-center">{{ row.gp }}</td>
                 <td class="text-center font-bold">{{ row.goals }}</td>
                 <td class="text-center">{{ row.assists }}</td>
                 <td class="text-center text-primary font-bold">{{ row.points }}</td>
@@ -155,6 +157,7 @@
         <tfoot>
             <tr class="font-bold border-t border-base-300">
                 <td colspan="2">Total</td>
+                <td class="text-center">{{ goals_by_team_season | sum(attribute='gp') }}</td>
                 <td class="text-center">{{ goals_by_team_season | sum(attribute='goals') }}</td>
                 <td class="text-center">{{ goals_by_team_season | sum(attribute='assists') }}</td>
                 <td class="text-center text-primary">{{ goals_by_team_season | sum(attribute='points') }}</td>

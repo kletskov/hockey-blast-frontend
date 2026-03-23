@@ -696,19 +696,13 @@ def human_stats():
             start=pd.Period("2020-01"), end=pd.Period("2020-01"), freq="M"
         )
 
-    # Dynamically adjust tick frequency based on the number of months
+    # Target ~12 tick labels max regardless of career length
     num_months = len(all_months)
-    if num_months > 200:  # Threshold for too many months
-        tick_interval = 4  # Show every 3rd month
-    elif num_months > 150:
-        tick_interval = 3  # Show every 3rd month
-    elif num_months > 50:
-        tick_interval = 2
-    else:
-        tick_interval = 1  # Show every month
+    MAX_TICKS = 12
+    tick_interval = max(1, num_months // MAX_TICKS)
 
-    tickvals = all_months[::tick_interval]  # Select ticks at the specified interval
-    ticktext = tickvals.strftime("%b %Y")  # Format tick labels as "Month Year"
+    tickvals = all_months[::tick_interval]
+    ticktext = tickvals.strftime("%b %Y")
 
     plot_data = []
     if player_games_per_month.sum() > 0:
@@ -1002,15 +996,37 @@ def human_stats():
         .all()
     )
 
-    # Merge into dict keyed by (season_name, team_id)
+    # Count games played per team+season (skater role only)
+    gp_rows = (
+        db.session.query(
+            Season.season_number,
+            Season.season_name,
+            GameRoster.team_id,
+            Team.name.label("team_name"),
+            db.func.count(db.distinct(GameRoster.game_id)).label("gp"),
+        )
+        .join(Game, GameRoster.game_id == Game.id)
+        .join(Division, Game.division_id == Division.id)
+        .join(Season, Division.season_id == Season.id)
+        .join(Team, GameRoster.team_id == Team.id)
+        .filter(GameRoster.human_id == human_id, GameRoster.role != "G")
+        .group_by(Season.season_number, Season.season_name, GameRoster.team_id, Team.name)
+        .all()
+    )
+
+    # Merge into dict keyed by (season_number, season_name, team_id, team_name)
     stats_map = {}
+    for r in gp_rows:
+        key = (r.season_number, r.season_name, r.team_id, r.team_name)
+        stats_map.setdefault(key, {"goals": 0, "assists": 0, "gp": 0})
+        stats_map[key]["gp"] = r.gp
     for r in goals_rows:
         key = (r.season_number, r.season_name, r.team_id, r.team_name)
-        stats_map.setdefault(key, {"goals": 0, "assists": 0})
+        stats_map.setdefault(key, {"goals": 0, "assists": 0, "gp": 0})
         stats_map[key]["goals"] += r.goals
     for r in assist1_rows + assist2_rows:
         key = (r.season_number, r.season_name, r.team_id, r.team_name)
-        stats_map.setdefault(key, {"goals": 0, "assists": 0})
+        stats_map.setdefault(key, {"goals": 0, "assists": 0, "gp": 0})
         stats_map[key]["assists"] += r.assists
 
     goals_by_team_season = [
@@ -1018,6 +1034,7 @@ def human_stats():
             "season_name": season_name,
             "team_id": team_id,
             "team_name": team_name,
+            "gp": v["gp"],
             "goals": v["goals"],
             "assists": v["assists"],
             "points": v["goals"] + v["assists"],
