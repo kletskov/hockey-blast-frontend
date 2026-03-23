@@ -127,4 +127,41 @@
 <div id="plot-div">
     {{ plot_div|safe }}
 </div>
+
+{% if goals_by_team_season %}
+<h2 class="text-lg font-bold mt-6 mb-3 text-primary">Goals &amp; Assists by Team &amp; Season</h2>
+<div class="overflow-x-auto">
+    <table class="table table-zebra table-sm w-full">
+        <thead>
+            <tr>
+                <th>Season</th>
+                <th>Team</th>
+                <th class="text-center">G</th>
+                <th class="text-center">A</th>
+                <th class="text-center">PTS</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in goals_by_team_season %}
+            <tr>
+                <td>{{ row.season_name }}</td>
+                <td><a href="{{ url_for('team_stats.team_stats', team_id=row.team_id) }}" class="link link-primary">{{ row.team_name }}</a></td>
+                <td class="text-center font-bold">{{ row.goals }}</td>
+                <td class="text-center">{{ row.assists }}</td>
+                <td class="text-center text-primary font-bold">{{ row.points }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr class="font-bold border-t border-base-300">
+                <td colspan="2">Total</td>
+                <td class="text-center">{{ goals_by_team_season | sum(attribute='goals') }}</td>
+                <td class="text-center">{{ goals_by_team_season | sum(attribute='assists') }}</td>
+                <td class="text-center text-primary">{{ goals_by_team_season | sum(attribute='points') }}</td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+{% endif %}
+
 {% endblock %}

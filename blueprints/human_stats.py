@@ -15,7 +15,8 @@ import plotly.graph_objs as go
 import plotly.io as pio
 from hockey_blast_common_lib.h2h_models import SkaterToSkaterStats
 from hockey_blast_common_lib.models import (Division, Game, GameRoster, Goal,
-                                            Human, Level, Penalty, Team, db)
+                                            Human, Level, Penalty, Season,
+                                            Team, db)
 from hockey_blast_common_lib.stats_models import OrgStatsHuman
 from hockey_blast_common_lib.stats_utils import ALL_ORGS_ID
 
@@ -942,6 +943,84 @@ def human_stats():
             }
         )
 
+    # ── Goals & Assists by Team + Season ─────────────────────────────────────
+    # Count goals where this player is the scorer
+    goals_rows = (
+        db.session.query(
+            Season.season_name,
+            Season.season_number,
+            Team.id.label("team_id"),
+            Team.name.label("team_name"),
+            db.func.count(Goal.id).label("goals"),
+        )
+        .join(Game, Goal.game_id == Game.id)
+        .join(Division, Game.division_id == Division.id)
+        .join(Season, Division.season_id == Season.id)
+        .join(Team, Goal.scoring_team_id == Team.id)
+        .filter(Goal.goal_scorer_id == human_id)
+        .group_by(Season.season_number, Season.season_name, Team.id, Team.name)
+        .all()
+    )
+
+    # Count assists (both primary and secondary)
+    assist1_rows = (
+        db.session.query(
+            Season.season_name,
+            Season.season_number,
+            Team.id.label("team_id"),
+            Team.name.label("team_name"),
+            db.func.count(Goal.id).label("assists"),
+        )
+        .join(Game, Goal.game_id == Game.id)
+        .join(Division, Game.division_id == Division.id)
+        .join(Season, Division.season_id == Season.id)
+        .join(Team, Goal.scoring_team_id == Team.id)
+        .filter(Goal.assist_1_id == human_id)
+        .group_by(Season.season_number, Season.season_name, Team.id, Team.name)
+        .all()
+    )
+    assist2_rows = (
+        db.session.query(
+            Season.season_name,
+            Season.season_number,
+            Team.id.label("team_id"),
+            Team.name.label("team_name"),
+            db.func.count(Goal.id).label("assists"),
+        )
+        .join(Game, Goal.game_id == Game.id)
+        .join(Division, Game.division_id == Division.id)
+        .join(Season, Division.season_id == Season.id)
+        .join(Team, Goal.scoring_team_id == Team.id)
+        .filter(Goal.assist_2_id == human_id)
+        .group_by(Season.season_number, Season.season_name, Team.id, Team.name)
+        .all()
+    )
+
+    # Merge into dict keyed by (season_name, team_id)
+    stats_map = {}
+    for r in goals_rows:
+        key = (r.season_number, r.season_name, r.team_id, r.team_name)
+        stats_map.setdefault(key, {"goals": 0, "assists": 0})
+        stats_map[key]["goals"] += r.goals
+    for r in assist1_rows + assist2_rows:
+        key = (r.season_number, r.season_name, r.team_id, r.team_name)
+        stats_map.setdefault(key, {"goals": 0, "assists": 0})
+        stats_map[key]["assists"] += r.assists
+
+    goals_by_team_season = [
+        {
+            "season_name": season_name,
+            "team_id": team_id,
+            "team_name": team_name,
+            "goals": v["goals"],
+            "assists": v["assists"],
+            "points": v["goals"] + v["assists"],
+        }
+        for (season_number, season_name, team_id, team_name), v in sorted(
+            stats_map.items(), key=lambda x: (x[0][0], x[0][3])
+        )
+    ]
+
     return render_template(
         "human_stats.html",
         display_name=display_name,
@@ -950,5 +1029,6 @@ def human_stats():
         teammates=teammates,
         games_against_skaters=games_against_skaters,
         plot_div=plot_div,
-        recent_games_data=recent_games_data,  # Pass recent games data to the template
+        recent_games_data=recent_games_data,
+        goals_by_team_season=goals_by_team_season,
     )
