@@ -5,6 +5,15 @@
 {% block content %}
 <h2 class="text-lg font-bold mt-4 mb-3 text-primary">SIAHL Schedule Games Distribution</h2>
 
+<!-- Pass org list to JS -->
+<script>
+    window._DOW_ORGS = [
+        {% for org in organizations %}
+        { "id": {{ org.id }}, "name": {{ org.organization_name | tojson }} }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+</script>
+
 {% include "days_of_week_dropdowns.html" %}
 
 <div id="weekdays-weekends-chart" style="width:100%;height:420px;border-radius:8px;overflow:hidden;margin-bottom:20px;"></div>
@@ -20,14 +29,19 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
-    function fetchDaysData(orgId, levelId, seasonId) {
+    function fetchDaysData(orgId, leagueId, levelId, seasonId) {
         var loadingIndicator = document.getElementById('loading-indicator');
         loadingIndicator.style.display = 'block';
         document.getElementById('dow-table-container').innerHTML = '';
         fetch('/days_of_week/filter_days', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ org_id: orgId, level_id: levelId, season_id: seasonId })
+            body: JSON.stringify({
+                org_id: orgId,
+                league_id: leagueId,
+                level_id: levelId,
+                season_id: seasonId
+            })
         })
             .then(response => {
                 if (!response.ok) throw new Error('Network response was not ok: ' + response.statusText);
@@ -78,10 +92,12 @@
         if (!chartContainer) return;
         const chartData = [];
         for (const row of data.rows) {
-            if (row.label === "Total for Level") continue;
+            if (row.label === "Total Games") continue;
             const weekDaysSum = row.data.slice(0, 5).reduce((a, b) => a + b, 0);
             const weekEndsSum = row.data.slice(5).reduce((a, b) => a + b, 0);
-            chartData.push({ label: row.label, weekdaysPercentage: (weekDaysSum / (weekDaysSum + weekEndsSum)) * 100 });
+            const total = weekDaysSum + weekEndsSum;
+            if (total === 0) continue;
+            chartData.push({ label: row.label, weekdaysPercentage: (weekDaysSum / total) * 100 });
         }
         const labels = chartData.map(item => item.label).reverse();
         const percentages = chartData.map(item => item.weekdaysPercentage).reverse();
@@ -126,28 +142,5 @@
         };
         Plotly.newPlot(chartContainer, traces, layout, { responsive: true, displayModeBar: false });
     }
-
-    document.getElementById('level').addEventListener('change', function () {
-        const orgId = 1;
-        const levelId = document.getElementById('level').value;
-        const seasonDropdown = document.getElementById('season');
-        seasonDropdown.value = '';
-        fetchDaysData(orgId, levelId, seasonDropdown.value);
-    });
-
-    document.getElementById('season').addEventListener('change', function () {
-        const orgId = 1;
-        const seasonId = document.getElementById('season').value;
-        const levelDropdown = document.getElementById('level');
-        levelDropdown.value = '';
-        fetchDaysData(orgId, levelDropdown.value, seasonId);
-    });
-
-    document.addEventListener('DOMContentLoaded', function () {
-        const orgId = 1;
-        const levelId = document.getElementById('level').value;
-        const seasonId = document.getElementById('season').value;
-        fetchDaysData(orgId, levelId, seasonId);
-    });
 </script>
 {% endblock %}

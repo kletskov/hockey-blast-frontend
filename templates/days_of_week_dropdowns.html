@@ -1,7 +1,12 @@
 <div class="flex flex-wrap items-center gap-3 mb-4 text-sm">
     <label for="organization" class="font-medium">Organization:</label>
-    <select id="organization" name="organization" class="select select-bordered select-primary select-sm bg-base-100" disabled>
-        <option value="1">Organization 1</option>
+    <select id="organization" name="organization" class="select select-bordered select-primary select-sm bg-base-100">
+        <!-- populated by JS -->
+    </select>
+
+    <label for="league" class="font-medium">League:</label>
+    <select id="league" name="league" class="select select-bordered select-primary select-sm bg-base-100">
+        <option value="">All Leagues</option>
     </select>
 
     <label for="level" class="font-medium">Level:</label>
@@ -16,40 +21,101 @@
 </div>
 
 <script>
-    function fetchLevels() {
-        fetch('/days_of_week/filter_levels', {
+    // ── helpers ──────────────────────────────────────────────────────────────
+    function getOrgId()    { return document.getElementById('organization').value || null; }
+    function getLeagueId() { return document.getElementById('league').value || null; }
+    function getLevelId()  { return document.getElementById('level').value || null; }
+    function getSeasonId() { return document.getElementById('season').value || null; }
+
+    function post(url, body) {
+        return fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ org_id: 1 })
-        })
-            .then(response => response.json())
+            body: JSON.stringify(body)
+        }).then(r => r.json());
+    }
+
+    // ── populate orgs ────────────────────────────────────────────────────────
+    function fetchOrgs() {
+        // Re-use the organizations passed from Jinja into the page
+        const orgData = window._DOW_ORGS || [];
+        const sel = document.getElementById('organization');
+        sel.innerHTML = '';
+        orgData.forEach(o => {
+            sel.innerHTML += `<option value="${o.id}">${o.name}</option>`;
+        });
+        // default = first org
+        if (orgData.length) fetchLeagues();
+    }
+
+    // ── populate leagues ─────────────────────────────────────────────────────
+    function fetchLeagues() {
+        const orgId = getOrgId();
+        post('/days_of_week/filter_leagues', { org_id: orgId })
             .then(data => {
-                data.sort((a, b) => a.level_name.localeCompare(b.level_name));
-                const levelSelect = document.getElementById('level');
-                levelSelect.innerHTML = '<option value="">All Levels</option>';
-                data.forEach(level => {
-                    levelSelect.innerHTML += `<option value="${level.id}">${level.level_name}</option>`;
+                const sel = document.getElementById('league');
+                sel.innerHTML = '<option value="">All Leagues</option>';
+                data.forEach(l => {
+                    sel.innerHTML += `<option value="${l.id}">${l.league_name}</option>`;
                 });
+                fetchSeasons();
+                fetchLevels();
             });
     }
 
+    // ── populate seasons ─────────────────────────────────────────────────────
     function fetchSeasons() {
-        fetch('/days_of_week/filter_seasons', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        })
-            .then(response => response.json())
+        post('/days_of_week/filter_seasons', { org_id: getOrgId(), league_id: getLeagueId() })
             .then(data => {
-                const seasonSelect = document.getElementById('season');
-                seasonSelect.innerHTML = '<option value="">All Seasons</option>';
-                data.forEach(season => {
-                    seasonSelect.innerHTML += `<option value="${season.id}">${season.season_name}</option>`;
+                const sel = document.getElementById('season');
+                sel.innerHTML = '<option value="">All Seasons</option>';
+                data.forEach(s => {
+                    sel.innerHTML += `<option value="${s.id}">${s.season_name}</option>`;
                 });
             });
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
-        fetchLevels();
-        fetchSeasons();
+    // ── populate levels ──────────────────────────────────────────────────────
+    function fetchLevels() {
+        post('/days_of_week/filter_levels', {
+            org_id: getOrgId(),
+            league_id: getLeagueId(),
+            season_id: getSeasonId()
+        }).then(data => {
+            const sel = document.getElementById('level');
+            sel.innerHTML = '<option value="">All Levels</option>';
+            data.sort((a, b) => a.level_name.localeCompare(b.level_name));
+            data.forEach(l => {
+                sel.innerHTML += `<option value="${l.id}">${l.level_name}</option>`;
+            });
+        });
+    }
+
+    // ── change handlers ──────────────────────────────────────────────────────
+    document.getElementById('organization').addEventListener('change', function () {
+        document.getElementById('league').value = '';
+        document.getElementById('level').value = '';
+        document.getElementById('season').value = '';
+        fetchLeagues();
+        fetchDaysData(getOrgId(), getLeagueId(), getLevelId(), getSeasonId());
     });
+
+    document.getElementById('league').addEventListener('change', function () {
+        document.getElementById('level').value = '';
+        document.getElementById('season').value = '';
+        fetchSeasons();
+        fetchLevels();
+        fetchDaysData(getOrgId(), getLeagueId(), getLevelId(), getSeasonId());
+    });
+
+    document.getElementById('level').addEventListener('change', function () {
+        fetchDaysData(getOrgId(), getLeagueId(), getLevelId(), getSeasonId());
+    });
+
+    document.getElementById('season').addEventListener('change', function () {
+        fetchLevels();
+        fetchDaysData(getOrgId(), getLeagueId(), getLevelId(), getSeasonId());
+    });
+
+    document.addEventListener('DOMContentLoaded', fetchOrgs);
 </script>
