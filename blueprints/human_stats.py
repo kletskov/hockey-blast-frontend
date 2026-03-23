@@ -753,17 +753,23 @@ def human_stats():
         )  # Dodger Blue
 
     plot_layout = go.Layout(
-        title=dict(text="PulseLine", x=0.5),  # Center the title
+        title=dict(text="PulseLine", x=0.5, font=dict(color="#e0f0f0", size=14)),
         xaxis=dict(
             title="Month",
-            tickmode="array",  # Use array mode for ticks
-            tickvals=tickvals.astype(str),  # Set tick values to the selected months
-            ticktext=ticktext,  # Set tick labels
+            tickmode="array",
+            tickvals=tickvals.astype(str),
+            ticktext=ticktext,
+            tickangle=-45,
+            color="#e0f0f0",
+            gridcolor="#1a6b6b",
         ),
-        yaxis=dict(title="Games per Month"),
-        plot_bgcolor="#20B2AA",  # Light teal
-        paper_bgcolor="#008080",  # Dark teal
-        font=dict(color="white"),
+        yaxis=dict(title="Games per Month", color="#e0f0f0", gridcolor="#1a6b6b"),
+        plot_bgcolor="#0a4444",
+        paper_bgcolor="#0d5555",
+        font=dict(color="#e0f0f0", size=12),
+        margin=dict(t=50, b=100, l=60, r=20),
+        legend=dict(orientation="h", y=-0.25, font=dict(color="#e0f0f0", size=11)),
+        height=420,
     )
     plot_fig = go.Figure(data=plot_data, layout=plot_layout)
     plot_div = pio.to_html(plot_fig, full_html=False, include_plotlyjs="cdn")
