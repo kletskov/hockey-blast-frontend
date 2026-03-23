@@ -696,13 +696,27 @@ def human_stats():
             start=pd.Period("2020-01"), end=pd.Period("2020-01"), freq="M"
         )
 
-    # Target ~12 tick labels max regardless of career length
+    # Build ticks: if span > 2 years, one tick per year (Jan or first available month)
+    # otherwise up to 12 evenly spaced month ticks
     num_months = len(all_months)
-    MAX_TICKS = 12
-    tick_interval = max(1, num_months // MAX_TICKS)
-
-    tickvals = all_months[::tick_interval]
-    ticktext = tickvals.strftime("%b %Y")
+    if num_months > 24:
+        years = sorted(set(m.year for m in all_months))
+        tick_periods = []
+        for y in years:
+            # Pick January if in range, otherwise the first month of that year present
+            jan = pd.Period(f"{y}-01", freq="M")
+            if jan in all_months:
+                tick_periods.append(jan)
+            else:
+                first_of_year = next((m for m in all_months if m.year == y), None)
+                if first_of_year:
+                    tick_periods.append(first_of_year)
+        tickvals = pd.PeriodIndex(tick_periods)
+        ticktext = [str(m.year) for m in tickvals]
+    else:
+        tick_interval = max(1, num_months // 12)
+        tickvals = all_months[::tick_interval]
+        ticktext = list(tickvals.strftime("%b %Y"))
 
     plot_data = []
     if player_games_per_month.sum() > 0:
