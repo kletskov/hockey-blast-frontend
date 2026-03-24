@@ -147,6 +147,7 @@
                 <a href="{{ url_for('hall_of_fame.hall_of_fame', top_n=20) }}" class="nav-pill">Hall of Fame</a>
                 <a href="{{ url_for('special_stats') }}" class="nav-pill">Special</a>
                 <a href="{{ url_for('about') }}" class="nav-pill">About</a>
+                <a href="#" class="nav-pill" onclick="document.getElementById('hb-help-modal').showModal();return false;" title="Help / Feedback" style="font-weight:700;">?</a>
             </div>
         </nav>
     </header>
@@ -600,14 +601,7 @@
     <!-- ── End Blast AI Widget ─────────────────────────────────────────── -->
 
     <!-- ── Help / Feedback Button ──────────────────────────────────────── -->
-    <!-- Floating ? button -->
-    <button
-      id="hb-help-btn"
-      onclick="document.getElementById('hb-help-modal').showModal()"
-      style="position:fixed;bottom:24px;right:24px;z-index:9999;width:48px;height:48px;border-radius:50%;background:#E57200;color:#fff;border:none;font-size:1.4rem;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;"
-      aria-label="Help / Feedback"
-      title="Help / Feedback"
-    >?</button>
+
 
     <!-- DaisyUI dialog modal -->
     <dialog id="hb-help-modal" class="modal">
