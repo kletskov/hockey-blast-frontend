@@ -26,18 +26,30 @@ else
   echo "$CHANGED_FILES" | sed 's/^/   • /'
 fi
 
-# ── 2. Restart the service ─────────────────────────────────────────────────
+# ── 2. Kill any stray app.py processes on port 5001 ───────────────────────
+echo ""
+echo "🧹 Clearing stray processes on port 5001..."
+STRAY_PIDS=$(lsof -ti :5001 2>/dev/null || true)
+if [ -n "$STRAY_PIDS" ]; then
+  echo "   Killing PIDs: $STRAY_PIDS"
+  kill $STRAY_PIDS 2>/dev/null || true
+  sleep 2
+else
+  echo "   None found."
+fi
+
+# ── 3. Restart the service ─────────────────────────────────────────────────
 echo ""
 echo "🔄 Restarting frontend service..."
 sudo launchctl kickstart -k system/com.pavelkletskov.flask_hockey
 
 sleep 4
 
-# ── 3. Health check ────────────────────────────────────────────────────────
+# ── 4. Health check ────────────────────────────────────────────────────────
 echo ""
 echo "🩺 Health check..."
-HEALTH=$(curl -s --max-time 5 http://127.0.0.1:8000/ -A "Mozilla/5.0" -o /dev/null -w "%{http_code}" 2>/dev/null)
-if [ "$HEALTH" = "200" ] || [ "$HEALTH" = "302" ]; then
+HEALTH=$(curl -s --max-time 5 http://127.0.0.1:5001/ -A "Mozilla/5.0" -o /dev/null -w "%{http_code}" 2>/dev/null)
+if [ "$HEALTH" = "200" ] || [ "$HEALTH" = "302" ] || [ "$HEALTH" = "204" ]; then
   echo "   ✅ Service is healthy (HTTP $HEALTH)"
 else
   echo "   ❌ Health check failed (HTTP $HEALTH)"

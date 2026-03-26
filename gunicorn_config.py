@@ -1,7 +1,7 @@
 import os
 
 # Get port from environment variable (Render sets this)
-port = int(os.environ.get("PORT", 8000))
+port = int(os.environ.get("PORT", 5001))
 
 # Bind to the correct port on all interfaces
 bind = f"0.0.0.0:{port}"
