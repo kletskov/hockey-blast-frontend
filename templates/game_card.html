@@ -58,27 +58,27 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td class="visitor-color"><a href="{{ url_for('team_stats.team_stats', team_id=visitor_team.id) }}">{{ visitor_team.name }}</a></td>
-                        <td class="visitor-color">{{ game.visitor_period_1_score or 0 }}</td>
-                        <td class="visitor-color">{{ game.visitor_period_2_score or 0 }}</td>
-                        <td class="visitor-color">{{ game.visitor_period_3_score or 0 }}</td>
-                        {% if visitor_shootout_goals > 0 or home_shootout_goals > 0 %}<td class="visitor-color">{{ visitor_shootout_goals }}</td>{% endif %}
+                        <td style="color:#1a3a6b!important;font-weight:500"><a href="{{ url_for('team_stats.team_stats', team_id=visitor_team.id) }}">{{ visitor_team.name }}</a></td>
+                        <td style="color:#1a3a6b!important;font-weight:500">{{ game.visitor_period_1_score or 0 }}</td>
+                        <td style="color:#1a3a6b!important;font-weight:500">{{ game.visitor_period_2_score or 0 }}</td>
+                        <td style="color:#1a3a6b!important;font-weight:500">{{ game.visitor_period_3_score or 0 }}</td>
+                        {% if visitor_shootout_goals > 0 or home_shootout_goals > 0 %}<td style="color:#1a3a6b!important;font-weight:500">{{ visitor_shootout_goals }}</td>{% endif %}
                         {% if is_live %}
-                            <td class="visitor-color"><strong>{{ visitor_current_score }}</strong></td>
+                            <td style="color:#1a3a6b!important;font-weight:500"><strong>{{ visitor_current_score }}</strong></td>
                         {% else %}
-                            <td class="visitor-color"><strong>{{ game.visitor_final_score }}</strong></td>
+                            <td style="color:#1a3a6b!important;font-weight:500"><strong>{{ game.visitor_final_score }}</strong></td>
                         {% endif %}
                     </tr>
                     <tr>
-                        <td class="home-color"><a href="{{ url_for('team_stats.team_stats', team_id=home_team.id) }}">{{ home_team.name }}</a></td>
-                        <td class="home-color">{{ game.home_period_1_score or 0 }}</td>
-                        <td class="home-color">{{ game.home_period_2_score or 0 }}</td>
-                        <td class="home-color">{{ game.home_period_3_score or 0 }}</td>
-                        {% if visitor_shootout_goals > 0 or home_shootout_goals > 0 %}<td class="home-color">{{ home_shootout_goals }}</td>{% endif %}
+                        <td style="color:#e07800!important;font-weight:500"><a href="{{ url_for('team_stats.team_stats', team_id=home_team.id) }}">{{ home_team.name }}</a></td>
+                        <td style="color:#e07800!important;font-weight:500">{{ game.home_period_1_score or 0 }}</td>
+                        <td style="color:#e07800!important;font-weight:500">{{ game.home_period_2_score or 0 }}</td>
+                        <td style="color:#e07800!important;font-weight:500">{{ game.home_period_3_score or 0 }}</td>
+                        {% if visitor_shootout_goals > 0 or home_shootout_goals > 0 %}<td style="color:#e07800!important;font-weight:500">{{ home_shootout_goals }}</td>{% endif %}
                         {% if is_live %}
-                            <td class="home-color"><strong>{{ home_current_score }}</strong></td>
+                            <td style="color:#e07800!important;font-weight:500"><strong>{{ home_current_score }}</strong></td>
                         {% else %}
-                            <td class="home-color"><strong>{{ game.home_final_score }}</strong></td>
+                            <td style="color:#e07800!important;font-weight:500"><strong>{{ game.home_final_score }}</strong></td>
                         {% endif %}
                     </tr>
                 </tbody>
@@ -98,20 +98,20 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td class="visitor-color"><a href="{{ url_for('team_stats.team_stats', team_id=visitor_team.id) }}">{{ visitor_team.name }}</a></td>
-                        <td class="visitor-color">{{ game.visitor_period_1_shots or 0 }}</td>
-                        <td class="visitor-color">{{ game.visitor_period_2_shots or 0 }}</td>
-                        <td class="visitor-color">{{ game.visitor_period_3_shots or 0 }}</td>
-                        {% if game.visitor_ot_shots > 0 or game.home_ot_shots > 0 %}<td class="visitor-color">{{ game.visitor_ot_shots or 0 }}</td>{% endif %}
-                        <td class="visitor-color"><strong>{{ visitor_total_shots }}</strong></td>
+                        <td style="color:#1a3a6b!important;font-weight:500"><a href="{{ url_for('team_stats.team_stats', team_id=visitor_team.id) }}">{{ visitor_team.name }}</a></td>
+                        <td style="color:#1a3a6b!important;font-weight:500">{{ game.visitor_period_1_shots or 0 }}</td>
+                        <td style="color:#1a3a6b!important;font-weight:500">{{ game.visitor_period_2_shots or 0 }}</td>
+                        <td style="color:#1a3a6b!important;font-weight:500">{{ game.visitor_period_3_shots or 0 }}</td>
+                        {% if game.visitor_ot_shots > 0 or game.home_ot_shots > 0 %}<td style="color:#1a3a6b!important;font-weight:500">{{ game.visitor_ot_shots or 0 }}</td>{% endif %}
+                        <td style="color:#1a3a6b!important;font-weight:500"><strong>{{ visitor_total_shots }}</strong></td>
                     </tr>
                     <tr>
-                        <td class="home-color"><a href="{{ url_for('team_stats.team_stats', team_id=home_team.id) }}">{{ home_team.name }}</a></td>
-                        <td class="home-color">{{ game.home_period_1_shots or 0 }}</td>
-                        <td class="home-color">{{ game.home_period_2_shots or 0 }}</td>
-                        <td class="home-color">{{ game.home_period_3_shots or 0 }}</td>
-                        {% if game.visitor_ot_shots > 0 or game.home_ot_shots > 0 %}<td class="home-color">{{ game.home_ot_shots or 0 }}</td>{% endif %}
-                        <td class="home-color"><strong>{{ home_total_shots }}</strong></td>
+                        <td style="color:#e07800!important;font-weight:500"><a href="{{ url_for('team_stats.team_stats', team_id=home_team.id) }}">{{ home_team.name }}</a></td>
+                        <td style="color:#e07800!important;font-weight:500">{{ game.home_period_1_shots or 0 }}</td>
+                        <td style="color:#e07800!important;font-weight:500">{{ game.home_period_2_shots or 0 }}</td>
+                        <td style="color:#e07800!important;font-weight:500">{{ game.home_period_3_shots or 0 }}</td>
+                        {% if game.visitor_ot_shots > 0 or game.home_ot_shots > 0 %}<td style="color:#e07800!important;font-weight:500">{{ game.home_ot_shots or 0 }}</td>{% endif %}
+                        <td style="color:#e07800!important;font-weight:500"><strong>{{ home_total_shots }}</strong></td>
                     </tr>
                 </tbody>
             </table>
