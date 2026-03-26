@@ -34,8 +34,7 @@
     </table>
 
     <!-- Scoring + Shots On Goal side by side -->
-    <div class="row mb-3">
-        <div class="col-6">
+    <table width="100%" style="margin-bottom:1rem"><tr><td width="50%" style="vertical-align:top;padding-right:1rem">
             <h4>Scoring ({% if game.status == "OPEN" and game.live_time %}<span style="color: orange;">{{ game.live_time.replace('Period ', 'P') }}</span>{% else %}{{ game.status }}{% endif %})</h4>
             <table class="table table-striped table-sm">
                 <thead>
@@ -75,8 +74,7 @@
                     </tr>
                 </tbody>
             </table>
-        </div>
-        <div class="col-6">
+        </td><td width="50%" style="vertical-align:top">
             <h4>Shots On Goal</h4>
             <table class="table table-striped table-sm">
                 <thead>
@@ -108,8 +106,8 @@
                     </tr>
                 </tbody>
             </table>
-        </div>
-    </div>
+        </td>
+    </tr></table>
 
     <!-- Goals -->
     <h4>Goals</h4>
@@ -203,8 +201,7 @@
     {% endif %}
 
     <!-- Rosters side by side -->
-    <div class="row">
-        <div class="col-6">
+    <table width="100%"><tr><td width="50%" style="vertical-align:top;padding-right:1rem">
             <h4><a href="{{ url_for('team_stats.team_stats', team_id=visitor_team.id) }}">{{ visitor_team.name }}</a> players</h4>
             <table class="table table-striped table-sm">
                 <tbody>
@@ -216,8 +213,7 @@
                     {% endfor %}
                 </tbody>
             </table>
-        </div>
-        <div class="col-6">
+        </td><td width="50%" style="vertical-align:top">
             <h4><a href="{{ url_for('team_stats.team_stats', team_id=home_team.id) }}">{{ home_team.name }}</a> players</h4>
             <table class="table table-striped table-sm">
                 <tbody>
@@ -229,8 +225,8 @@
                     {% endfor %}
                 </tbody>
             </table>
-        </div>
-    </div>
+        </td>
+    </tr></table>
 
 </div>
 <p style="color: transparent; user-select: text;">Game Number: {{ game_number }}</p>
