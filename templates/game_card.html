@@ -35,7 +35,7 @@
 
     <!-- Scoring + Shots On Goal side by side -->
     <div class="row mb-3">
-        <div class="col-md-6">
+        <div class="col-6">
             <h4>Scoring ({% if game.status == "OPEN" and game.live_time %}<span style="color: orange;">{{ game.live_time.replace('Period ', 'P') }}</span>{% else %}{{ game.status }}{% endif %})</h4>
             <table class="table table-striped table-sm">
                 <thead>
@@ -76,7 +76,7 @@
                 </tbody>
             </table>
         </div>
-        <div class="col-md-6">
+        <div class="col-6">
             <h4>Shots On Goal</h4>
             <table class="table table-striped table-sm">
                 <thead>
@@ -204,7 +204,7 @@
 
     <!-- Rosters side by side -->
     <div class="row">
-        <div class="col-md-6">
+        <div class="col-6">
             <h4><a href="{{ url_for('team_stats.team_stats', team_id=visitor_team.id) }}">{{ visitor_team.name }}</a> players</h4>
             <table class="table table-striped table-sm">
                 <tbody>
@@ -217,7 +217,7 @@
                 </tbody>
             </table>
         </div>
-        <div class="col-md-6">
+        <div class="col-6">
             <h4><a href="{{ url_for('team_stats.team_stats', team_id=home_team.id) }}">{{ home_team.name }}</a> players</h4>
             <table class="table table-striped table-sm">
                 <tbody>
