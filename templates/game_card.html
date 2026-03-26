@@ -6,8 +6,11 @@
 {% block content %}
 
 <style>
-  .visitor-color, .visitor-color a { color: #1a3a6b !important; font-weight: 500; }
-  .home-color, .home-color a { color: #e07800 !important; font-weight: 500; }
+  .visitor-color, .visitor-color a, td.visitor-color, th.visitor-color { color: #1a3a6b !important; font-weight: 500; }
+  .home-color, .home-color a, td.home-color, th.home-color { color: #e07800 !important; font-weight: 500; }
+  table.table td.visitor-color, table.table td.home-color { color: inherit; }
+  td.visitor-color { color: #1a3a6b !important; }
+  td.home-color { color: #e07800 !important; }
 </style>
 <div class="container mt-4">
 
