@@ -16,7 +16,7 @@
     <h3 class="mb-3">{{ day_of_week }} {{ game.date.strftime('%m/%d/%y') }} {{ game.time.strftime('%I:%M%p') }}, {{ macros.location_display(master_location, link_to_page=True) }}</h3>
 
     <!-- Officials -->
-    <table class="table table-striped table-sm mb-3">
+    <table class="table table-striped table-sm mb-3" width="100%">
         <thead>
             <tr>
                 <th>Scorekeeper</th>
@@ -36,7 +36,7 @@
     <!-- Scoring + Shots On Goal side by side -->
     <table width="100%" style="margin-bottom:1rem"><tr><td width="50%" style="vertical-align:top;padding-right:1rem">
             <h4>Scoring ({% if game.status == "OPEN" and game.live_time %}<span style="color: orange;">{{ game.live_time.replace('Period ', 'P') }}</span>{% else %}{{ game.status }}{% endif %})</h4>
-            <table class="table table-striped table-sm">
+            <table class="table table-striped table-sm" width="100%">
                 <thead>
                     <tr>
                         <th></th>
@@ -76,7 +76,7 @@
             </table>
         </td><td width="50%" style="vertical-align:top">
             <h4>Shots On Goal</h4>
-            <table class="table table-striped table-sm">
+            <table class="table table-striped table-sm" width="100%">
                 <thead>
                     <tr>
                         <th></th>
@@ -112,7 +112,7 @@
     <!-- Goals -->
     <h4>Goals</h4>
     <div class="table-responsive mb-3">
-        <table class="table table-striped table-sm">
+        <table class="table table-striped table-sm" width="100%">
             <thead>
                 <tr>
                     <th>P</th>
@@ -141,7 +141,7 @@
     <!-- Penalties -->
     <h4>Penalties</h4>
     <div class="table-responsive mb-3">
-        <table class="table table-striped table-sm">
+        <table class="table table-striped table-sm" width="100%">
             <thead>
                 <tr>
                     <th>P</th>
@@ -177,7 +177,7 @@
     {% if shootouts %}
     <h4>Shootout</h4>
     <div class="table-responsive mb-3">
-        <table class="table table-striped table-sm">
+        <table class="table table-striped table-sm" width="100%">
             <thead>
                 <tr>
                     <th>Team</th>
@@ -203,7 +203,7 @@
     <!-- Rosters side by side -->
     <table width="100%"><tr><td width="50%" style="vertical-align:top;padding-right:1rem">
             <h4><a href="{{ url_for('team_stats.team_stats', team_id=visitor_team.id) }}">{{ visitor_team.name }}</a> players</h4>
-            <table class="table table-striped table-sm">
+            <table class="table table-striped table-sm" width="100%">
                 <tbody>
                     {% for roster, human in visitor_roster %}
                     <tr>
@@ -215,7 +215,7 @@
             </table>
         </td><td width="50%" style="vertical-align:top">
             <h4><a href="{{ url_for('team_stats.team_stats', team_id=home_team.id) }}">{{ home_team.name }}</a> players</h4>
-            <table class="table table-striped table-sm">
+            <table class="table table-striped table-sm" width="100%">
                 <tbody>
                     {% for roster, human in home_roster %}
                     <tr>
