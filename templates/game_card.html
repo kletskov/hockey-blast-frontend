@@ -18,7 +18,7 @@
         <span class="home-color"><strong><a href="{{ url_for('team_stats.team_stats', team_id=home_team.id) }}">{{ home_team.name }}</a></strong></span>
         ({{ division.level }})
     </h1>
-    <h3 class="mb-3">{{ day_of_week }} {{ game.date.strftime('%m/%d/%y') }} {{ game.time.strftime('%I:%M%p') }}, {{ macros.location_display(master_location, link_to_page=True) }}</h3>
+    <h3 class="mb-3">{{ day_of_week }} {{ game.date.strftime('%m/%d/%y') }} {{ game.time.strftime('%I:%M%p') }}, <span style="color:white">{{ macros.location_display(master_location, link_to_page=True) }}</span></h3>
 
     <!-- Officials -->
     <table class="table table-striped table-sm mb-3 text-center" width="100%">
