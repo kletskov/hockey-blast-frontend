@@ -200,7 +200,7 @@
               <td class="name-col visitor-color">
                 <a href="{{ url_for('human_stats.human_stats', human_id=player.human.id) }}">{{ player.human.first_name }}{% if player.human.middle_name and player.human.middle_name != 'None' %} {{ player.human.middle_name }}{% endif %} {{ player.human.last_name }}</a>{% if player.roster.role %} <small class="text-muted">({{ player.roster.role }})</small>{% endif %}
                 {% if player.goals > 0 or player.assists > 0 or player.penalty_count > 0 %}
-                <span class="text-xs font-semibold opacity-70 ml-1">
+                <span class="text-xs ml-1" style="color:#666 !important; font-weight:normal;">
                   {%- if player.goals > 0 %}{{ player.goals }}G{% endif -%}
                   {%- if player.goals > 0 and player.assists > 0 %}+{% endif -%}
                   {%- if player.assists > 0 %}{{ player.assists }}A{% endif -%}
@@ -225,7 +225,7 @@
               <td class="name-col home-color">
                 <a href="{{ url_for('human_stats.human_stats', human_id=player.human.id) }}">{{ player.human.first_name }}{% if player.human.middle_name and player.human.middle_name != 'None' %} {{ player.human.middle_name }}{% endif %} {{ player.human.last_name }}</a>{% if player.roster.role %} <small class="text-muted">({{ player.roster.role }})</small>{% endif %}
                 {% if player.goals > 0 or player.assists > 0 or player.penalty_count > 0 %}
-                <span class="text-xs font-semibold opacity-70 ml-1">
+                <span class="text-xs ml-1" style="color:#666 !important; font-weight:normal;">
                   {%- if player.goals > 0 %}{{ player.goals }}G{% endif -%}
                   {%- if player.goals > 0 and player.assists > 0 %}+{% endif -%}
                   {%- if player.assists > 0 %}{{ player.assists }}A{% endif -%}
