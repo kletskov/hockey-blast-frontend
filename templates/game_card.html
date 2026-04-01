@@ -39,8 +39,8 @@
   </div>
 
   <!-- Scoring + Shots side by side -->
-  <div class="row mb-3">
-    <div class="col-12 col-md-6 mb-3 mb-md-0">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+    <div>
       <h5>Scoring ({% if game.status == "OPEN" and game.live_time %}<span style="color:orange">{{ game.live_time.replace('Period ', 'P') }}</span>{% else %}{{ game.status }}{% endif %})</h5>
       <div class="table-responsive">
         <table class="table table-sm table-striped gc-table">
@@ -70,7 +70,7 @@
         </table>
       </div>
     </div>
-    <div class="col-12 col-md-6">
+    <div>
       <h5>Shots On Goal</h5>
       <div class="table-responsive">
         <table class="table table-sm table-striped gc-table">
@@ -188,8 +188,8 @@
   {% endif %}
 
   <!-- Rosters -->
-  <div class="row">
-    <div class="col-12 col-md-6 mb-3">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
       <h5 class="visitor-color"><a href="{{ url_for('team_stats.team_stats', team_id=visitor_team.id) }}">{{ visitor_team.name }}</a></h5>
       <div class="table-responsive">
         <table class="table table-sm table-striped gc-table">
@@ -204,7 +204,7 @@
         </table>
       </div>
     </div>
-    <div class="col-12 col-md-6 mb-3">
+    <div>
       <h5 class="home-color"><a href="{{ url_for('team_stats.team_stats', team_id=home_team.id) }}">{{ home_team.name }}</a></h5>
       <div class="table-responsive">
         <table class="table table-sm table-striped gc-table">
