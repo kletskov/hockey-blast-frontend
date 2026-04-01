@@ -62,6 +62,50 @@
 </div>
 {% endif %}
 
+{% if chart_labels %}
+<h2 class="text-lg font-bold mt-6 mb-2 text-primary">Team Performance Across Divisions</h2>
+<div class="mb-6 w-full overflow-x-auto">
+  <canvas id="winPctChart" style="min-width:{{ [chart_labels|length * 40, 400]|max }}px; height:300px;"></canvas>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+  var ctx = document.getElementById('winPctChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: {{ chart_labels | tojson }},
+      datasets: [{
+        label: 'Win %',
+        data: {{ chart_win_pct | tojson }},
+        borderColor: 'rgba(100,200,180,0.9)',
+        backgroundColor: 'rgba(100,200,180,0.15)',
+        borderWidth: 2,
+        pointRadius: 3,
+        tension: 0.1,
+        fill: false,
+      }]
+    },
+    options: {
+      responsive: false,
+      scales: {
+        x: {
+          ticks: { maxRotation: 90, minRotation: 45, font: { size: 10 } }
+        },
+        y: {
+          min: 0, max: 100,
+          title: { display: true, text: 'Win Percentage (%)' }
+        }
+      },
+      plugins: {
+        legend: { position: 'top' }
+      }
+    }
+  });
+})();
+</script>
+{% endif %}
+
 <h2 class="text-lg font-bold mt-6 mb-3 text-primary">Recent and Upcoming Games for {{ team.name }} in {{ last_division_name }}</h2>
 <div class="overflow-x-auto mb-6">
 <table class="table table-zebra table-sm">

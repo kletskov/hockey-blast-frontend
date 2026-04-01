@@ -2,7 +2,7 @@ from datetime import datetime
 
 from flask import Blueprint, jsonify, render_template, request, url_for
 from hockey_blast_common_lib.models import (Division, Game, GameRoster, Goal,
-                                            Human, Team, db)
+                                            Human, Season, Team, db)
 
 team_stats_bp = Blueprint("team_stats", __name__)
 
@@ -398,6 +398,36 @@ def team_stats():
             }
         )
 
+    # Build per-division-season win% data for the performance chart
+    # Group completed regular-season games by (division_id, season) and compute win%
+    division_season_stats = {}
+    for game in completed_games:
+        if game.game_type in ["Playoff", "Championship"]:
+            continue
+        div = db.session.query(Division).filter(Division.id == game.division_id).first()
+        if not div:
+            continue
+        season = db.session.query(Season).filter(Season.id == div.season_id).first() if div.season_id else None
+        season_name = season.season_name if season else str(game.date.year)
+        label = f"{div.level} - {season_name}"
+        # Use division start_date for sorting (fall back to game date)
+        sort_date = season.start_date if season and season.start_date else game.date
+        key = (game.division_id, season_name)
+        if key not in division_season_stats:
+            division_season_stats[key] = {"label": label, "wins": 0, "games": 0, "sort_date": sort_date}
+        division_season_stats[key]["games"] += 1
+        is_win = (
+            (game.home_team_id == team_id and game.home_final_score > game.visitor_final_score) or
+            (game.visitor_team_id == team_id and game.visitor_final_score > game.home_final_score)
+        )
+        if is_win:
+            division_season_stats[key]["wins"] += 1
+
+    # Sort by season start date then label
+    sorted_seasons = sorted(division_season_stats.values(), key=lambda x: (x["sort_date"], x["label"]))
+    chart_labels = [s["label"] for s in sorted_seasons]
+    chart_win_pct = [round(s["wins"] / s["games"] * 100, 1) if s["games"] > 0 else 0 for s in sorted_seasons]
+
     return render_template(
         "team_stats.html",
         team=team,  # Pass the team object to the template
@@ -436,4 +466,6 @@ def team_stats():
         last_division_name=last_division_name,
         recent_and_upcoming_games_data=recent_and_upcoming_games_data,  # Pass recent and upcoming games data to the template
         championship_wins_data=championship_wins_data,  # Pass championship wins data to the template
+        chart_labels=chart_labels,
+        chart_win_pct=chart_win_pct,
     )
