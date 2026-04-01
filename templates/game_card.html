@@ -194,10 +194,20 @@
       <div class="table-responsive">
         <table class="table table-sm table-striped gc-table">
           <tbody>
-            {% for roster, human in visitor_roster %}
+            {% for player in visitor_roster %}
             <tr>
-              <td class="nowrap" style="width:2rem">{{ roster.jersey_number or '' }}</td>
-              <td class="name-col visitor-color"><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }}{% if human.middle_name and human.middle_name != 'None' %} {{ human.middle_name }}{% endif %} {{ human.last_name }}{% if roster.role %} <small class="text-muted">({{ roster.role }})</small>{% endif %}</a></td>
+              <td class="nowrap" style="width:2rem">{{ player.roster.jersey_number or '' }}</td>
+              <td class="name-col visitor-color">
+                <a href="{{ url_for('human_stats.human_stats', human_id=player.human.id) }}">{{ player.human.first_name }}{% if player.human.middle_name and player.human.middle_name != 'None' %} {{ player.human.middle_name }}{% endif %} {{ player.human.last_name }}</a>{% if player.roster.role %} <small class="text-muted">({{ player.roster.role }})</small>{% endif %}
+                {% if player.goals > 0 or player.assists > 0 or player.penalty_count > 0 %}
+                <span class="text-xs font-semibold text-base-content/70 ml-1">
+                  {%- if player.goals > 0 %}{{ player.goals }}G{% endif -%}
+                  {%- if player.goals > 0 and player.assists > 0 %}+{% endif -%}
+                  {%- if player.assists > 0 %}{{ player.assists }}A{% endif -%}
+                  {%- if player.penalty_count > 0 %}{%- if player.goals > 0 or player.assists > 0 %}, {% endif %}{{ player.penalty_types|join(', ') }}{% endif -%}
+                </span>
+                {% endif %}
+              </td>
             </tr>
             {% endfor %}
           </tbody>
@@ -209,10 +219,20 @@
       <div class="table-responsive">
         <table class="table table-sm table-striped gc-table">
           <tbody>
-            {% for roster, human in home_roster %}
+            {% for player in home_roster %}
             <tr>
-              <td class="nowrap" style="width:2rem">{{ roster.jersey_number or '' }}</td>
-              <td class="name-col home-color"><a href="{{ url_for('human_stats.human_stats', human_id=human.id) }}">{{ human.first_name }}{% if human.middle_name and human.middle_name != 'None' %} {{ human.middle_name }}{% endif %} {{ human.last_name }}{% if roster.role %} <small class="text-muted">({{ roster.role }})</small>{% endif %}</a></td>
+              <td class="nowrap" style="width:2rem">{{ player.roster.jersey_number or '' }}</td>
+              <td class="name-col home-color">
+                <a href="{{ url_for('human_stats.human_stats', human_id=player.human.id) }}">{{ player.human.first_name }}{% if player.human.middle_name and player.human.middle_name != 'None' %} {{ player.human.middle_name }}{% endif %} {{ player.human.last_name }}</a>{% if player.roster.role %} <small class="text-muted">({{ player.roster.role }})</small>{% endif %}
+                {% if player.goals > 0 or player.assists > 0 or player.penalty_count > 0 %}
+                <span class="text-xs font-semibold text-base-content/70 ml-1">
+                  {%- if player.goals > 0 %}{{ player.goals }}G{% endif -%}
+                  {%- if player.goals > 0 and player.assists > 0 %}+{% endif -%}
+                  {%- if player.assists > 0 %}{{ player.assists }}A{% endif -%}
+                  {%- if player.penalty_count > 0 %}{%- if player.goals > 0 or player.assists > 0 %}, {% endif %}{{ player.penalty_types|join(', ') }}{% endif -%}
+                </span>
+                {% endif %}
+              </td>
             </tr>
             {% endfor %}
           </tbody>
