@@ -108,7 +108,7 @@
   <div class="table-responsive mb-3">
     <table class="table table-sm table-striped gc-table">
       <thead><tr>
-        <th class="nowrap">P</th><th class="nowrap">Time</th><th class="name-col">Team</th>
+        <th class="nowrap">P</th><th class="nowrap">Time</th>
         <th class="name-col">Goal</th><th class="name-col">Assist 1</th><th class="name-col">Assist 2</th>
       </tr></thead>
       <tbody>
@@ -118,15 +118,12 @@
           <td class="nowrap">{{ goal.period }}</td>
           <td class="nowrap">{{ goal.time }}</td>
           <td class="name-col {{ 'visitor-color' if is_visitor else 'home-color' }}">
-            <a href="{{ url_for('team_stats.team_stats', team_id=goal.scoring_team_id) }}">{{ visitor_team.name if is_visitor else home_team.name }}</a>
-          </td>
-          <td class="name-col {{ 'visitor-color' if is_visitor else 'home-color' }}">
             {% if goal.scorer_name %}<a href="{{ url_for('human_stats.human_stats', human_id=goal.goal_scorer_id) }}">{{ goal.scorer_name.first_name }}{% if goal.scorer_name.middle_name and goal.scorer_name.middle_name != 'None' %} {{ goal.scorer_name.middle_name }}{% endif %} {{ goal.scorer_name.last_name }}</a>{% else %}—{% endif %}
           </td>
-          <td class="name-col">
+          <td class="name-col {{ 'visitor-color' if is_visitor else 'home-color' }}">
             {% if goal.assist_1_name %}<a href="{{ url_for('human_stats.human_stats', human_id=goal.assist_1_id) }}">{{ goal.assist_1_name.first_name }}{% if goal.assist_1_name.middle_name and goal.assist_1_name.middle_name != 'None' %} {{ goal.assist_1_name.middle_name }}{% endif %} {{ goal.assist_1_name.last_name }}</a>{% else %}{% endif %}
           </td>
-          <td class="name-col">
+          <td class="name-col {{ 'visitor-color' if is_visitor else 'home-color' }}">
             {% if goal.assist_2_name %}<a href="{{ url_for('human_stats.human_stats', human_id=goal.assist_2_id) }}">{{ goal.assist_2_name.first_name }}{% if goal.assist_2_name.middle_name and goal.assist_2_name.middle_name != 'None' %} {{ goal.assist_2_name.middle_name }}{% endif %} {{ goal.assist_2_name.last_name }}</a>{% else %}{% endif %}
           </td>
         </tr>
@@ -142,7 +139,7 @@
   <div class="table-responsive mb-3">
     <table class="table table-sm table-striped gc-table">
       <thead><tr>
-        <th class="nowrap">P</th><th class="nowrap">Time</th><th class="name-col">Team</th>
+        <th class="nowrap">P</th><th class="nowrap">Time</th>
         <th class="name-col">Player</th><th class="name-col">Infraction</th><th>Min</th>
       </tr></thead>
       <tbody>
@@ -151,13 +148,12 @@
         <tr>
           <td class="nowrap">{{ penalty.period }}</td>
           <td class="nowrap">{{ penalty.time }}</td>
-          <td class="name-col {{ 'visitor-color' if is_visitor else 'home-color' }}">{{ penalty.team_name }}</td>
-          <td class="name-col">
+          <td class="name-col {{ 'visitor-color' if is_visitor else 'home-color' }}">
             {% if penalty.player_name and penalty.player_name != "Unknown" %}
             <a href="{{ url_for('human_stats.human_stats', human_id=penalty.penalized_player_id) }}">{{ penalty.player_name }}</a>
             {% else %}—{% endif %}
           </td>
-          <td class="name-col">{{ penalty.infraction }}</td>
+          <td class="name-col {{ 'visitor-color' if is_visitor else 'home-color' }}">{{ penalty.infraction }}</td>
           <td>{{ penalty.penalty_minutes }}</td>
         </tr>
         {% endfor %}
