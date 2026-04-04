@@ -292,6 +292,7 @@ def filter_skater_performance():
         if level_id is None:
             if human_id:
                 levels = get_levels_for_skater_in_org(org_id, human_id)
+                level_sort_keys = {}
                 for level in levels:
                     level_stats = (
                         db.session.query(LevelStatsSkater)
@@ -306,11 +307,19 @@ def filter_skater_performance():
 
                     for stats in level_stats:
                         context = level.level_name
+                        # Build sort key: levels with a real skill_value (> 0) first (ascending), then alphabetical
+                        # skill_value of None, -1, or 0 all mean "unassigned" → sort to bottom alphabetically
+                        has_skill = level.skill_value is not None and level.skill_value > 0
+                        level_sort_keys[context] = (
+                            0 if has_skill else 1,
+                            level.skill_value if has_skill else 0,
+                            level.level_name,
+                        )
                         append_skater_performance_result(
                             skater_performance_results, stats, context
                         )
                 skater_performance_results.sort(
-                    key=lambda x: (x["games_participated"]), reverse=True
+                    key=lambda x: level_sort_keys.get(x["context"], (1, 0, x["context"]))
                 )
         else:
             if season_id is None:
