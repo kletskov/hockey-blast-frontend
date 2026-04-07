@@ -272,7 +272,9 @@
         }
         if (isAuth) {
           currentUser = await auth0Client.getUser();
-          if (!token) token = await auth0Client.getTokenSilently();
+          if (!token) {
+            try { token = await auth0Client.getTokenSilently(); } catch(e) { /* ignore */ }
+          }
         }
         return isAuth;
       }
