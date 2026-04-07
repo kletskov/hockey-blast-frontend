@@ -9,7 +9,7 @@ from flask import Blueprint, request, Response, jsonify
 
 chat_proxy_bp = Blueprint("chat_proxy", __name__)
 
-SPORTSBOOK_BASE = "https://sportsbook.hockey-blast.com"
+SPORTSBOOK_BASE = "http://127.0.0.1:5002"
 TIMEOUT = 90  # Chat can take a while (Bedrock round trips)
 
 
