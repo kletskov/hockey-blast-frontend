@@ -81,6 +81,7 @@ from blueprints.two_skaters_selection import \
     two_skaters_selection_bp  # Add this import
 from blueprints.version import version_bp
 from blueprints.support import support_bp
+from blueprints.chat_proxy import chat_proxy_bp
 
 suspicious_subnets = [
     "185.6.233.0/24",
@@ -306,6 +307,7 @@ def _create_app(db_name):
     app.register_blueprint(game_shootout_bp)
     app.register_blueprint(version_bp)
     app.register_blueprint(support_bp)
+    app.register_blueprint(chat_proxy_bp)
     app.register_blueprint(games_bp, url_prefix="/games")
     app.register_blueprint(location_bp, url_prefix="/location")
     app.register_blueprint(dropdowns_bp, url_prefix="/dropdowns")

@@ -407,7 +407,7 @@
             return;
           }
           // History lives on the sportsbook API
-          fetch('https://sportsbook.hockey-blast.com/api/chat/history', {
+          fetch('/api/chat/history', {
             headers: { 'Authorization': 'Bearer ' + tok }
           }).then(function(r) {
             if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -497,7 +497,7 @@
 
       function sendFeedback(messageId, rating, comment) {
         BlastAuth.getToken().then(function(authToken) {
-          fetch('https://sportsbook.hockey-blast.com/api/chat/feedback', {
+          fetch('/api/chat/feedback', {
             method: 'POST',
             headers: Object.assign(
               {'Content-Type': 'application/json'},
@@ -529,7 +529,7 @@
         }
 
         var authToken = await BlastAuth.getToken();
-        fetch('https://sportsbook.hockey-blast.com/api/chat/message', {
+        fetch('/api/chat/message', {
           method: 'POST',
           headers: Object.assign(
             {'Content-Type': 'application/json'},
