@@ -280,22 +280,15 @@
       }
 
       async function login() {
-        try {
-          await auth0Client.loginWithPopup();
-          var isAuth = await auth0Client.isAuthenticated();
-          if (isAuth) {
-            currentUser = await auth0Client.getUser();
-            token = await auth0Client.getTokenSilently();
-            updateAuthUI(true);
-          }
-        } catch(e) {
-          if (e.message && e.message.includes('Popup closed')) {
-            // User closed popup — do nothing
-            return;
-          }
-          // Fallback for popup blockers
-          await auth0Client.loginWithRedirect();
+        if (!auth0Client) {
+          console.error('[Auth] auth0Client not initialized');
+          return;
         }
+        await auth0Client.loginWithRedirect({
+          authorizationParams: {
+            redirect_uri: window.location.origin + '/callback'
+          }
+        });
       }
 
       async function logout() {
@@ -357,6 +350,11 @@
     BlastAuth.init().then(function(isAuth) {
       updateAuthUI(isAuth);
       updateChatAuth(isAuth);
+    }).catch(function(e) {
+      console.error('[Auth] init failed:', e);
+      // Still wire up sign-in button even if init failed
+      var signinBtn = document.getElementById('blast-signin-btn');
+      if (signinBtn) { signinBtn.style.display = 'flex'; signinBtn.onclick = function() { BlastAuth.login(); }; }
     });
 
     function updateChatAuth(isAuth) {
