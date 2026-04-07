@@ -280,7 +280,19 @@
       }
 
       async function login() {
-        await auth0Client.loginWithRedirect();
+        try {
+          await auth0Client.loginWithPopup();
+          // Refresh auth state after popup closes
+          var isAuth = await auth0Client.isAuthenticated();
+          if (isAuth) {
+            currentUser = await auth0Client.getUser();
+            token = await auth0Client.getTokenSilently();
+            updateAuthUI(true);
+          }
+        } catch(e) {
+          console.warn('[Auth] Popup login failed, falling back to redirect:', e);
+          await auth0Client.loginWithRedirect();
+        }
       }
 
       async function logout() {
