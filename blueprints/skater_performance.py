@@ -291,6 +291,23 @@ def filter_skater_performance():
     else:
         if level_id is None:
             if human_id:
+                # Show org-level summary row first
+                org_stats = db.session.query(OrgStatsSkater).filter(
+                    OrgStatsSkater.org_id == org_id,
+                    OrgStatsSkater.human_id == human_id,
+                ).first()
+                if org_stats:
+                    organization = (
+                        db.session.query(Organization)
+                        .filter(Organization.id == org_id)
+                        .first()
+                    )
+                    context = f"{organization.organization_name} (All Levels)"
+                    append_skater_performance_result(
+                        skater_performance_results, org_stats, context
+                    )
+                    skater_performance_results[-1]["is_summary"] = True
+
                 levels = get_levels_for_skater_in_org(org_id, human_id)
                 level_sort_keys = {}
                 for level in levels:
@@ -319,7 +336,7 @@ def filter_skater_performance():
                             skater_performance_results, stats, context
                         )
                 skater_performance_results.sort(
-                    key=lambda x: level_sort_keys.get(x["context"], (1, 0, x["context"]))
+                    key=lambda x: (not x.get("is_summary", False), level_sort_keys.get(x["context"], (1, 0, x["context"])))
                 )
         else:
             if season_id is None:
