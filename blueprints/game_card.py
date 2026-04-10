@@ -141,7 +141,7 @@ def game_card():
             goal.sortable_time = 0  # Default value if time is empty
 
     # Sort goals by period ascending and time descending
-    goals.sort(key=lambda x: (x.period, x.sortable_time))
+    goals.sort(key=lambda x: (x.period, -x.sortable_time))
 
     # Determine unique periods
     unique_periods = sorted(set(goal.period for goal in goals))
