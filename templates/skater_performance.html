@@ -35,6 +35,9 @@
     .highlight-row {
         background-color: oklch(0.20 0 0) !important;
     }
+    .summary-row td { font-weight: bold; }
+    .summary-row { border-bottom: 3px solid #e57200; }
+    tbody tr span.text-error { color: #e57200 !important; }
 </style>
 
 <div class="mb-4 text-center">
@@ -146,7 +149,8 @@
 
                 if (data.skater_performance && data.skater_performance.length > 0) {
                     data.skater_performance.forEach(item => {
-                        skaterPerformanceTableBody.innerHTML += `<tr>
+                        const rowClass = item.is_summary ? 'summary-row' : '';
+                        skaterPerformanceTableBody.innerHTML += `<tr class="${rowClass}">
                                 <td>${item.context}</td>
                                 <td>${item.first_game}</td>
                                 <td>${item.last_game}</td>
