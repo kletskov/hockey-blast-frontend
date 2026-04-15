@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Game Highlights{% endblock %}
+
+{% block content %}
+<div id="hl-auth-gate" style="display:none; text-align:center; padding:60px 20px;">
+  <p style="margin-bottom:16px;">Sign in to watch game highlights</p>
+  <a href="#" onclick="BlastAuth.login();return false;"
+     style="background:#3b82f6;color:#fff;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:600;">
+    Sign In
+  </a>
+</div>
+
+<div id="hl-player" style="display:none; max-width:1200px; margin:0 auto;">
+  <p class="mb-2">
+    <a href="/game_card?game_id={{ game_id }}" style="color:#1d8a7e;">&larr; Back to game card</a>
+  </p>
+  <video id="hl-video" controls playsinline preload="metadata"
+         style="width:100%; border-radius:8px; background:#000;">
+    <source src="/api/highlights/{{ game_id }}/video" type="video/mp4">
+  </video>
+</div>
+
+<script>
+(function() {
+  var gate = document.getElementById('hl-auth-gate');
+  var player = document.getElementById('hl-player');
+
+  function show(isAuth) {
+    if (isAuth) { player.style.display = 'block'; }
+    else { gate.style.display = 'block'; }
+  }
+
+  document.addEventListener('blast-auth-ready', function(e) { show(e.detail.isAuth); });
+  if (typeof BlastAuth !== 'undefined') {
+    BlastAuth.isAuthenticated().then(function(a) { show(a); });
+  }
+})();
+</script>
+{% endblock %}

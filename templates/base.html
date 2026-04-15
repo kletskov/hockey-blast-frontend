@@ -256,9 +256,9 @@
 
         // Handle redirect callback
         if (window.location.search.includes('code=') || window.location.search.includes('error=')) {
-          await auth0Client.handleRedirectCallback();
-          // Redirect to home after successful callback
-          window.location.replace('/');
+          var result = await auth0Client.handleRedirectCallback();
+          var targetUrl = (result && result.appState && result.appState.targetUrl) || '/';
+          window.location.replace(targetUrl);
           return false;
         }
 
@@ -280,7 +280,9 @@
       }
 
       async function login() {
-        await auth0Client.loginWithRedirect();
+        await auth0Client.loginWithRedirect({
+          appState: { targetUrl: window.location.href }
+        });
       }
 
       async function logout() {
@@ -342,6 +344,7 @@
     BlastAuth.init().then(function(isAuth) {
       updateAuthUI(isAuth);
       updateChatAuth(isAuth);
+      document.dispatchEvent(new CustomEvent('blast-auth-ready', { detail: { isAuth: isAuth } }));
     });
 
     function updateChatAuth(isAuth) {

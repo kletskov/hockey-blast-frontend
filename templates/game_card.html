@@ -26,6 +26,22 @@
     {% if master_location %}&nbsp;·&nbsp;<span>{{ macros.location_display(master_location, link_to_page=True) }}</span>{% endif %}
   </p>
 
+  <!-- Highlights -->
+  <div id="highlights-section" style="display:none; margin-bottom: 1rem;">
+    <span id="highlights-available" style="display:none;">
+      <a id="highlights-link" href="#" target="_blank"
+         style="background:#E57200;color:#fff;padding:6px 16px;border-radius:6px;text-decoration:none;font-weight:600;font-size:0.9rem;">
+        View Highlights
+      </a>
+    </span>
+    <span id="highlights-login" style="display:none;">
+      <a href="#" onclick="BlastAuth.login();return false;"
+         style="background:#3b82f6;color:#fff;padding:6px 16px;border-radius:6px;text-decoration:none;font-weight:600;font-size:0.9rem;">
+        Log in to view highlights
+      </a>
+    </span>
+  </div>
+
   <!-- Officials -->
   <div class="table-responsive mb-3">
     <table class="table table-sm gc-table">
@@ -237,4 +253,41 @@
   </div>
 
 <p style="color:transparent;user-select:text">Game Number: {{ game_number }}</p>
+
+<script>
+(function() {
+  var gameId = {{ game.id }};
+  var section = document.getElementById('highlights-section');
+  var availableEl = document.getElementById('highlights-available');
+  var loginEl = document.getElementById('highlights-login');
+  var link = document.getElementById('highlights-link');
+
+  var authKnown = false, userAuth = false, videoReady = false;
+
+  function render() {
+    if (!videoReady || !authKnown) return;
+    section.style.display = 'block';
+    link.href = '/highlights/' + gameId;
+    if (userAuth) {
+      availableEl.style.display = 'inline';
+    } else {
+      loginEl.style.display = 'inline';
+    }
+  }
+
+  fetch('/api/highlights/' + gameId + '/status')
+    .then(function(r) { return r.json(); })
+    .then(function(d) { if (d.available) { videoReady = true; render(); } })
+    .catch(function() {});
+
+  document.addEventListener('blast-auth-ready', function(e) {
+    authKnown = true; userAuth = e.detail.isAuth; render();
+  });
+  if (typeof BlastAuth !== 'undefined') {
+    BlastAuth.isAuthenticated().then(function(a) {
+      if (!authKnown) { authKnown = true; userAuth = a; render(); }
+    });
+  }
+})();
+</script>
 {% endblock %}
