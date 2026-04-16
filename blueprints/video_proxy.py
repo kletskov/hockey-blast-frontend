@@ -55,11 +55,18 @@ def proxy_video(game_id):
         "Content-Type",
         "Content-Length",
         "Content-Range",
+        "Content-Disposition",
         "Accept-Ranges",
         "Cache-Control",
     ):
         if h in upstream.headers:
             response_headers[h] = upstream.headers[h]
+
+    # ?dl=1 forces download (needed for iOS Safari)
+    if request.args.get("dl"):
+        response_headers["Content-Disposition"] = (
+            f'attachment; filename="highlights_{game_id}.mp4"'
+        )
 
     return Response(
         upstream.iter_content(chunk_size=64 * 1024),
