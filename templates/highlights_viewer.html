@@ -15,10 +15,34 @@
   <p class="mb-2">
     <a href="/game_card?game_id={{ game_id }}" style="color:#1d8a7e;">&larr; Back to game card</a>
   </p>
-  <video id="hl-video" controls playsinline preload="metadata"
-         style="width:100%; border-radius:8px; background:#000;">
-    <source src="/api/highlights/{{ game_id }}/video" type="video/mp4">
-  </video>
+
+  <!-- Toolbar: zoom + download -->
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap;">
+    <button id="hl-zoom-out" title="Zoom out"
+            style="background:#333;color:#fff;border:none;border-radius:4px;width:32px;height:32px;font-size:1.1rem;cursor:pointer;">-</button>
+    <span id="hl-zoom-label" style="font-size:0.85rem;min-width:40px;text-align:center;">100%</span>
+    <button id="hl-zoom-in" title="Zoom in"
+            style="background:#333;color:#fff;border:none;border-radius:4px;width:32px;height:32px;font-size:1.1rem;cursor:pointer;">+</button>
+    <button id="hl-zoom-reset" title="Reset zoom"
+            style="background:#333;color:#fff;border:none;border-radius:4px;height:32px;padding:0 10px;font-size:0.8rem;cursor:pointer;">Reset</button>
+    <a id="hl-download" href="/api/highlights/{{ game_id }}/video?dl=1"
+       style="background:#E57200;color:#fff;padding:6px 16px;border-radius:6px;text-decoration:none;font-weight:600;font-size:0.85rem;margin-left:auto;">
+      Download
+    </a>
+  </div>
+
+  <!-- Video container: scrollable viewport around a scaled video -->
+  <div id="hl-viewport"
+       style="overflow:scroll;border-radius:8px;background:#000;position:relative;
+              -webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;">
+    <div id="hl-sizer" style="position:relative;">
+      <video id="hl-video" controls playsinline preload="metadata"
+             style="display:block;width:100%;">
+        <source src="/api/highlights/{{ game_id }}/video" type="video/mp4">
+      </video>
+    </div>
+  </div>
+  <p style="font-size:0.75rem;color:#888;margin-top:4px;">Use +/- to zoom in on the action, then scroll to pan around the video.</p>
 </div>
 
 <script>
@@ -35,6 +59,30 @@
   if (typeof BlastAuth !== 'undefined') {
     BlastAuth.isAuthenticated().then(function(a) { show(a); });
   }
+
+  // Zoom via CSS width on the inner sizer div
+  var sizer = document.getElementById('hl-sizer');
+  var viewport = document.getElementById('hl-viewport');
+  var label = document.getElementById('hl-zoom-label');
+  var steps = [1, 1.5, 2, 3, 4, 6, 8];
+  var idx = 0;
+
+  function applyZoom() {
+    var scale = steps[idx];
+    sizer.style.width = (scale * 100) + '%';
+    label.textContent = Math.round(scale * 100) + '%';
+  }
+
+  document.getElementById('hl-zoom-in').addEventListener('click', function() {
+    if (idx < steps.length - 1) { idx++; applyZoom(); }
+  });
+  document.getElementById('hl-zoom-out').addEventListener('click', function() {
+    if (idx > 0) { idx--; applyZoom(); }
+  });
+  document.getElementById('hl-zoom-reset').addEventListener('click', function() {
+    idx = 0; applyZoom();
+    viewport.scrollLeft = 0; viewport.scrollTop = 0;
+  });
 })();
 </script>
 {% endblock %}
