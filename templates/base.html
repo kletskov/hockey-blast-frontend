@@ -339,8 +339,9 @@
             showCallbackError(urlError, urlErrorDesc);
             return false;
           }
+          var result;
           try {
-            await auth0Client.handleRedirectCallback();
+            result = await auth0Client.handleRedirectCallback();
           } catch (e) {
             showCallbackError('callback_failed', (e && e.message) ? e.message : String(e));
             return false;
@@ -360,8 +361,8 @@
           // Fire-and-forget sync to the shared pred_users pool.
           syncUserToSharedPool();
 
-          // Redirect home after successful callback
-          window.location.replace('/');
+          var targetUrl = (result && result.appState && result.appState.targetUrl) || '/';
+          window.location.replace(targetUrl);
           return false;
         }
 
@@ -383,7 +384,9 @@
       }
 
       async function login() {
-        await auth0Client.loginWithRedirect();
+        await auth0Client.loginWithRedirect({
+          appState: { targetUrl: window.location.href }
+        });
       }
 
       async function logout() {
@@ -445,6 +448,7 @@
     BlastAuth.init().then(function(isAuth) {
       updateAuthUI(isAuth);
       updateChatAuth(isAuth);
+      document.dispatchEvent(new CustomEvent('blast-auth-ready', { detail: { isAuth: isAuth } }));
     });
 
     function updateChatAuth(isAuth) {

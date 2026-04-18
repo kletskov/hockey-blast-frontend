@@ -82,6 +82,7 @@ from blueprints.version import version_bp
 from blueprints.support import support_bp
 from blueprints.chat_proxy import chat_proxy_bp
 from blueprints.auth_proxy import auth_proxy_bp
+from blueprints.video_proxy import video_proxy_bp
 
 
 
@@ -190,6 +191,7 @@ def _create_app(db_name):
     app.register_blueprint(support_bp)
     app.register_blueprint(chat_proxy_bp)
     app.register_blueprint(auth_proxy_bp)
+    app.register_blueprint(video_proxy_bp)
     app.register_blueprint(games_bp, url_prefix="/games")
     app.register_blueprint(location_bp, url_prefix="/location")
     app.register_blueprint(dropdowns_bp, url_prefix="/dropdowns")

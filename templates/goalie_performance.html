@@ -18,6 +18,9 @@
     }
     @keyframes blink { 50% { opacity: 0; } }
     .highlight-row { background-color: oklch(0.20 0 0) !important; }
+    .summary-row td { font-weight: bold; }
+    .summary-row { border-bottom: 3px solid #e57200; }
+    tbody tr span.text-error { color: #e57200 !important; }
 </style>
 
 <div class="overflow-x-auto">
@@ -115,7 +118,8 @@
 
                 if (data.goalie_performance && data.goalie_performance.length > 0) {
                     data.goalie_performance.forEach(item => {
-                        goaliePerformanceTableBody.innerHTML += `<tr>
+                        const rowClass = item.is_summary ? 'summary-row' : '';
+                        goaliePerformanceTableBody.innerHTML += `<tr class="${rowClass}">
                             <td>${item.context}</td>
                             <td>${item.first_game}</td>
                             <td>${item.last_game}</td>

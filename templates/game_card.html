@@ -26,6 +26,38 @@
     {% if master_location %}&nbsp;·&nbsp;<span>{{ macros.location_display(master_location, link_to_page=True) }}</span>{% endif %}
   </p>
 
+  <!-- Highlights -->
+  <div id="highlights-section" style="display:none; margin-bottom: 1rem;">
+    <span id="highlights-available" style="display:none;">
+      <a id="highlights-link" href="#" target="_blank"
+         style="background:#E57200;color:#fff;padding:6px 16px;border-radius:6px;text-decoration:none;font-weight:600;font-size:0.9rem;">
+        Video Highlights
+      </a>
+      &nbsp;
+      <a href="#" id="hl-report-toggle"
+         style="color:#E57200;font-size:0.85rem;text-decoration:underline;font-weight:600;">
+        Report a problem
+      </a>
+      <div id="hl-report-form" style="display:none;margin-top:8px;">
+        <textarea id="hl-report-text" rows="2" placeholder="Describe the issue..."
+                  style="width:100%;max-width:500px;border:1px solid #444;border-radius:6px;padding:8px;font-size:0.85rem;background:#1a1a1a;color:#eee;"></textarea>
+        <br>
+        <button id="hl-report-submit"
+                style="background:#3b82f6;color:#fff;border:none;border-radius:6px;padding:6px 16px;font-size:0.85rem;font-weight:600;cursor:pointer;margin-top:4px;">
+          Submit
+        </button>
+        <span id="hl-report-status" style="margin-left:8px;font-size:0.85rem;"></span>
+      </div>
+    </span>
+    <span id="highlights-login" style="display:none;">
+      <a href="#" onclick="BlastAuth.login();return false;"
+         style="background:#3b82f6;color:#fff;padding:6px 16px;border-radius:6px;text-decoration:none;font-weight:600;font-size:0.9rem;">
+        Log in to view highlights
+      </a>
+    </span>
+    <span id="highlights-status" style="display:none;font-size:0.9rem;font-weight:600;"></span>
+  </div>
+
   <!-- Officials -->
   <div class="table-responsive mb-3">
     <table class="table table-sm gc-table">
@@ -237,4 +269,107 @@
   </div>
 
 <p style="color:transparent;user-select:text">Game Number: {{ game_number }}</p>
+
+<script>
+(function() {
+  var gameId = {{ game.id }};
+  var section = document.getElementById('highlights-section');
+  var availableEl = document.getElementById('highlights-available');
+  var loginEl = document.getElementById('highlights-login');
+  var statusEl = document.getElementById('highlights-status');
+  var link = document.getElementById('highlights-link');
+
+  var authKnown = false, userAuth = false, videoStatus = null;
+
+  var STATUS_LABELS = {
+    'downloading': {text: 'Video highlights: downloading...', color: '#E57200'},
+    'downloaded':  {text: 'Video highlights: waiting for game scores', color: '#E57200'},
+    'processing':  {text: 'Video highlights: generating...', color: '#E57200'},
+    'failed':      {text: 'Video highlights: processing failed, will retry', color: '#f87171'}
+  };
+
+  function render() {
+    if (!videoStatus) return;
+    if (videoStatus === 'unavailable') return;
+
+    if (videoStatus === 'available') {
+      if (!authKnown) return;
+      section.style.display = 'block';
+      link.href = '/highlights/' + gameId;
+      if (userAuth) {
+        availableEl.style.display = 'inline';
+      } else {
+        loginEl.style.display = 'inline';
+      }
+    } else if (STATUS_LABELS[videoStatus]) {
+      section.style.display = 'block';
+      statusEl.textContent = STATUS_LABELS[videoStatus].text;
+      statusEl.style.color = STATUS_LABELS[videoStatus].color;
+      statusEl.style.display = 'inline';
+    }
+  }
+
+  fetch('/api/highlights/' + gameId + '/status')
+    .then(function(r) { return r.json(); })
+    .then(function(d) { videoStatus = d.status || (d.available ? 'available' : 'unavailable'); render(); })
+    .catch(function() {});
+
+  document.addEventListener('blast-auth-ready', function(e) {
+    authKnown = true; userAuth = e.detail.isAuth; render();
+  });
+  if (typeof BlastAuth !== 'undefined') {
+    BlastAuth.isAuthenticated().then(function(a) {
+      if (!authKnown) { authKnown = true; userAuth = a; render(); }
+    });
+  }
+
+  // Report problem
+  var toggle = document.getElementById('hl-report-toggle');
+  var form = document.getElementById('hl-report-form');
+  var text = document.getElementById('hl-report-text');
+  var submit = document.getElementById('hl-report-submit');
+  var status = document.getElementById('hl-report-status');
+
+  toggle.addEventListener('click', function(e) {
+    e.preventDefault();
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+  });
+
+  submit.addEventListener('click', function() {
+    var comment = text.value.trim();
+    if (!comment) { status.textContent = 'Please describe the issue.'; return; }
+    submit.disabled = true;
+    status.textContent = 'Sending...';
+    var videoUrl = window.location.origin + '/highlights/' + gameId;
+    var payload = {
+      message_id: 'video_report_' + gameId + '_' + Date.now(),
+      rating: 'dislike',
+      comment: '[Video Report] ' + videoUrl + '\n' + comment
+    };
+    var headers = {'Content-Type': 'application/json'};
+    (typeof BlastAuth !== 'undefined' ? BlastAuth.getToken() : Promise.resolve(null))
+      .then(function(tok) {
+        if (tok) headers['Authorization'] = 'Bearer ' + tok;
+        return fetch('/api/chat/feedback', {method: 'POST', headers: headers, body: JSON.stringify(payload)});
+      })
+      .then(function(r) {
+        if (r.ok) {
+          form.style.display = 'none';
+          toggle.style.color = '#4ade80';
+          toggle.textContent = 'Sent, thank you!';
+          toggle.onclick = function(e) { e.preventDefault(); };
+        } else {
+          status.style.color = '#f87171';
+          status.textContent = 'Failed to send.';
+          submit.disabled = false;
+        }
+      })
+      .catch(function() {
+        status.style.color = '#f87171';
+        status.textContent = 'Failed to send.';
+        submit.disabled = false;
+      });
+  });
+})();
+</script>
 {% endblock %}

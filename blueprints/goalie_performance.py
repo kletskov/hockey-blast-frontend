@@ -265,6 +265,24 @@ def filter_goalie_performance():
     else:
         if level_id is None:
             if human_id:
+                # Show org-level summary row first
+                org_stats = db.session.query(OrgStatsGoalie).filter(
+                    OrgStatsGoalie.org_id == org_id,
+                    OrgStatsGoalie.human_id == human_id,
+                ).first()
+                if org_stats:
+                    organization = (
+                        db.session.query(Organization)
+                        .filter(Organization.id == org_id)
+                        .first()
+                    )
+                    context = f"{organization.organization_name} (All Levels)"
+                    append_goalie_performance_result(
+                        goalie_performance_results, org_stats, context
+                    )
+                    goalie_performance_results[-1]["is_summary"] = True
+
+                # Then show per-level breakdowns
                 levels = get_levels_for_goalie_in_org(org_id, human_id)
                 for level in levels:
                     query = db.session.query(LevelStatsGoalie).filter(
@@ -284,7 +302,7 @@ def filter_goalie_performance():
                             goalie_performance_results, stats, context
                         )
                 goalie_performance_results.sort(
-                    key=lambda x: (x["games_participated"]), reverse=True
+                    key=lambda x: (not x.get("is_summary", False), -x["games_participated"])
                 )
         else:
             if season_id is None:
