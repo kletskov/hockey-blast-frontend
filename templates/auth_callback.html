@@ -1,7 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
-<div style="text-align:center;padding:60px;color:#fff">
-  <div style="font-size:2rem;margin-bottom:16px">🏒</div>
-  <div>Signing you in...</div>
+<div id="blast-auth-callback" style="text-align:center;padding:60px 20px;color:#fff;max-width:560px;margin:0 auto;">
+  <div id="cb-icon" style="font-size:2rem;margin-bottom:16px">🏒</div>
+  <div id="cb-title" style="font-size:1.25rem;margin-bottom:12px;">Signing you in...</div>
+  <div id="cb-message" style="color:#bbb;font-size:0.95rem;line-height:1.5;"></div>
+  <div id="cb-actions" style="margin-top:24px;display:none;">
+    <a id="cb-home-btn" href="/" style="display:inline-block;padding:10px 20px;background:#3b82f6;color:white;border-radius:6px;text-decoration:none;margin-right:8px;">Go home</a>
+    <button id="cb-retry-btn" type="button" style="padding:10px 20px;background:#444;color:white;border:0;border-radius:6px;cursor:pointer;">Try sign-in again</button>
+  </div>
 </div>
 {% endblock %}
