@@ -244,6 +244,80 @@
       var AUTH0_DOMAIN = 'dev-tqe4zxubkkg82828.us.auth0.com';
       var AUTH0_CLIENT_ID = 'qhV0rAn6CywncUVjR3tjOCc45qaeBpj3';
 
+      function renderCallbackState(state) {
+        var el = document.getElementById('blast-auth-callback');
+        if (!el) return;
+        var icon = el.querySelector('#cb-icon');
+        var title = el.querySelector('#cb-title');
+        var msg = el.querySelector('#cb-message');
+        var actions = el.querySelector('#cb-actions');
+        var retryBtn = el.querySelector('#cb-retry-btn');
+        if (!icon || !title || !msg || !actions) return;
+        icon.textContent = state.icon || '⚠️';
+        title.textContent = state.title || 'Sign-in failed';
+        msg.innerHTML = state.body || '';
+        actions.style.display = 'block';
+        if (retryBtn) {
+          retryBtn.textContent = state.retryLabel || 'Try sign-in again';
+          retryBtn.onclick = function() {
+            if (state.onRetry) state.onRetry();
+            else if (auth0Client) auth0Client.loginWithRedirect();
+          };
+        }
+      }
+
+      function showEmailVerifyNotice(email, name) {
+        renderCallbackState({
+          icon: '📧',
+          title: 'Please verify your email',
+          body: 'Hi' + (name ? ' ' + name : '') + ', we sent a verification link to '
+                + '<strong>' + (email || 'your email address') + '</strong>. '
+                + 'Click the link in that email, then come back and sign in again.',
+          retryLabel: "I've verified — sign in",
+        });
+      }
+
+      function showCallbackError(code, description) {
+        var isVerifyIssue = /verif|email_not_verified/i.test(description || '')
+          || /verif/i.test(code || '');
+        if (isVerifyIssue) {
+          renderCallbackState({
+            icon: '📧',
+            title: 'Please verify your email',
+            body: 'Auth0 reports your email has not been verified yet. '
+                  + 'Check your inbox for a verification link, then sign in again.'
+                  + (description ? '<br><br><small style="color:#888">Details: ' + description + '</small>' : ''),
+            retryLabel: "I've verified — sign in",
+          });
+        } else {
+          renderCallbackState({
+            icon: '⚠️',
+            title: 'Sign-in failed',
+            body: (description || code || 'Something went wrong during sign-in.'),
+            retryLabel: 'Try again',
+          });
+        }
+      }
+
+      async function syncUserToSharedPool() {
+        // Best-effort POST of the ID token to the shared user-sync endpoint.
+        // Failures are silent — sign-in still succeeds even if sync fails.
+        try {
+          var claims = await auth0Client.getIdTokenClaims();
+          var idToken = claims && claims.__raw;
+          if (!idToken) return;
+          await fetch('/api/auth/sync', {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer ' + idToken,
+              'Content-Type': 'application/json'
+            }
+          });
+        } catch (e) {
+          // Deliberately swallowed — sync is non-critical for browsing stats.
+        }
+      }
+
       async function init() {
         auth0Client = await window.auth0.createAuth0Client({
           domain: AUTH0_DOMAIN,
@@ -254,9 +328,39 @@
           cacheLocation: 'localstorage',
         });
 
-        // Handle redirect callback
-        if (window.location.search.includes('code=') || window.location.search.includes('error=')) {
-          var result = await auth0Client.handleRedirectCallback();
+        var params = new URLSearchParams(window.location.search);
+        var urlError = params.get('error');
+        var urlErrorDesc = params.get('error_description') || '';
+        var hasCode = params.has('code');
+
+        // Handle redirect callback (either with code= on success or error= on failure)
+        if (hasCode || urlError) {
+          if (urlError) {
+            showCallbackError(urlError, urlErrorDesc);
+            return false;
+          }
+          var result;
+          try {
+            result = await auth0Client.handleRedirectCallback();
+          } catch (e) {
+            showCallbackError('callback_failed', (e && e.message) ? e.message : String(e));
+            return false;
+          }
+
+          // Enforce email verification — Auth0 may still issue a token when the email
+          // isn't verified (depends on tenant rules), so we gate on the claim here.
+          var cbUser = null;
+          try { cbUser = await auth0Client.getUser(); } catch (e) { /* ignore */ }
+          if (cbUser && cbUser.email_verified === false) {
+            showEmailVerifyNotice(cbUser.email, cbUser.name);
+            // Stay on /callback with the notice visible. The retry button triggers a
+            // fresh loginWithRedirect which will re-read email_verified from Auth0.
+            return false;
+          }
+
+          // Fire-and-forget sync to the shared pred_users pool.
+          syncUserToSharedPool();
+
           var targetUrl = (result && result.appState && result.appState.targetUrl) || '/';
           window.location.replace(targetUrl);
           return false;
